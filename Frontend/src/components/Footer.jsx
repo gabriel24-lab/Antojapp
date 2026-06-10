@@ -1,54 +1,58 @@
+import { useState, useEffect, useRef } from "react";
+
 export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
+
+  /* ── aparece con fade+slide al entrar en viewport ── */
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.15 }
+    );
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
   const año = new Date().getFullYear();
 
+  const link = (label, accion) => (
+    <FooterLink key={label} onClick={accion}>{label}</FooterLink>
+  );
+
   return (
-    <footer style={{
-      background: "#1A1208",
-      borderTop: "1px solid rgba(255,255,255,0.07)",
-      padding: "32px 20px",
-      marginTop: "auto",
-    }}>
+    <footer
+      ref={ref}
+      style={{
+        background: "#1A1208",
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        padding: "30px 20px",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+      }}
+    >
       <div style={{
         maxWidth: 1100, margin: "0 auto",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        flexWrap: "wrap", gap: 20,
+        flexWrap: "wrap", gap: 16,
       }}>
-
-        {/* Logo + tagline */}
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover" }} />
-            <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>
-              Antoj<span style={{ color: "#E8460A" }}>app</span>
-            </span>
-          </div>
-          <p style={{ fontSize: 12, color: "rgba(255,255,255,.35)", margin: 0 }}>
-            Descubre lo mejor de la comida en Valledupar
-          </p>
-        </div>
+        {/* Logo */}
+        <button
+          onClick={onIrInicio}
+          style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
+        >
+          <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 26, height: 26, borderRadius: 6, objectFit: "cover" }} />
+          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, color: "#fff" }}>
+            Antoj<span style={{ color: "#E8460A" }}>app</span>
+          </span>
+        </button>
 
         {/* Links */}
-        <nav style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {[
-            { label: "Inicio",    accion: onIrInicio   },
-            { label: "Negocios",  accion: onIrNegocios },
-            { label: "Guardados", accion: () => onVerFavoritos(true) },
-          ].map(({ label, accion }) => (
-            <button
-              key={label}
-              onClick={accion}
-              style={{
-                background: "none", border: "none",
-                color: "rgba(255,255,255,.5)", fontSize: 13,
-                cursor: "pointer", padding: "4px 10px", borderRadius: 6,
-                transition: "color 0.15s",
-              }}
-              onMouseOver={e => e.currentTarget.style.color = "#E8460A"}
-              onMouseOut={e => e.currentTarget.style.color = "rgba(255,255,255,.5)"}
-            >
-              {label}
-            </button>
-          ))}
+        <nav style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {link("Inicio",    onIrInicio)}
+          {link("Negocios",  onIrNegocios)}
+          {link("Guardados", () => onVerFavoritos(true))}
         </nav>
 
         {/* Copyright */}
@@ -57,5 +61,25 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
         </p>
       </div>
     </footer>
+  );
+}
+
+function FooterLink({ children, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        background: "none", border: "none",
+        color: hover ? "#E8460A" : "rgba(255,255,255,.45)",
+        fontSize: 13, cursor: "pointer",
+        padding: "4px 10px", borderRadius: 6,
+        transition: "color 0.15s",
+      }}
+    >
+      {children}
+    </button>
   );
 }

@@ -16,17 +16,10 @@ function AppContent() {
   const [authAbierto,    setAuthAbierto]    = useState(false);
   const [formularioOpen, setFormularioOpen] = useState(false);
   const [negocioEditar,  setNegocioEditar]  = useState(null);
-  const [busqueda,       setBusqueda]       = useState("");  // ← estado global de búsqueda
+  const [busqueda,       setBusqueda]       = useState("");
 
-  const irInicio = () => {
-    setVista("home");
-    setNegocioActivo(null);
-  };
-
-  const irNegocios = () => {
-    setVista("negocios");
-    setNegocioActivo(null);
-  };
+  const irInicio = () => { setVista("home");     setNegocioActivo(null); setBusqueda(""); };
+  const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
 
   const verDetalle = (negocio) => {
     setNegocioActivo(negocio);
@@ -34,10 +27,7 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const volver = () => {
-    setVista("home");
-    setNegocioActivo(null);
-  };
+  const volver = () => { setVista("home"); setNegocioActivo(null); };
 
   const abrirFormulario = (negocio = null) => {
     setNegocioEditar(negocio);
@@ -50,18 +40,17 @@ function AppContent() {
     if (refrescar) setVista("panel");
   };
 
-  // Si el usuario escribe en el navbar y no está en home/negocios, lo lleva a home
+  // Si escribe en el navbar desde una vista interna, lo lleva a home
   const handleBusqueda = (valor) => {
     setBusqueda(valor);
     if (vista !== "home" && vista !== "negocios") setVista("home");
   };
 
-  // home y negocios muestran el mismo componente (HomePage) pero
-  // "negocios" hace scroll directo a los resultados (sin hero)
   const mostrarHome = vista === "home" || vista === "negocios";
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+
       <Navbar
         onAbrirAuth={() => setAuthAbierto(true)}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
@@ -106,31 +95,20 @@ function AppContent() {
         )}
       </main>
 
-      {/* Footer visible en todas las vistas excepto cuando hay modal */}
       <Footer
         onIrInicio={irInicio}
         onIrNegocios={irNegocios}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
       />
 
-      {authAbierto && (
-        <AuthModal onCerrar={() => setAuthAbierto(false)} />
-      )}
-
+      {authAbierto  && <AuthModal onCerrar={() => setAuthAbierto(false)} />}
       {formularioOpen && (
-        <FormularioNegocio
-          negocioInicial={negocioEditar}
-          onCerrar={cerrarFormulario}
-        />
+        <FormularioNegocio negocioInicial={negocioEditar} onCerrar={cerrarFormulario} />
       )}
     </div>
   );
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AuthProvider><AppContent /></AuthProvider>;
 }
