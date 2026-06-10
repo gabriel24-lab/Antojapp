@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
+import AppIcon from "./AppIcon";
 
 export default function AuthModal({ onCerrar }) {
   const { login } = useAuth();
@@ -172,7 +173,7 @@ export default function AuthModal({ onCerrar }) {
           <button onClick={onCerrar} style={{
             color: "rgba(255,255,255,.5)", fontSize: 22, lineHeight: 1,
             background: "none", border: "none", cursor: "pointer", padding: 4,
-          }}>×</button>
+          }}><AppIcon name="x" size={20} /></button>
         </div>
 
         <div style={{ padding: "24px 28px" }}>
@@ -238,9 +239,9 @@ export default function AuthModal({ onCerrar }) {
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 8 }}>¿Cómo vas a usar Antojapp?</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {[
-                    { valor: "usuario",  emoji: "🍽️", titulo: "Soy cliente",      sub: "Busco dónde comer" },
-                    { valor: "negocio",  emoji: "🏪", titulo: "Soy propietario",  sub: "Registro mi negocio" },
-                  ].map(({ valor, emoji, titulo, sub }) => (
+                    { valor: "usuario",  icon: "utensils", titulo: "Soy cliente",      sub: "Busco dónde comer" },
+                    { valor: "negocio",  icon: "store",    titulo: "Soy propietario",  sub: "Registro mi negocio" },
+                  ].map(({ valor, icon, titulo, sub }) => (
                     <button
                       key={valor}
                       type="button"
@@ -256,7 +257,9 @@ export default function AuthModal({ onCerrar }) {
                         outline:       "none",
                       }}
                     >
-                      <div style={{ fontSize: 26, marginBottom: 4 }}>{emoji}</div>
+                      <div style={{ marginBottom: 5, color: form.rol === valor ? "#E8460A" : "#6B5E52" }}>
+                        <AppIcon name={icon} size={27} />
+                      </div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: form.rol === valor ? "#E8460A" : "#3D2B1F" }}>{titulo}</div>
                       <div style={{ fontSize: 11, color: "#A8988A", marginTop: 2 }}>{sub}</div>
                     </button>
@@ -292,7 +295,7 @@ export default function AuthModal({ onCerrar }) {
             <form onSubmit={handleRecuperar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {exito ? (
                 <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 10, padding: "16px", textAlign: "center" }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>✉️</div>
+                  <div style={{ marginBottom: 8, color: "#1A8C5B" }}><AppIcon name="mail" size={30} /></div>
                   <div style={{ fontSize: 14, color: "#1A8C5B", fontWeight: 500 }}>{exito}</div>
                   <div style={{ fontSize: 13, color: "#6B5E52", marginTop: 6 }}>Revisa también tu carpeta de spam.</div>
                 </div>
@@ -310,7 +313,7 @@ export default function AuthModal({ onCerrar }) {
               )}
               <div style={{ textAlign: "center" }}>
                 <button type="button" className="btn-ghost" onClick={() => { setVista("login"); setError(""); setExito(""); }} style={{ fontSize: 13 }}>
-                  ← Volver al inicio de sesión
+                  <AppIcon name="arrowLeft" size={15} /> Volver al inicio de sesión
                 </button>
               </div>
             </form>

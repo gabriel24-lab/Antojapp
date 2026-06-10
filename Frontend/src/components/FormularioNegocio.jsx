@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { apiMutate, apiFetch, apiUpload, apiDelete } from "../apiClient";
+import AppIcon from "./AppIcon";
 
 // ── Constantes ────────────────────────────────────────────────
 const CATEGORIAS = [
@@ -12,10 +13,10 @@ const CATEGORIAS = [
 const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 const DIAS_LABEL = { lunes:"Lun", martes:"Mar", miercoles:"Mié", jueves:"Jue", viernes:"Vie", sabado:"Sáb", domingo:"Dom" };
 const TIPO_PLATO = [
-  { val:"estrella",  label:"⭐ Estrella",   desc:"Tu plato bandera" },
-  { val:"economico", label:"💚 Económico",  desc:"El más accesible" },
-  { val:"premium",   label:"👑 Premium",    desc:"La experiencia completa" },
-  { val:"menu",      label:"🍽️ Menú",      desc:"Carta general" },
+  { val:"estrella",  icon:"star",     label:"Estrella",   desc:"Tu plato bandera" },
+  { val:"economico", icon:"wallet",   label:"Económico",  desc:"El más accesible" },
+  { val:"premium",   icon:"crown",    label:"Premium",    desc:"La experiencia completa" },
+  { val:"menu",      icon:"utensils", label:"Menú",       desc:"Carta general" },
 ];
 
 const HORARIO_VACIO = { lunes:"cerrado", martes:"cerrado", miercoles:"cerrado", jueves:"cerrado", viernes:"cerrado", sabado:"cerrado", domingo:"cerrado" };
@@ -33,7 +34,7 @@ const Field = ({ children }) => (
 
 const SectionTitle = ({ icon, children }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, marginTop: 4 }}>
-    <span style={{ fontSize: 18 }}>{icon}</span>
+    <AppIcon name={icon} size={18} color="#E8460A" fill={icon === "star" ? "currentColor" : "none"} />
     <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 15, fontWeight: 700, color: "#1A1208" }}>{children}</h3>
   </div>
 );

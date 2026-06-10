@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import BusinessCard from "../components/BusinessCard";
 import API_URL from "../api";
+import AppIcon from "../components/AppIcon";
 
 export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusqueda, modoNegocios }) {
   const [negocios,     setNegocios]     = useState([]);
@@ -65,7 +66,9 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
             </p>
             {/* Barra hero */}
             <div style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}>
-              <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", fontSize: 18, color: "#A8988A", pointerEvents: "none" }}>🔍</span>
+              <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#A8988A", pointerEvents: "none" }}>
+                <AppIcon name="search" size={19} />
+              </span>
               <input
                 className="input" type="text"
                 placeholder="Ej: carne asada, empanadas, corozo…"
@@ -74,7 +77,9 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
                 style={{ paddingLeft: 46, paddingRight: busqueda ? 40 : 14, fontSize: 15, borderRadius: 50, height: 52, boxShadow: "0 4px 20px rgba(0,0,0,.3)", border: "2px solid rgba(255,255,255,.1)" }}
               />
               {busqueda && (
-                <button onClick={() => onBusqueda("")} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 18, color: "#A8988A", cursor: "pointer" }}>×</button>
+                <button onClick={() => onBusqueda("")} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#A8988A", cursor: "pointer", padding: 2 }}>
+                  <AppIcon name="x" size={18} />
+                </button>
               )}
             </div>
           </div>
@@ -117,8 +122,8 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
       {/* Resultados */}
       <section ref={resultadosRef} style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px 60px" }}>
         {error && (
-          <div style={{ background: "#FDECEA", border: "1px solid #C0392B", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#C0392B" }}>
-            ⚠️ {error}
+          <div style={{ background: "#FDECEA", border: "1px solid #C0392B", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#C0392B", display: "flex", alignItems: "center", gap: 8 }}>
+            <AppIcon name="alert" size={18} /> {error}
           </div>
         )}
         {!cargando && !error && (
@@ -143,7 +148,7 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
         )}
         {!cargando && !error && negocios.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
+            <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
             <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
               {busqueda ? `No encontramos "${busqueda}"` : "No hay negocios disponibles"}
             </h3>

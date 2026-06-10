@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import BusinessCard from "../components/BusinessCard";
 import API_URL from "../api";
+import AppIcon from "../components/AppIcon";
 
 export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
   const { user } = useAuth();
@@ -24,7 +25,9 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
   if (!user) {
     return (
       <div style={{ textAlign: "center", padding: "80px 20px" }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>♥</div>
+        <div style={{ marginBottom: 16, color: "#E8460A" }}>
+          <AppIcon name="heart" size={52} fill="currentColor" />
+        </div>
         <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
           Guarda tus antojos favoritos
         </h2>
@@ -80,7 +83,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
               }}
             >
-              📲 Compartir en WhatsApp
+              <AppIcon name="share" size={16} /> Compartir en WhatsApp
             </button>
           </div>
 
@@ -99,9 +102,9 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
 
       {!cargando && negocios.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
+          <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
           <p style={{ fontSize: 15 }}>
-            Toca el <span style={{ color: "#E8460A" }}>♥</span> en cualquier negocio para guardarlo aquí.
+            Toca el <AppIcon name="heart" size={16} color="#E8460A" fill="currentColor" /> en cualquier negocio para guardarlo aquí.
           </p>
         </div>
       )}

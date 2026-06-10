@@ -1,10 +1,18 @@
 import { useAuth } from "../context/AuthContext";
+import AppIcon from "./AppIcon";
 
 function Estrellas({ calificacion }) {
   return (
-    <span className="stars">
+    <span className="stars" style={{ display: "inline-flex", gap: 1 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <span key={i} style={{ opacity: i <= Math.round(calificacion) ? 1 : 0.25 }}>★</span>
+        <AppIcon
+          key={i}
+          name="star"
+          size={13}
+          color="#E8A020"
+          fill="currentColor"
+          style={{ opacity: i <= Math.round(calificacion) ? 1 : 0.25 }}
+        />
       ))}
     </span>
   );
@@ -72,7 +80,12 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
           onMouseOver={e => e.currentTarget.style.transform = "scale(1.1)"}
           onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
         >
-          <span style={{ color: favorito ? "#fff" : "#E8460A" }}>♥</span>
+          <AppIcon
+            name="heart"
+            size={18}
+            color={favorito ? "#fff" : "#E8460A"}
+            fill={favorito ? "currentColor" : "none"}
+          />
         </button>
         {/* Nombre sobre la imagen */}
         <div style={{ position: "absolute", bottom: 12, left: 12, right: 50 }}>
@@ -113,7 +126,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
             display: "flex", alignItems: "center", justifyContent: "space-between"
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 15 }}>⭐</span>
+              <AppIcon name="star" size={15} color="#E8460A" fill="currentColor" />
               <span style={{ fontSize: 13, fontWeight: 500, color: "#1A1208" }}>{platoEstrella.nombre}</span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#E8460A" }}>

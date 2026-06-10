@@ -1,0 +1,97 @@
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  CalendarDays,
+  Camera,
+  Check,
+  ChefHat,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Crown,
+  Edit3,
+  Eye,
+  Heart,
+  Image,
+  Info,
+  Lightbulb,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Plus,
+  RefreshCw,
+  Search,
+  Share2,
+  Sparkles,
+  Star,
+  Store,
+  Tag,
+  Trash2,
+  Utensils,
+  Wallet,
+  X,
+} from "lucide-react";
+
+const ICONS = {
+  alert: AlertTriangle,
+  arrowLeft: ArrowLeft,
+  arrowRight: ArrowRight,
+  barChart: BarChart3,
+  calendar: CalendarDays,
+  camera: Camera,
+  check: Check,
+  chef: ChefHat,
+  chevronDown: ChevronDown,
+  chevronUp: ChevronUp,
+  clock: Clock,
+  crown: Crown,
+  edit: Edit3,
+  eye: Eye,
+  heart: Heart,
+  image: Image,
+  info: Info,
+  lightbulb: Lightbulb,
+  mail: Mail,
+  mapPin: MapPin,
+  message: MessageCircle,
+  phone: Phone,
+  plus: Plus,
+  refresh: RefreshCw,
+  search: Search,
+  share: Share2,
+  sparkles: Sparkles,
+  star: Star,
+  store: Store,
+  tag: Tag,
+  trash: Trash2,
+  utensils: Utensils,
+  wallet: Wallet,
+  x: X,
+};
+
+export default function AppIcon({
+  name,
+  size = 18,
+  color = "currentColor",
+  fill = "none",
+  strokeWidth = 2,
+  style,
+  ...props
+}) {
+  const Icon = ICONS[name] || Info;
+  return (
+    <Icon
+      aria-hidden="true"
+      focusable="false"
+      size={size}
+      color={color}
+      fill={fill}
+      strokeWidth={strokeWidth}
+      style={{ display: "inline-block", flexShrink: 0, ...style }}
+      {...props}
+    />
+  );
+}

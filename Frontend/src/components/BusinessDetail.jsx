@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
+import AppIcon from "./AppIcon";
 
 function Estrellas({ calificacion, interactivo = false, onSeleccionar }) {
   const [hover, setHover] = useState(0);
   return (
-    <span className="stars" style={{ fontSize: interactivo ? 22 : 14 }}>
+    <span className="stars" style={{ display: "inline-flex", gap: 2 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <span
+        <AppIcon
           key={i}
+          name="star"
+          size={interactivo ? 22 : 14}
+          color="#E8A020"
+          fill="currentColor"
           style={{
             opacity: i <= (hover || Math.round(calificacion)) ? 1 : 0.25,
             cursor: interactivo ? "pointer" : "default",
@@ -17,7 +22,7 @@ function Estrellas({ calificacion, interactivo = false, onSeleccionar }) {
           onMouseOver={() => interactivo && setHover(i)}
           onMouseOut={() =>  interactivo && setHover(0)}
           onClick={() =>     interactivo && onSeleccionar?.(i)}
-        >★</span>
+        />
       ))}
     </span>
   );
@@ -93,7 +98,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
     <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 60px" }}>
       {/* Volver */}
       <button onClick={onVolver} className="btn-ghost" style={{ marginBottom: 20 }}>
-        ← Volver a resultados
+        <AppIcon name="arrowLeft" size={16} /> Volver a resultados
       </button>
 
       {/* Hero */}
@@ -110,8 +115,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
               {abierto ? "Abierto ahora" : "Cerrado ahora"}
             </span>
             <span className="badge badge-cat">{negocio.categoria}</span>
-            <span style={{ color: "rgba(255,255,255,.85)", fontSize: 14 }}>
-              ★ {negocio.calificacion} · {negocio.total_resenas ?? negocio.totalResenas} reseñas
+            <span style={{ color: "rgba(255,255,255,.85)", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <AppIcon name="star" size={14} fill="currentColor" /> {negocio.calificacion} · {negocio.total_resenas ?? negocio.totalResenas} reseñas
             </span>
           </div>
         </div>
@@ -127,7 +132,12 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
             transition: "background 0.18s"
           }}
         >
-          <span style={{ color: favorito ? "#fff" : "#E8460A" }}>♥</span>
+          <AppIcon
+            name="heart"
+            size={20}
+            color={favorito ? "#fff" : "#E8460A"}
+            fill={favorito ? "currentColor" : "none"}
+          />
         </button>
       </div>
 
@@ -144,13 +154,13 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
         {/* Platos clave */}
         {[
-          { label: "Plato estrella", emoji: "⭐", plato: negocio.plato_estrella_nombre  ? { nombre: negocio.plato_estrella_nombre,  precio: negocio.plato_estrella_precio  } : negocio.platoEstrella,  bg: "#FFF0EB", color: "#E8460A" },
-          { label: "Más económico",  emoji: "💰", plato: negocio.plato_economico_nombre ? { nombre: negocio.plato_economico_nombre, precio: negocio.plato_economico_precio } : negocio.platoEconomico, bg: "#E8F6EE", color: "#1A8C5B" },
-          { label: "Premium",        emoji: "👑", plato: negocio.plato_premium_nombre   ? { nombre: negocio.plato_premium_nombre,   precio: negocio.plato_premium_precio   } : negocio.platoPremium,   bg: "#F3F0FF", color: "#6C5CE7" },
-        ].map(({ label, emoji, plato, bg, color }) => plato && (
+          { label: "Plato estrella", icon: "star", plato: negocio.plato_estrella_nombre  ? { nombre: negocio.plato_estrella_nombre,  precio: negocio.plato_estrella_precio  } : negocio.platoEstrella,  bg: "#FFF0EB", color: "#E8460A" },
+          { label: "Más económico",  icon: "wallet", plato: negocio.plato_economico_nombre ? { nombre: negocio.plato_economico_nombre, precio: negocio.plato_economico_precio } : negocio.platoEconomico, bg: "#E8F6EE", color: "#1A8C5B" },
+          { label: "Premium",        icon: "crown", plato: negocio.plato_premium_nombre   ? { nombre: negocio.plato_premium_nombre,   precio: negocio.plato_premium_precio   } : negocio.platoPremium,   bg: "#F3F0FF", color: "#6C5CE7" },
+        ].map(({ label, icon, plato, bg, color }) => plato && (
           <div key={label} className="card" style={{ padding: "14px 16px", background: bg, border: `1px solid ${color}22` }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
-              {emoji} {label}
+            <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+              <AppIcon name={icon} size={14} fill={icon === "star" ? "currentColor" : "none"} /> {label}
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1208", marginBottom: 3 }}>{plato.nombre}</div>
             <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'Sora',sans-serif" }}>
@@ -164,7 +174,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       <div className="card" style={{ marginBottom: 24, overflow: "hidden" }}>
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid #E2DBD5" }}>
           <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 12 }}>
-            📍 {negocio.sedes.length > 1 ? `${negocio.sedes.length} sedes` : "Ubicación"}
+            <AppIcon name="mapPin" size={18} color="#E8460A" /> {negocio.sedes.length > 1 ? `${negocio.sedes.length} sedes` : "Ubicación"}
           </h2>
           {negocio.sedes.length > 1 && (
             <div style={{ display: "flex", gap: 8 }}>
@@ -240,7 +250,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       {/* Reseñas */}
       <div className="card" style={{ padding: "20px" }}>
         <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 16 }}>
-          💬 Reseñas de la comunidad
+          <AppIcon name="message" size={18} color="#E8460A" /> Reseñas de la comunidad
         </h2>
 
         {/* Escribir reseña */}
@@ -273,7 +283,9 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
             style={{ resize: "vertical", marginBottom: 10, minHeight: 70 }}
           />
           {enviadoResena && (
-            <div style={{ fontSize: 13, color: "#1A8C5B", marginBottom: 8 }}>✓ Reseña publicada, ¡gracias!</div>
+            <div style={{ fontSize: 13, color: "#1A8C5B", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+              <AppIcon name="check" size={15} /> Reseña publicada, ¡gracias!
+            </div>
           )}
           {errorResena && (
             <div style={{ fontSize: 13, color: "#C0392B", background: "#FDECEA", padding: "8px 12px", borderRadius: 8, marginBottom: 8 }}>{errorResena}</div>

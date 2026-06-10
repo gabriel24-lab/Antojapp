@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import AppIcon from "./AppIcon";
 
 export default function Navbar({
   onAbrirAuth, onVerFavoritos, onAbrirPanel,
@@ -85,7 +86,7 @@ export default function Navbar({
           <span style={{
             position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
             fontSize: 14, color: "#A8988A", pointerEvents: "none",
-          }}>🔍</span>
+          }}><AppIcon name="search" size={15} /></span>
           <input
             type="text"
             placeholder="Busca: carne, empanadas, jugos…"
@@ -124,7 +125,7 @@ export default function Navbar({
               onClick={() => onVerFavoritos(true)}
               style={{ ...navLinkStyle(vistaActual === "favoritos"), display: "flex", alignItems: "center", gap: 5 }}
             >
-              <span>♥</span> Guardados
+              <AppIcon name="heart" size={15} fill="currentColor" /> Guardados
             </button>
           )}
 
@@ -133,7 +134,7 @@ export default function Navbar({
               onClick={onAbrirPanel}
               style={{ ...navLinkStyle(vistaActual === "panel"), display: "flex", alignItems: "center", gap: 5 }}
             >
-              <span>📊</span> Mi panel
+              <AppIcon name="barChart" size={15} /> Mi panel
             </button>
           )}
 
@@ -160,7 +161,11 @@ export default function Navbar({
                 <span style={{ maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {user.nombre}
                 </span>
-                <span style={{ opacity: 0.4, fontSize: 10, transition: "transform 0.2s", transform: menuAbierto ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                <AppIcon
+                  name="chevronDown"
+                  size={14}
+                  style={{ opacity: 0.4, transition: "transform 0.2s", transform: menuAbierto ? "rotate(180deg)" : "rotate(0deg)" }}
+                />
               </button>
 
               {menuAbierto && (
@@ -182,18 +187,21 @@ export default function Navbar({
                         background: esPropietario ? "#E8F6EE" : "#FFF0EB",
                         display: "inline-block", padding: "2px 8px", borderRadius: 10,
                       }}>
-                        {esPropietario ? "🏪 Propietario" : "🍽️ Cliente"}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <AppIcon name={esPropietario ? "store" : "utensils"} size={12} />
+                          {esPropietario ? "Propietario" : "Cliente"}
+                        </span>
                       </div>
                     </div>
 
                     {esPropietario && (
                       <>
-                        <MenuBtn onClick={() => { onAbrirPanel();      setMenuAbierto(false); }}>📊 Mi panel</MenuBtn>
-                        <MenuBtn onClick={() => { onAbrirFormulario(); setMenuAbierto(false); }}>✏️ Editar negocio</MenuBtn>
+                        <MenuBtn onClick={() => { onAbrirPanel();      setMenuAbierto(false); }} icon="barChart">Mi panel</MenuBtn>
+                        <MenuBtn onClick={() => { onAbrirFormulario(); setMenuAbierto(false); }} icon="edit">Editar negocio</MenuBtn>
                       </>
                     )}
                     {user && !esPropietario && (
-                      <MenuBtn onClick={() => { onVerFavoritos(true); setMenuAbierto(false); }}>♥ Mis guardados</MenuBtn>
+                      <MenuBtn onClick={() => { onVerFavoritos(true); setMenuAbierto(false); }} icon="heart">Mis guardados</MenuBtn>
                     )}
                     <MenuBtn onClick={() => { logout(); setMenuAbierto(false); }} danger>Cerrar sesión</MenuBtn>
                   </div>
@@ -218,7 +226,7 @@ export default function Navbar({
   );
 }
 
-function MenuBtn({ children, onClick, danger }) {
+function MenuBtn({ children, onClick, danger, icon }) {
   const [hover, setHover] = useState(false);
   return (
     <button
@@ -233,8 +241,10 @@ function MenuBtn({ children, onClick, danger }) {
         border: "none", borderTop: danger ? "1px solid #F0EBE5" : "none",
         borderBottom: danger ? "none" : "1px solid #F0EBE5",
         cursor: "pointer", transition: "background 0.15s",
+        display: "flex", alignItems: "center", gap: 9,
       }}
     >
+      {icon && <AppIcon name={icon} size={16} fill={icon === "heart" ? "currentColor" : "none"} />}
       {children}
     </button>
   );

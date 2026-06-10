@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../apiClient";
+import AppIcon from "../components/AppIcon";
 
 // ── Mini gráfico SVG de línea ──────────────────────────────────
 function LineChart({ datos, color = "#E8460A", altura = 100 }) {
@@ -76,8 +77,8 @@ function StatCard({ icon, label, valor, sub, color = "#E8460A", bg = "#FFF4F0" }
       <div style={{
         width: 52, height: 52, borderRadius: 14,
         background: bg, display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 24, flexShrink: 0,
-      }}>{icon}</div>
+        color, flexShrink: 0,
+      }}><AppIcon name={icon} size={25} fill={icon === "heart" || icon === "star" ? "currentColor" : "none"} /></div>
       <div>
         <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Sora',sans-serif", color: "#1A1208", lineHeight: 1 }}>
           {valor}
@@ -92,8 +93,17 @@ function StatCard({ icon, label, valor, sub, color = "#E8460A", bg = "#FFF4F0" }
 // ── Estrellas visuales ─────────────────────────────────────────
 function Estrellas({ valor, total = 5 }) {
   return (
-    <span style={{ color: "#E8A020", fontSize: 13, letterSpacing: 1 }}>
-      {Array.from({ length: total }, (_, i) => i < Math.round(valor) ? "★" : "☆").join("")}
+    <span style={{ display: "inline-flex", gap: 1 }}>
+      {Array.from({ length: total }, (_, i) => (
+        <AppIcon
+          key={i}
+          name="star"
+          size={13}
+          color="#E8A020"
+          fill="currentColor"
+          style={{ opacity: i < Math.round(valor) ? 1 : 0.25 }}
+        />
+      ))}
     </span>
   );
 }
@@ -126,7 +136,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   // ── Estado: sin negocio ──
   if (error === "No tienes ningún negocio registrado") return (
     <div style={{ maxWidth: 540, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
-      <div style={{ fontSize: 64, marginBottom: 16 }}>🏪</div>
+      <div style={{ marginBottom: 16, color: "#E8460A" }}><AppIcon name="store" size={64} /></div>
       <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
         Aún no tienes un negocio registrado
       </h2>
@@ -142,7 +152,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   // ── Estado: error genérico ──
   if (error) return (
     <div style={{ maxWidth: 480, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
-      <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+      <div style={{ marginBottom: 12, color: "#C0392B" }}><AppIcon name="alert" size={48} /></div>
       <p style={{ color: "#C0392B", fontSize: 14 }}>{error}</p>
       <button className="btn-secondary" style={{ marginTop: 16 }} onClick={cargar}>Reintentar</button>
     </div>
@@ -188,10 +198,10 @@ export default function PanelPropietario({ onAbrirFormulario }) {
               background: resenas.promedio >= 4 ? "#1A8C5B" : resenas.promedio >= 3 ? "#E8A020" : "#C0392B",
               color: "#fff",
             }}>
-              ★ {resenas.promedio.toFixed(1)} calificación
+              <AppIcon name="star" size={13} fill="currentColor" /> {resenas.promedio.toFixed(1)} calificación
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.12)", color: "rgba(255,255,255,.7)" }}>
-              📅 Últimos 30 días
+              <AppIcon name="calendar" size={13} /> Últimos 30 días
             </span>
           </div>
         </div>
@@ -200,29 +210,29 @@ export default function PanelPropietario({ onAbrirFormulario }) {
           onClick={() => onAbrirFormulario({ id: negocio.id })}
           style={{ padding: "10px 22px", fontSize: 14, flexShrink: 0 }}
         >
-          ✏️ Editar negocio
+          <AppIcon name="edit" size={16} /> Editar negocio
         </button>
       </div>
 
       {/* ── Tarjetas de estadísticas ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 28 }}>
         <StatCard
-          icon="👁️" label="Visitas totales" valor={visitas.total.toLocaleString("es-CO")}
+          icon="eye" label="Visitas totales" valor={visitas.total.toLocaleString("es-CO")}
           sub="Desde que te registraste"
           color="#E8460A" bg="#FFF4F0"
         />
         <StatCard
-          icon="📈" label="Visitas esta semana" valor={visitas.semana.toLocaleString("es-CO")}
+          icon="barChart" label="Visitas esta semana" valor={visitas.semana.toLocaleString("es-CO")}
           sub="Últimos 7 días"
           color="#6C3BD5" bg="#F3F0FF"
         />
         <StatCard
-          icon="♥" label="Favoritos" valor={favoritos.toLocaleString("es-CO")}
+          icon="heart" label="Favoritos" valor={favoritos.toLocaleString("es-CO")}
           sub="Usuarios que te guardaron"
           color="#E8460A" bg="#FFF0EB"
         />
         <StatCard
-          icon="⭐" label="Calificación" valor={`${resenas.promedio.toFixed(1)} / 5`}
+          icon="star" label="Calificación" valor={`${resenas.promedio.toFixed(1)} / 5`}
           sub={`${resenas.total} reseñas en total`}
           color="#E8A020" bg="#FFF8EC"
         />
@@ -274,7 +284,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
           {resenas.ultimas.length === 0 ? (
             <div style={{ textAlign: "center", padding: "32px 0", color: "#A8988A" }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
+              <div style={{ marginBottom: 8 }}><AppIcon name="message" size={32} /></div>
               <div style={{ fontSize: 14 }}>Aún no tienes reseñas.</div>
               <div style={{ fontSize: 13, marginTop: 4 }}>¡Comparte tu negocio para que te califiquen!</div>
             </div>
@@ -332,14 +342,14 @@ export default function PanelPropietario({ onAbrirFormulario }) {
                 style={{ width: "100%", justifyContent: "flex-start", gap: 10, fontSize: 14 }}
                 onClick={() => onAbrirFormulario({ id: negocio.id })}
               >
-                <span>✏️</span> Editar información
+                <AppIcon name="edit" size={16} /> Editar información
               </button>
               <button
                 className="btn-secondary"
                 style={{ width: "100%", justifyContent: "flex-start", gap: 10, fontSize: 14 }}
                 onClick={cargar}
               >
-                <span>🔄</span> Actualizar datos
+                <AppIcon name="refresh" size={16} /> Actualizar datos
               </button>
             </div>
           </div>
@@ -371,7 +381,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
                 return (
                   <div key={estrella} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 11, color: "#A8988A", width: 12, textAlign: "right" }}>{estrella}</span>
-                    <span style={{ color: "#E8A020", fontSize: 11 }}>★</span>
+                    <AppIcon name="star" size={11} color="#E8A020" fill="currentColor" />
                     <div style={{ flex: 1, height: 6, background: "#F0EBE5", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         height: "100%", width: `${pct}%`,
@@ -392,7 +402,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
             borderRadius: 16, padding: "18px",
             border: "1px solid #FFD9C8",
           }}>
-            <div style={{ fontSize: 18, marginBottom: 6 }}>💡</div>
+            <div style={{ marginBottom: 6, color: "#E8460A" }}><AppIcon name="lightbulb" size={19} /></div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1208", marginBottom: 4 }}>Tip para más visitas</div>
             <div style={{ fontSize: 12, color: "#6B5E52", lineHeight: 1.6 }}>
               Los negocios con fotos de portada reciben <strong>3× más visitas</strong>. Agrega o actualiza tus imágenes desde <em>Editar información</em>.
