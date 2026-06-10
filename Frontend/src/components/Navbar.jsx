@@ -22,7 +22,11 @@ export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
           onClick={() => onVerFavoritos(false)}
           style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
         >
-          <span style={{ fontSize: 22 }}>🍽️</span>
+          <img
+            src="/Antojapp icon.png"
+            alt="Antojapp"
+            style={{ width: 84, height: 84, borderRadius: 8, objectFit: "cover" }}
+          />
           <span style={{
             fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 20,
             color: "#fff", letterSpacing: "-0.5px"

@@ -1,0 +1,101 @@
+const bcrypt = require("bcryptjs");
+const jwt    = require("jsonwebtoken");
+const pool   = require("../db/pool");
+
+function generarToken(usuario) {
+  return jwt.sign(
+    { id: usuario.id, nombre: usuario.nombre, email: usuario.email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+  );
+}
+
+// POST /api/auth/registro
+async function registro(req, res) {
+  const { nombre, email, password } = req.body;
+
+  if (!nombre || !email || !password)
+    return res.status(400).json({ error: "Todos los campos son obligatorios" });
+
+  if (password.length < 6)
+    return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+
+  try {
+    // Verificar si el email ya existe
+    const existe = await pool.query("SELECT id FROM usuarios WHERE email = $1", [email]);
+    if (existe.rows.length > 0)
+      return res.status(409).json({ error: "Este correo ya está registrado" });
+
+    const hash = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      "INSERT INTO usuarios (nombre, email, password) VALUES ($1, $2, $3) RETURNING id, nombre, email",
+      [nombre.trim(), email.toLowerCase(), hash]
+    );
+
+    const usuario = result.rows[0];
+    const token   = generarToken(usuario);
+
+    res.status(201).json({ token, usuario });
+  } catch (err) {
+    console.error("Error en registro:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+// POST /api/auth/login
+async function login(req, res) {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({ error: "Correo y contraseña son obligatorios" });
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM usuarios WHERE email = $1",
+      [email.toLowerCase()]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: "Correo o contraseña incorrectos" });
+
+    const usuario = result.rows[0];
+
+    if (usuario.es_google)
+      return res.status(400).json({ error: "Esta cuenta usa Google para iniciar sesión" });
+
+    const coincide = await bcrypt.compare(password, usuario.password);
+    if (!coincide)
+      return res.status(401).json({ error: "Correo o contraseña incorrectos" });
+
+    const token = generarToken(usuario);
+
+    res.json({
+      token,
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email }
+    });
+  } catch (err) {
+    console.error("Error en login:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+// GET /api/auth/me  (requiere token)
+async function me(req, res) {
+  try {
+    const result = await pool.query(
+      "SELECT id, nombre, email, creado_en FROM usuarios WHERE id = $1",
+      [req.usuario.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error en /me:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+module.exports = { registro, login, me };

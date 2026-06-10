@@ -1,17 +1,14 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-
-const USUARIOS_MOCK = [
-  { email: "demo@antojapp.co", password: "demo123", nombre: "Demo User" }
-];
+import API_URL from "../api";
 
 export default function AuthModal({ onCerrar }) {
   const { login } = useAuth();
-  const [vista, setVista] = useState("login"); // login | registro | recuperar
-  const [form, setForm] = useState({ nombre: "", email: "", password: "", confirmar: "" });
-  const [error, setError] = useState("");
+  const [vista,    setVista]    = useState("login"); // login | registro | recuperar
+  const [form,     setForm]     = useState({ nombre: "", email: "", password: "", confirmar: "" });
+  const [error,    setError]    = useState("");
   const [cargando, setCargando] = useState(false);
-  const [exito, setExito] = useState("");
+  const [exito,    setExito]    = useState("");
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setError(""); };
 
@@ -19,31 +16,46 @@ export default function AuthModal({ onCerrar }) {
     e.preventDefault();
     setError("");
     setCargando(true);
-    await new Promise(r => setTimeout(r, 700));
-    const usuario = USUARIOS_MOCK.find(
-      u => u.email === form.email && u.password === form.password
-    );
-    if (usuario) {
-      login({ nombre: usuario.nombre, email: usuario.email });
+    try {
+      const res  = await fetch(`${API_URL}/auth/login`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email: form.email, password: form.password })
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Error al iniciar sesión"); return; }
+      login(data.token, data.usuario);
       onCerrar();
-    } else {
-      setError("Correo o contraseña incorrectos.");
+    } catch {
+      setError("No se pudo conectar con el servidor");
+    } finally {
+      setCargando(false);
     }
-    setCargando(false);
   };
 
   const handleRegistro = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.nombre.trim()) return setError("Ingresa tu nombre.");
-    if (!form.email.includes("@")) return setError("Correo no válido.");
-    if (form.password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+    if (!form.nombre.trim())          return setError("Ingresa tu nombre.");
+    if (!form.email.includes("@"))    return setError("Correo no válido.");
+    if (form.password.length < 6)     return setError("La contraseña debe tener al menos 6 caracteres.");
     if (form.password !== form.confirmar) return setError("Las contraseñas no coinciden.");
     setCargando(true);
-    await new Promise(r => setTimeout(r, 900));
-    login({ nombre: form.nombre, email: form.email });
-    onCerrar();
-    setCargando(false);
+    try {
+      const res  = await fetch(`${API_URL}/auth/registro`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password })
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
+      login(data.token, data.usuario);
+      onCerrar();
+    } catch {
+      setError("No se pudo conectar con el servidor");
+    } finally {
+      setCargando(false);
+    }
   };
 
   const handleRecuperar = async (e) => {
@@ -51,6 +63,7 @@ export default function AuthModal({ onCerrar }) {
     setError("");
     if (!form.email.includes("@")) return setError("Ingresa un correo válido.");
     setCargando(true);
+    // Simulado por ahora (requiere servicio de email en el backend)
     await new Promise(r => setTimeout(r, 800));
     setExito(`Enviamos instrucciones a ${form.email}`);
     setCargando(false);
@@ -59,13 +72,13 @@ export default function AuthModal({ onCerrar }) {
   const handleGoogleMock = async () => {
     setCargando(true);
     await new Promise(r => setTimeout(r, 600));
-    login({ nombre: "Usuario Google", email: "google@antojapp.co", esGoogle: true });
+    // Google auth real requiere OAuth2 — por ahora sigue siendo mock
+    login(null, { nombre: "Usuario Google", email: "google@antojapp.co", esGoogle: true });
     onCerrar();
     setCargando(false);
   };
 
   return (
-    /* Overlay */
     <div
       onClick={(e) => e.target === e.currentTarget && onCerrar()}
       style={{
@@ -87,13 +100,13 @@ export default function AuthModal({ onCerrar }) {
         }}>
           <div>
             <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>
-              {vista === "login" && "¡Bienvenido de nuevo!"}
-              {vista === "registro" && "Crea tu cuenta"}
+              {vista === "login"     && "¡Bienvenido de nuevo!"}
+              {vista === "registro"  && "Crea tu cuenta"}
               {vista === "recuperar" && "Recuperar contraseña"}
             </div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", marginTop: 3 }}>
-              {vista === "login" && "Inicia sesión para guardar tus antojos"}
-              {vista === "registro" && "Es gratis y toma menos de un minuto"}
+              {vista === "login"     && "Inicia sesión para guardar tus antojos"}
+              {vista === "registro"  && "Es gratis y toma menos de un minuto"}
               {vista === "recuperar" && "Te enviamos un correo con instrucciones"}
             </div>
           </div>
@@ -120,7 +133,7 @@ export default function AuthModal({ onCerrar }) {
                   boxShadow: "0 1px 3px rgba(0,0,0,.06)"
                 }}
                 onMouseOver={e => e.currentTarget.style.borderColor = "#A8988A"}
-                onMouseOut={e => e.currentTarget.style.borderColor = "#E2DBD5"}
+                onMouseOut={e  => e.currentTarget.style.borderColor = "#E2DBD5"}
               >
                 <svg width="18" height="18" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -130,7 +143,6 @@ export default function AuthModal({ onCerrar }) {
                 </svg>
                 Continuar con Google
               </button>
-
               <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "18px 0" }}>
                 <div style={{ flex: 1, height: 1, background: "#E2DBD5" }} />
                 <span style={{ fontSize: 13, color: "#A8988A" }}>o con correo</span>

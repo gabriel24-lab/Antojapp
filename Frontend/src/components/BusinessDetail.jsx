@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../api";
 
 function Estrellas({ calificacion, interactivo = false, onSeleccionar }) {
   const [hover, setHover] = useState(0);
@@ -14,62 +15,79 @@ function Estrellas({ calificacion, interactivo = false, onSeleccionar }) {
             transition: "opacity 0.1s"
           }}
           onMouseOver={() => interactivo && setHover(i)}
-          onMouseOut={() => interactivo && setHover(0)}
-          onClick={() => interactivo && onSeleccionar?.(i)}
+          onMouseOut={() =>  interactivo && setHover(0)}
+          onClick={() =>     interactivo && onSeleccionar?.(i)}
         >★</span>
       ))}
     </span>
   );
 }
 
-const DIAS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+const DIAS    = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
 const DIAS_ES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 function estaAbierto(horario) {
-  const ahora = new Date();
-  const dia = DIAS[ahora.getDay() === 0 ? 6 : ahora.getDay() - 1];
+  const ahora   = new Date();
+  const dia     = DIAS[ahora.getDay() === 0 ? 6 : ahora.getDay() - 1];
   const horaDia = horario[dia];
   if (!horaDia || horaDia === "cerrado") return false;
   const [apertura, cierre] = horaDia.split("-");
   const [ha, ma] = apertura.split(":").map(Number);
   const [hc, mc] = cierre.split(":").map(Number);
-  const actual = ahora.getHours() * 60 + ahora.getMinutes();
+  const actual   = ahora.getHours() * 60 + ahora.getMinutes();
   return actual >= ha * 60 + ma && actual < hc * 60 + mc;
 }
 
 export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
   const { user, toggleFavorito, esFavorito } = useAuth();
-  const [sedeActiva, setSedeActiva] = useState(0);
-  const [nuevaResena, setNuevaResena] = useState({ estrellas: 0, comentario: "" });
-  const [resenas, setResenas] = useState(negocio.resenas);
-  const [enviadoResena, setEnviadoResena] = useState(false);
+  const [sedeActiva,   setSedeActiva]   = useState(0);
+  const [nuevaResena,  setNuevaResena]  = useState({ estrellas: 0, comentario: "" });
+  const [resenas,      setResenas]      = useState(negocio.resenas || []);
+  const [enviando,     setEnviando]     = useState(false);
+  const [enviadoResena,setEnviadoResena]= useState(false);
+  const [errorResena,  setErrorResena]  = useState("");
 
   const favorito = esFavorito(negocio.id);
-  const sede = negocio.sedes[sedeActiva];
-  const abierto = estaAbierto(sede.horario);
+  const sede     = negocio.sedes[sedeActiva];
+  const abierto  = estaAbierto(sede.horario);
 
   const handleFavorito = () => {
     if (!user) { onAbrirAuth(); return; }
     toggleFavorito(negocio.id);
   };
 
-  const enviarResena = (e) => {
+  const enviarResena = async (e) => {
     e.preventDefault();
-    if (!user) { onAbrirAuth(); return; }
+    if (!user)                     { onAbrirAuth(); return; }
     if (nuevaResena.estrellas === 0) return;
-    setResenas(prev => [{
-      id: Date.now(),
-      usuario: user.nombre,
-      estrellas: nuevaResena.estrellas,
-      comentario: nuevaResena.comentario,
-      fecha: new Date().toISOString().slice(0, 10)
-    }, ...prev]);
-    setNuevaResena({ estrellas: 0, comentario: "" });
-    setEnviadoResena(true);
-    setTimeout(() => setEnviadoResena(false), 3000);
-  };
+    setEnviando(true);
+    setErrorResena("");
+    try {
+      const token = localStorage.getItem("token");
+      const res   = await fetch(`${API_URL}/negocios/${negocio.id}/resenas`, {
+        method:  "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:  `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          estrellas:  nuevaResena.estrellas,
+          comentario: nuevaResena.comentario
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) { setErrorResena(data.error || "Error al publicar"); return; }
 
-  const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU14R8&q=${sede.lat},${sede.lng}&zoom=15`;
+      setResenas(prev => [data, ...prev]);
+      setNuevaResena({ estrellas: 0, comentario: "" });
+      setEnviadoResena(true);
+      setTimeout(() => setEnviadoResena(false), 3000);
+    } catch {
+      setErrorResena("No se pudo conectar con el servidor");
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
     <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 60px" }}>
@@ -93,7 +111,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
             </span>
             <span className="badge badge-cat">{negocio.categoria}</span>
             <span style={{ color: "rgba(255,255,255,.85)", fontSize: 14 }}>
-              ★ {negocio.calificacion} · {negocio.totalResenas} reseñas
+              ★ {negocio.calificacion} · {negocio.total_resenas ?? negocio.totalResenas} reseñas
             </span>
           </div>
         </div>
@@ -126,10 +144,10 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
         {/* Platos clave */}
         {[
-          { label: "Plato estrella", emoji: "⭐", plato: negocio.platoEstrella, bg: "#FFF0EB", color: "#E8460A" },
-          { label: "Más económico", emoji: "💰", plato: negocio.platoEconomico, bg: "#E8F6EE", color: "#1A8C5B" },
-          { label: "Premium", emoji: "👑", plato: negocio.platoPremium, bg: "#F3F0FF", color: "#6C5CE7" },
-        ].map(({ label, emoji, plato, bg, color }) => (
+          { label: "Plato estrella", emoji: "⭐", plato: negocio.plato_estrella_nombre  ? { nombre: negocio.plato_estrella_nombre,  precio: negocio.plato_estrella_precio  } : negocio.platoEstrella,  bg: "#FFF0EB", color: "#E8460A" },
+          { label: "Más económico",  emoji: "💰", plato: negocio.plato_economico_nombre ? { nombre: negocio.plato_economico_nombre, precio: negocio.plato_economico_precio } : negocio.platoEconomico, bg: "#E8F6EE", color: "#1A8C5B" },
+          { label: "Premium",        emoji: "👑", plato: negocio.plato_premium_nombre   ? { nombre: negocio.plato_premium_nombre,   precio: negocio.plato_premium_precio   } : negocio.platoPremium,   bg: "#F3F0FF", color: "#6C5CE7" },
+        ].map(({ label, emoji, plato, bg, color }) => plato && (
           <div key={label} className="card" style={{ padding: "14px 16px", background: bg, border: `1px solid ${color}22` }}>
             <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>
               {emoji} {label}
@@ -157,8 +175,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
                   style={{
                     padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
                     background: sedeActiva === i ? "#E8460A" : "#F7F4F1",
-                    color: sedeActiva === i ? "#fff" : "#6B5E52",
-                    border: sedeActiva === i ? "none" : "1px solid #E2DBD5",
+                    color:      sedeActiva === i ? "#fff"    : "#6B5E52",
+                    border:     sedeActiva === i ? "none"    : "1px solid #E2DBD5",
                     transition: "all 0.15s"
                   }}
                 >
@@ -185,15 +203,14 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {DIAS.map((dia, i) => {
                   const horaDia = sede.horario[dia];
-                  const esHoy = (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1) === i;
+                  const esHoy   = (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1) === i;
                   return (
                     <div key={dia} style={{
                       display: "flex", justifyContent: "space-between",
                       fontSize: 13,
                       background: esHoy ? "#FFF0EB" : "transparent",
                       padding: esHoy ? "3px 6px" : "1px 0",
-                      borderRadius: 4,
-                      fontWeight: esHoy ? 600 : 400
+                      borderRadius: 4, fontWeight: esHoy ? 600 : 400
                     }}>
                       <span style={{ color: esHoy ? "#E8460A" : "#6B5E52" }}>{DIAS_ES[i]}</span>
                       <span style={{ color: horaDia === "cerrado" ? "#A8988A" : "#1A1208" }}>
@@ -210,8 +227,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           <div style={{ background: "#EDE9E5", position: "relative", minHeight: 220 }}>
             <iframe
               title={`Mapa ${sede.nombre}`}
-              width="100%"
-              height="100%"
+              width="100%" height="100%"
               style={{ border: 0, display: "block", minHeight: 220 }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -259,13 +275,16 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           {enviadoResena && (
             <div style={{ fontSize: 13, color: "#1A8C5B", marginBottom: 8 }}>✓ Reseña publicada, ¡gracias!</div>
           )}
+          {errorResena && (
+            <div style={{ fontSize: 13, color: "#C0392B", background: "#FDECEA", padding: "8px 12px", borderRadius: 8, marginBottom: 8 }}>{errorResena}</div>
+          )}
           <button
             className="btn-primary"
             type="submit"
-            disabled={!user}
+            disabled={!user || enviando}
             style={{ fontSize: 14, padding: "9px 18px", opacity: user ? 1 : 0.5 }}
           >
-            Publicar reseña
+            {enviando ? "Publicando..." : "Publicar reseña"}
           </button>
         </form>
 
@@ -280,11 +299,15 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 13, fontWeight: 700, color: "#fff"
                   }}>
-                    {r.usuario.charAt(0)}
+                    {(r.usuario_nombre || r.usuario || "?").charAt(0)}
                   </div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1208" }}>{r.usuario}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1208" }}>
+                    {r.usuario_nombre || r.usuario}
+                  </span>
                 </div>
-                <span style={{ fontSize: 12, color: "#A8988A" }}>{r.fecha}</span>
+                <span style={{ fontSize: 12, color: "#A8988A" }}>
+                  {r.creado_en ? new Date(r.creado_en).toLocaleDateString("es-CO") : r.fecha}
+                </span>
               </div>
               <div style={{ marginLeft: 38 }}>
                 <Estrellas calificacion={r.estrellas} />

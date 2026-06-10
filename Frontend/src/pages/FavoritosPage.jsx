@@ -1,10 +1,25 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { NEGOCIOS } from "../data/mockData";
 import BusinessCard from "../components/BusinessCard";
+import API_URL from "../api";
 
 export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
-  const { user, favoritos } = useAuth();
-  const negociosFavoritos = NEGOCIOS.filter(n => favoritos.includes(n.id));
+  const { user } = useAuth();
+  const [negocios, setNegocios] = useState([]);
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    setCargando(true);
+    fetch(`${API_URL}/favoritos`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setNegocios(data))
+      .catch(() => setNegocios([]))
+      .finally(() => setCargando(false));
+  }, [user]);
 
   if (!user) {
     return (
@@ -30,13 +45,23 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
           Tus guardados
         </h1>
         <p style={{ fontSize: 14, color: "#6B5E52" }}>
-          {negociosFavoritos.length === 0
-            ? "Aún no has guardado ningún negocio."
-            : `${negociosFavoritos.length} ${negociosFavoritos.length === 1 ? "negocio guardado" : "negocios guardados"}`}
+          {cargando
+            ? "Cargando..."
+            : negocios.length === 0
+              ? "Aún no has guardado ningún negocio."
+              : `${negocios.length} ${negocios.length === 1 ? "negocio guardado" : "negocios guardados"}`}
         </p>
       </div>
 
-      {negociosFavoritos.length > 0 ? (
+      {cargando && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card" style={{ height: 320, background: "#F0EBE5", animation: "pulse 1.5s infinite" }} />
+          ))}
+        </div>
+      )}
+
+      {!cargando && negocios.length > 0 && (
         <>
           {/* Botón compartir */}
           <div style={{
@@ -51,7 +76,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
               className="btn-primary"
               style={{ fontSize: 13, padding: "8px 16px" }}
               onClick={() => {
-                const texto = `Mis lugares favoritos en Antojapp:\n${negociosFavoritos.map(n => `• ${n.nombre}`).join("\n")}\n\nDescúbrelos en antojapp.co`;
+                const texto = `Mis lugares favoritos en Antojapp:\n${negocios.map(n => `• ${n.nombre}`).join("\n")}\n\nDescúbrelos en antojapp.co`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
               }}
             >
@@ -59,12 +84,8 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
             </button>
           </div>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
-            gap: 20
-          }}>
-            {negociosFavoritos.map(negocio => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+            {negocios.map(negocio => (
               <BusinessCard
                 key={negocio.id}
                 negocio={negocio}
@@ -74,7 +95,9 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
             ))}
           </div>
         </>
-      ) : (
+      )}
+
+      {!cargando && negocios.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
           <p style={{ fontSize: 15 }}>
@@ -82,6 +105,13 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
           </p>
         </div>
       )}
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.5; }
+        }
+      `}</style>
     </main>
   );
 }

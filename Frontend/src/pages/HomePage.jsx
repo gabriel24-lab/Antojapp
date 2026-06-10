@@ -1,40 +1,50 @@
-import { useState, useMemo } from "react";
-import { NEGOCIOS } from "../data/mockData";
+import { useState, useEffect, useCallback } from "react";
 import BusinessCard from "../components/BusinessCard";
-
-const CATEGORIAS = ["Todas", ...Array.from(new Set(NEGOCIOS.map(n => n.categoria)))];
+import API_URL from "../api";
 
 export default function HomePage({ onVerDetalle, onAbrirAuth }) {
-  const [busqueda, setBusqueda] = useState("");
-  const [categoria, setCategoria] = useState("Todas");
+  const [negocios,     setNegocios]     = useState([]);
+  const [categorias,   setCategorias]   = useState(["Todas"]);
+  const [busqueda,     setBusqueda]     = useState("");
+  const [categoria,    setCategoria]    = useState("Todas");
   const [soloAbiertos, setSoloAbiertos] = useState(false);
+  const [cargando,     setCargando]     = useState(true);
+  const [error,        setError]        = useState("");
 
-  const resultados = useMemo(() => {
-    return NEGOCIOS.filter(n => {
-      if (soloAbiertos && !n.abierto) return false;
-      if (categoria !== "Todas" && n.categoria !== categoria) return false;
-      if (!busqueda.trim()) return true;
-      const q = busqueda.toLowerCase();
-      return (
-        n.nombre.toLowerCase().includes(q) ||
-        n.descripcion.toLowerCase().includes(q) ||
-        n.etiquetas.some(t => t.toLowerCase().includes(q)) ||
-        n.categoria.toLowerCase().includes(q) ||
-        n.platoEstrella.nombre.toLowerCase().includes(q) ||
-        n.platoEconomico.nombre.toLowerCase().includes(q) ||
-        n.platoPremium.nombre.toLowerCase().includes(q)
-      );
-    });
+  // Cargar categorías una sola vez al montar
+  useEffect(() => {
+    fetch(`${API_URL}/negocios/categorias`)
+      .then(r => r.json())
+      .then(data => setCategorias(["Todas", ...data]))
+      .catch(() => {});
+  }, []);
+
+  // Cargar negocios cada vez que cambian los filtros (con debounce en búsqueda)
+  const cargarNegocios = useCallback(() => {
+    setCargando(true);
+    setError("");
+    const params = new URLSearchParams();
+    if (busqueda.trim())           params.set("busqueda",     busqueda.trim());
+    if (categoria !== "Todas")     params.set("categoria",    categoria);
+    if (soloAbiertos)              params.set("soloAbiertos", "true");
+
+    fetch(`${API_URL}/negocios?${params}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setNegocios(data))
+      .catch(() => setError("No se pudo cargar los negocios. ¿Está corriendo el backend?"))
+      .finally(() => setCargando(false));
   }, [busqueda, categoria, soloAbiertos]);
+
+  // Debounce en búsqueda (espera 400ms después de que el usuario deja de escribir)
+  useEffect(() => {
+    const timer = setTimeout(cargarNegocios, busqueda ? 400 : 0);
+    return () => clearTimeout(timer);
+  }, [cargarNegocios, busqueda]);
 
   return (
     <main>
       {/* Hero */}
-      <section style={{
-        background: "#1A1208",
-        padding: "52px 20px 44px",
-        textAlign: "center"
-      }}>
+      <section style={{ background: "#1A1208", padding: "52px 20px 44px", textAlign: "center" }}>
         <div style={{ maxWidth: 620, margin: "0 auto" }}>
           <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "2px", color: "#E8460A", textTransform: "uppercase", marginBottom: 14 }}>
             Descubre lo que está cerca
@@ -88,7 +98,7 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
       <section style={{ background: "#fff", borderBottom: "1px solid #E2DBD5", position: "sticky", top: 60, zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", padding: "10px 0", scrollbarWidth: "none" }}>
-            {CATEGORIAS.map(cat => (
+            {categorias.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategoria(cat)}
@@ -97,8 +107,8 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
                   padding: "7px 16px", borderRadius: 50, fontSize: 13, fontWeight: 500,
                   border: "1.5px solid",
                   borderColor: categoria === cat ? "#E8460A" : "#E2DBD5",
-                  background: categoria === cat ? "#E8460A" : "#fff",
-                  color: categoria === cat ? "#fff" : "#6B5E52",
+                  background:  categoria === cat ? "#E8460A" : "#fff",
+                  color:       categoria === cat ? "#fff"    : "#6B5E52",
                   cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap"
                 }}
               >
@@ -116,8 +126,8 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
                 padding: "7px 14px", borderRadius: 50, fontSize: 13, fontWeight: 500,
                 border: "1.5px solid",
                 borderColor: soloAbiertos ? "#1A8C5B" : "#E2DBD5",
-                background: soloAbiertos ? "#E8F6EE" : "#fff",
-                color: soloAbiertos ? "#1A8C5B" : "#6B5E52",
+                background:  soloAbiertos ? "#E8F6EE" : "#fff",
+                color:       soloAbiertos ? "#1A8C5B" : "#6B5E52",
                 cursor: "pointer", transition: "all 0.15s"
               }}
             >
@@ -134,27 +144,43 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
 
       {/* Resultados */}
       <section style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px 60px" }}>
+
+        {/* Error de conexión */}
+        {error && (
+          <div style={{
+            background: "#FDECEA", border: "1px solid #C0392B", borderRadius: 10,
+            padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#C0392B"
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+
         {/* Contador */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <div>
+        {!cargando && !error && (
+          <div style={{ marginBottom: 20 }}>
             <span style={{ fontSize: 14, color: "#6B5E52" }}>
               {busqueda
-                ? <>Resultados para <strong style={{ color: "#1A1208" }}>"{busqueda}"</strong> — </>
+                ? <><strong style={{ color: "#1A1208" }}>"{busqueda}"</strong> — </>
                 : ""}
-              <strong style={{ color: "#1A1208" }}>{resultados.length}</strong>
-              {resultados.length === 1 ? " negocio" : " negocios"}
+              <strong style={{ color: "#1A1208" }}>{negocios.length}</strong>
+              {negocios.length === 1 ? " negocio" : " negocios"}
             </span>
           </div>
-        </div>
+        )}
 
-        {/* Grid */}
-        {resultados.length > 0 ? (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
-            gap: 20
-          }}>
-            {resultados.map(negocio => (
+        {/* Skeleton de carga */}
+        {cargando && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="card" style={{ height: 320, background: "#F0EBE5", animation: "pulse 1.5s infinite" }} />
+            ))}
+          </div>
+        )}
+
+        {/* Grid de negocios */}
+        {!cargando && negocios.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+            {negocios.map(negocio => (
               <BusinessCard
                 key={negocio.id}
                 negocio={negocio}
@@ -163,7 +189,10 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
               />
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* Sin resultados */}
+        {!cargando && !error && negocios.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
             <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
@@ -182,6 +211,13 @@ export default function HomePage({ onVerDetalle, onAbrirAuth }) {
           </div>
         )}
       </section>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.5; }
+        }
+      `}</style>
     </main>
   );
 }
