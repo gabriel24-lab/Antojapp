@@ -1,5 +1,16 @@
 import { useAuth } from "../context/AuthContext";
 import AppIcon from "./AppIcon";
+import { PAISES, MONEDAS } from "../data/mockData";
+
+// Símbolo de moneda según el código del país
+function simboloMoneda(moneda) {
+  return MONEDAS[moneda]?.simbolo || "$";
+}
+
+// Bandera por código de país
+function banderaPais(codigo) {
+  return PAISES.find(p => p.codigo === codigo)?.bandera || null;
+}
 
 function Estrellas({ calificacion }) {
   return (
@@ -130,7 +141,14 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
       <div style={{ padding: "14px 16px" }}>
         {/* Categoría y calificación */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span className="badge badge-cat">{negocio.categoria}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="badge badge-cat">{negocio.categoria}</span>
+            {negocio.pais && (
+              <span style={{ fontSize: 14 }} title={negocio.ciudad || negocio.pais}>
+                {banderaPais(negocio.pais)}
+              </span>
+            )}
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <Estrellas calificacion={negocio.calificacion} />
             <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1208" }}>{negocio.calificacion}</span>
@@ -158,7 +176,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
               <span style={{ fontSize: 13, fontWeight: 500, color: "#1A1208" }}>{platoEstrella.nombre}</span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#E8460A" }}>
-              ${platoEstrella.precio?.toLocaleString("es-CO")}
+              ${simboloMoneda(negocio.moneda)}{platoEstrella.precio?.toLocaleString("es-CO")}
             </span>
           </div>
         )}

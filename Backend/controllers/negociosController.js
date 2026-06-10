@@ -5,7 +5,7 @@ const supabase = require("../db/supabase");
 
 // GET /api/negocios
 async function getNegocios(req, res) {
-  const { busqueda, categoria, soloAbiertos } = req.query;
+  const { busqueda, categoria, soloAbiertos, pais, ciudad } = req.query;
 
   try {
     let query = `
@@ -50,6 +50,16 @@ async function getNegocios(req, res) {
           WHERE LOWER(tag) LIKE $${i}
         )
       )`);
+    }
+
+    if (pais && pais.trim()) {
+      valores.push(pais.trim().toUpperCase());
+      condiciones.push(`n.pais = $${valores.length}`);
+    }
+
+    if (ciudad && ciudad.trim()) {
+      valores.push(ciudad.trim());
+      condiciones.push(`LOWER(n.ciudad) = LOWER($${valores.length})`);
     }
 
     if (condiciones.length > 0)
