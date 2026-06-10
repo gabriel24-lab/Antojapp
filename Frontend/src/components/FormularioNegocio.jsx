@@ -12,11 +12,10 @@ const CATEGORIAS = [
 
 const DIAS = ["lunes","martes","miercoles","jueves","viernes","sabado","domingo"];
 const DIAS_LABEL = { lunes:"Lun", martes:"Mar", miercoles:"Mié", jueves:"Jue", viernes:"Vie", sabado:"Sáb", domingo:"Dom" };
-const TIPO_PLATO = [
-  { val:"estrella",  icon:"star",     label:"Estrella",   desc:"Tu plato bandera" },
-  { val:"economico", icon:"wallet",   label:"Económico",  desc:"El más accesible" },
-  { val:"premium",   icon:"crown",    label:"Premium",    desc:"La experiencia completa" },
-  { val:"menu",      icon:"utensils", label:"Menú",       desc:"Carta general" },
+// Sugerencias rápidas de tipo (el propietario puede escribir lo que quiera)
+const TIPO_SUGERENCIAS = [
+  "Estrella", "Económico", "Premium", "Especial del día",
+  "Desayuno", "Almuerzo", "Cena", "Para llevar", "Menú",
 ];
 
 const HORARIO_VACIO = { lunes:"cerrado", martes:"cerrado", miercoles:"cerrado", jueves:"cerrado", viernes:"cerrado", sabado:"cerrado", domingo:"cerrado" };
@@ -140,9 +139,45 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
               <Label required>Nombre de la sede</Label>
               <input className="input" value={sede.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Sede Centro" />
             </Field>
-            <Field>
-              <Label>Teléfono</Label>
-              <input className="input" value={sede.telefono || ""} onChange={e => set("telefono", e.target.value)} placeholder="300 123 4567" />
+            <Field style={{ gridColumn: "1 / -1" }}>
+              <Label>Teléfonos de contacto (WhatsApp)</Label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {(sede.telefonos || [""]).map((tel, ti) => (
+                  <div key={ti} style={{ display: "flex", gap: 6 }}>
+                    <input
+                      className="input"
+                      value={tel}
+                      onChange={e => {
+                        const nums = [...(sede.telefonos || [""])];
+                        nums[ti] = e.target.value;
+                        set("telefonos", nums);
+                      }}
+                      placeholder="300 123 4567"
+                      style={{ flex: 1 }}
+                    />
+                    {(sede.telefonos || [""]).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => set("telefonos", (sede.telefonos || [""]).filter((_, idx) => idx !== ti))}
+                        style={{
+                          padding: "0 12px", borderRadius: 8, border: "1px solid #E2DBD5",
+                          background: "#FFF4F0", color: "#E8460A", cursor: "pointer", fontSize: 18, lineHeight: 1,
+                        }}
+                      >×</button>
+                    )}
+                  </div>
+                ))}
+                {(sede.telefonos || [""]).length < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => set("telefonos", [...(sede.telefonos || [""]), ""])}
+                    style={{
+                      fontSize: 13, color: "#E8460A", background: "none", border: "1px dashed #E8460A",
+                      borderRadius: 8, padding: "6px 12px", cursor: "pointer", width: "fit-content",
+                    }}
+                  >+ Agregar teléfono</button>
+                )}
+              </div>
             </Field>
           </div>
           <Field>
@@ -170,18 +205,29 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
 function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
   const [expandido, setExpandido] = useState(false);
   const [subiendo,  setSubiendo]  = useState(false);
-  const fileRef = useRef();
+  const [subiendoB, setSubiendoB] = useState(false);
+  const fileRef  = useRef();
+  const fileRefB = useRef();
   const set = (k, v) => onChange({ ...plato, [k]: v });
 
-  const handleFoto = async (e) => {
+  // Detectar si el tipo es "menú"
+  const esMenu = (plato.tipo || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "") === "menu";
+
+  const handleFoto = async (e, lado = "a") => {
     const file = e.target.files[0];
     if (!file || !negocioId || !plato.id) return;
-    setSubiendo(true);
+    lado === "a" ? setSubiendo(true) : setSubiendoB(true);
     const fd = new FormData();
     fd.append("foto", file);
-    const { data } = await apiUpload(`/negocios/${negocioId}/platos/${plato.id}/foto`, fd);
-    if (data?.url) set("foto", data.url);
-    setSubiendo(false);
+    if (lado === "b") {
+      fd.append("lado", "b");
+      const { data } = await apiUpload(`/negocios/${negocioId}/platos/${plato.id}/foto?lado=b`, fd);
+      if (data?.url) set("foto_menu_b", data.url);
+    } else {
+      const { data } = await apiUpload(`/negocios/${negocioId}/platos/${plato.id}/foto`, fd);
+      if (data?.url) set("foto", data.url);
+    }
+    lado === "a" ? setSubiendo(false) : setSubiendoB(false);
   };
 
   const toggleDescuento = (dia) => {
@@ -190,16 +236,20 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
     if (existe) {
       onChange({ ...plato, descuentos: desc.filter(d => d.dia !== dia) });
     } else {
-      onChange({ ...plato, descuentos: [...desc, { dia, precio_descuento: Math.round((plato.precio || 0) * 0.8) }] });
+      onChange({ ...plato, descuentos: [...desc, { dia, precio_desc: Math.round((plato.precio || 0) * 0.8) }] });
     }
   };
 
   const setDescPrecio = (dia, precio) => {
-    const desc = (plato.descuentos || []).map(d => d.dia === dia ? { ...d, precio_descuento: parseInt(precio) } : d);
+    const desc = (plato.descuentos || []).map(d => d.dia === dia ? { ...d, precio_desc: parseInt(precio) } : d);
     onChange({ ...plato, descuentos: desc });
   };
 
-  const tipoInfo = TIPO_PLATO.find(t => t.val === plato.tipo) || TIPO_PLATO[3];
+  // Preview header
+  const previewFoto = plato.foto;
+  const previewLabel = plato.tipo
+    ? (plato.tipo.charAt(0).toUpperCase() + plato.tipo.slice(1))
+    : `Plato ${index + 1}`;
 
   return (
     <div style={{ border: "1.5px solid #E2DBD5", borderRadius: 12, overflow: "hidden" }}>
@@ -214,13 +264,15 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {plato.foto
-            ? <img src={plato.foto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
+          {previewFoto
+            ? <img src={previewFoto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
             : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F0EBE5", display: "flex", alignItems: "center", justifyContent: "center", color: "#A8988A" }}><AppIcon name="utensils" size={18} /></div>
           }
           <div>
             <div style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>{plato.nombre || `Plato ${index + 1}`}</div>
-            <div style={{ fontSize: 12, color: "#A8988A" }}>{tipoInfo.label} · {plato.precio ? `$${plato.precio?.toLocaleString("es-CO")}` : "Sin precio"}</div>
+            <div style={{ fontSize: 12, color: "#A8988A" }}>
+              {previewLabel}{!esMenu && plato.precio ? ` · $${parseInt(plato.precio).toLocaleString("es-CO")}` : ""}
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -235,69 +287,119 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
       {/* Cuerpo */}
       {expandido && (
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Tipo */}
+
+          {/* Tipo: input libre con sugerencias */}
           <Field>
-            <Label required>Tipo de plato</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
-              {TIPO_PLATO.map(t => (
-                <button
-                  key={t.val} type="button" onClick={() => set("tipo", t.val)}
-                  style={{
-                    border: `2px solid ${plato.tipo === t.val ? "#E8460A" : "#E2DBD5"}`,
-                    borderRadius: 10, padding: "8px 4px", textAlign: "center",
-                    background: plato.tipo === t.val ? "#FFF4F0" : "#FAFAF9",
-                    cursor: "pointer", fontSize: 11,
-                    color: plato.tipo === t.val ? "#E8460A" : "#6B5E52",
-                    fontWeight: plato.tipo === t.val ? 700 : 500,
-                  }}
-                >
-                  <div style={{ fontSize: 18 }}>{t.label.split(" ")[0]}</div>
-                  <div style={{ marginTop: 3 }}>{t.label.split(" ").slice(1).join(" ")}</div>
-                </button>
-              ))}
+            <Label required>Tipo / etiqueta del plato</Label>
+            <input
+              className="input"
+              list="tipo-sugerencias"
+              value={plato.tipo || ""}
+              onChange={e => set("tipo", e.target.value)}
+              placeholder="Ej: Estrella, Menú, Especial del día..."
+            />
+            <datalist id="tipo-sugerencias">
+              {TIPO_SUGERENCIAS.map(s => <option key={s} value={s} />)}
+            </datalist>
+            <div style={{ fontSize: 11, color: "#A8988A", marginTop: 4 }}>
+              Escribe libremente o elige una sugerencia. Pon <strong>Menú</strong> para subir fotos de carta.
             </div>
           </Field>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Field>
-              <Label required>Nombre del plato</Label>
-              <input className="input" value={plato.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Bandeja paisa" />
-            </Field>
-            <Field>
-              <Label required>Precio ($)</Label>
-              <input className="input" type="number" min="0" value={plato.precio || ""} onChange={e => set("precio", e.target.value)} placeholder="15000" />
-            </Field>
-          </div>
-
+          {/* Nombre (siempre visible) */}
           <Field>
-            <Label>Descripción breve</Label>
-            <input className="input" value={plato.descripcion || ""} onChange={e => set("descripcion", e.target.value)} placeholder="Ingredientes principales..." />
+            <Label required>Nombre</Label>
+            <input
+              className="input"
+              value={plato.nombre || ""}
+              onChange={e => set("nombre", e.target.value)}
+              placeholder={esMenu ? "Ej: Menú del día, Carta principal..." : "Ej: Bandeja paisa"}
+            />
           </Field>
 
-          {/* Foto del plato */}
-          <Field>
-            <Label>Foto del plato</Label>
-            <div
-              onClick={() => fileRef.current?.click()}
-              style={{
-                border: "2px dashed #E2DBD5", borderRadius: 10, padding: 16,
-                cursor: "pointer", textAlign: "center",
-                background: plato.foto ? "none" : "#FAFAF9",
-                display: "flex", alignItems: "center", gap: 12,
-              }}
-            >
-              {plato.foto
-                ? <img src={plato.foto} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }} />
-                : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
-              }
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>{subiendo ? "Subiendo..." : plato.foto ? "Cambiar foto" : "Subir foto"}</div>
-                <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>JPG, PNG · Máx 5 MB</div>
+          {/* Precio y descripción — solo si NO es menú */}
+          {!esMenu && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field>
+                <Label required>Precio ($)</Label>
+                <input className="input" type="number" min="0" value={plato.precio || ""} onChange={e => set("precio", e.target.value)} placeholder="15000" />
+              </Field>
+              <Field>
+                <Label>Descripción breve</Label>
+                <input className="input" value={plato.descripcion || ""} onChange={e => set("descripcion", e.target.value)} placeholder="Ingredientes principales..." />
+              </Field>
+            </div>
+          )}
+
+          {/* Descripción para menú (sin precio) */}
+          {esMenu && (
+            <Field>
+              <Label>Descripción (opcional)</Label>
+              <input className="input" value={plato.descripcion || ""} onChange={e => set("descripcion", e.target.value)} placeholder="Ej: Menú ejecutivo de lunes a viernes..." />
+            </Field>
+          )}
+
+          {/* Fotos */}
+          {esMenu ? (
+            /* Menú: 2 fotos (cara A y cara B) */
+            <Field>
+              <Label>Fotos del menú</Label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  { key: "foto",       ref: fileRef,  handler: (e) => handleFoto(e, "a"), label: "Cara A / Frente",  preview: plato.foto,       subiendo: subiendo  },
+                  { key: "foto_menu_b",ref: fileRefB, handler: (e) => handleFoto(e, "b"), label: "Cara B / Reverso", preview: plato.foto_menu_b, subiendo: subiendoB },
+                ].map(({ ref, handler, label, preview, subiendo: sub }) => (
+                  <div key={label}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#6B5E52", marginBottom: 5 }}>{label}</div>
+                    <div
+                      onClick={() => ref.current?.click()}
+                      style={{
+                        border: "2px dashed #E2DBD5", borderRadius: 10, padding: 12,
+                        cursor: "pointer", textAlign: "center", background: preview ? "none" : "#FAFAF9",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minHeight: 100,
+                        justifyContent: "center",
+                      }}
+                    >
+                      {preview
+                        ? <img src={preview} alt="" style={{ width: "100%", maxHeight: 120, borderRadius: 8, objectFit: "cover" }} />
+                        : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
+                      }
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#6B5E52" }}>
+                        {sub ? "Subiendo..." : preview ? "Cambiar" : "Subir foto"}
+                      </div>
+                    </div>
+                    <input ref={ref} type="file" accept="image/*" style={{ display: "none" }} onChange={handler} />
+                  </div>
+                ))}
               </div>
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFoto} />
-            {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>⚠️ Guarda el negocio primero para subir fotos</div>}
-          </Field>
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>⚠️ Guarda el negocio primero para subir fotos</div>}
+            </Field>
+          ) : (
+            /* Plato normal: 1 foto */
+            <Field>
+              <Label>Foto del plato</Label>
+              <div
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  border: "2px dashed #E2DBD5", borderRadius: 10, padding: 16,
+                  cursor: "pointer", textAlign: "center",
+                  background: plato.foto ? "none" : "#FAFAF9",
+                  display: "flex", alignItems: "center", gap: 12,
+                }}
+              >
+                {plato.foto
+                  ? <img src={plato.foto} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }} />
+                  : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
+                }
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>{subiendo ? "Subiendo..." : plato.foto ? "Cambiar foto" : "Subir foto"}</div>
+                  <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>JPG, PNG · Máx 5 MB</div>
+                </div>
+              </div>
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e, "a")} />
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>⚠️ Guarda el negocio primero para subir fotos</div>}
+            </Field>
+          )}
 
           {/* Disponibilidad */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -323,42 +425,46 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
             </span>
           </div>
 
-          {/* Descuentos por día */}
-          <Divider />
-          <SectionTitle icon="tag">Descuentos por día</SectionTitle>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {DIAS.map(dia => {
-              const desc = (plato.descuentos || []).find(d => d.dia === dia);
-              return (
-                <div key={dia} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 10, alignItems: "center" }}>
-                  <button
-                    type="button" onClick={() => toggleDescuento(dia)}
-                    style={{
-                      padding: "5px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                      border: "1.5px solid", cursor: "pointer",
-                      borderColor: desc ? "#E8460A" : "#E2DBD5",
-                      background: desc ? "#FFF4F0" : "#F7F4F1",
-                      color: desc ? "#E8460A" : "#A8988A",
-                      display: "flex", alignItems: "center", gap: 4,
-                    }}
-                  >
-                    {DIAS_LABEL[dia]} {desc ? <AppIcon name="check" size={12} /> : <AppIcon name="plus" size={12} />}
-                  </button>
-                  {desc && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#6B5E52" }}>Precio especial $</span>
-                      <input
-                        className="input" type="number" min="0"
-                        style={{ padding: "5px 10px", fontSize: 13, maxWidth: 120 }}
-                        value={desc.precio_descuento || ""}
-                        onChange={e => setDescPrecio(dia, e.target.value)}
-                      />
+          {/* Descuentos por día — solo si NO es menú */}
+          {!esMenu && (
+            <>
+              <Divider />
+              <SectionTitle icon="tag">Descuentos por día</SectionTitle>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {DIAS.map(dia => {
+                  const desc = (plato.descuentos || []).find(d => d.dia === dia);
+                  return (
+                    <div key={dia} style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 10, alignItems: "center" }}>
+                      <button
+                        type="button" onClick={() => toggleDescuento(dia)}
+                        style={{
+                          padding: "5px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                          border: "1.5px solid", cursor: "pointer",
+                          borderColor: desc ? "#E8460A" : "#E2DBD5",
+                          background: desc ? "#FFF4F0" : "#F7F4F1",
+                          color: desc ? "#E8460A" : "#A8988A",
+                          display: "flex", alignItems: "center", gap: 4,
+                        }}
+                      >
+                        {DIAS_LABEL[dia]} {desc ? <AppIcon name="check" size={12} /> : <AppIcon name="plus" size={12} />}
+                      </button>
+                      {desc && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, color: "#6B5E52" }}>Precio especial $</span>
+                          <input
+                            className="input" type="number" min="0"
+                            style={{ padding: "5px 10px", fontSize: 13, maxWidth: 120 }}
+                            value={desc.precio_desc || ""}
+                            onChange={e => setDescPrecio(dia, e.target.value)}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -391,8 +497,13 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
   // Paso 2: sedes
   const [sedes, setSedes] = useState(
     negocioInicial?.sedes?.length
-      ? negocioInicial.sedes
-      : [{ nombre: "", direccion: "", telefono: "", referencia: "", maps_url: "", horario: { ...HORARIO_VACIO } }]
+      ? negocioInicial.sedes.map(s => ({
+          ...s,
+          telefonos: Array.isArray(s.telefonos) && s.telefonos.length > 0
+            ? s.telefonos
+            : s.telefono ? [s.telefono] : [""],
+        }))
+      : [{ nombre: "", direccion: "", telefonos: [""], referencia: "", maps_url: "", horario: { ...HORARIO_VACIO } }]
   );
 
   // Paso 3: platos
@@ -471,19 +582,26 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
 
   // ── Paso 3: Guardar platos ──
   const guardarPaso3 = async () => {
-    const invalidos = platos.filter(p => !p.nombre?.trim() || !p.tipo || !p.precio);
-    if (invalidos.length) return setError("Completa nombre, tipo y precio de todos los platos.");
+    const invalidos = platos.filter(p => {
+      if (!p.nombre?.trim() || !p.tipo?.trim()) return true;
+      const esMenu = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "menu";
+      if (!esMenu && !p.precio) return true;
+      return false;
+    });
+    if (invalidos.length) return setError("Completa nombre, tipo (y precio si no es menú) de todos los platos.");
     setGuardando(true); setError("");
 
     try {
       for (const plato of platos) {
+        const esMenu = (plato.tipo || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "menu";
         const body = {
           nombre:      plato.nombre,
           descripcion: plato.descripcion || "",
           tipo:        plato.tipo,
-          precio:      parseInt(plato.precio),
+          precio:      esMenu ? null : parseInt(plato.precio),
           disponible:  plato.disponible !== false,
-          descuentos:  plato.descuentos || [],
+          descuentos:  esMenu ? [] : (plato.descuentos || []),
+          foto_menu_b: esMenu ? (plato.foto_menu_b || null) : null,
         };
         if (plato.id) {
           await apiMutate("PUT", `/negocios/${negocioId}/platos/${plato.id}`, body);
@@ -627,7 +745,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
               ))}
               <button
                 type="button"
-                onClick={() => setSedes(prev => [...prev, { nombre: "", direccion: "", telefono: "", referencia: "", maps_url: "", horario: { ...HORARIO_VACIO } }])}
+                onClick={() => setSedes(prev => [...prev, { nombre: "", direccion: "", telefonos: [""], referencia: "", maps_url: "", horario: { ...HORARIO_VACIO } }])}
                 style={{
                   border: "2px dashed #E2DBD5", borderRadius: 12, padding: "12px",
                   fontSize: 14, fontWeight: 600, color: "#A8988A",

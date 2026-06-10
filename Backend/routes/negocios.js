@@ -30,12 +30,13 @@ const upload = multer({
 // ── Rutas públicas ─────────────────────────────────────────────
 router.get("/categorias",       getCategorias);
 router.get("/",                 getNegocios);
+
+// ── Rutas del propietario (ANTES de /:id para evitar conflicto de parámetros) ──
+router.get( "/mio/negocio",                    auth, esNegocio,                     getMiNegocio);
+
 router.get("/:id",              getNegocioById);
 router.get("/:id/platos",       getPlatos);
 router.get("/:id/resenas",      getResenas);
-
-// ── Rutas del propietario ──────────────────────────────────────
-router.get( "/mio/negocio",                    auth, esNegocio,                     getMiNegocio);
 router.post("/",                               auth, esNegocio,                     crearNegocio);
 router.put( "/:id",                            auth, esNegocio, esPropietario,      actualizarNegocio);
 

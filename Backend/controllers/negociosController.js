@@ -17,7 +17,7 @@ async function getNegocios(req, res) {
               'id', s.id,
               'nombre', s.nombre,
               'direccion', s.direccion,
-              'telefono', s.telefono,
+              'telefonos', s.telefonos,
               'lat', s.lat,
               'lng', s.lng,
               'horario', s.horario
@@ -97,7 +97,7 @@ async function getNegocioById(req, res) {
       `SELECT p.*,
         COALESCE(
           json_agg(
-            json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_descuento)
+            json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
           ) FILTER (WHERE pd.id IS NOT NULL),
           '[]'
         ) AS descuentos
@@ -191,9 +191,9 @@ async function crearNegocio(req, res) {
     if (sedes.length > 0) {
       const sedePromises = sedes.map(s =>
         pool.query(
-          `INSERT INTO sedes (negocio_id, nombre, direccion, telefono, lat, lng, horario, maps_url, referencia)
+          `INSERT INTO sedes (negocio_id, nombre, direccion, telefonos, lat, lng, horario, maps_url, referencia)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [negocio.id, s.nombre, s.direccion, s.telefono, s.lat, s.lng, s.horario, s.maps_url, s.referencia]
+          [negocio.id, s.nombre, s.direccion, Array.isArray(s.telefonos) ? s.telefonos : (s.telefonos ? [s.telefonos] : []), s.lat, s.lng, s.horario, s.maps_url, s.referencia]
         )
       );
       await Promise.all(sedePromises);
@@ -365,7 +365,7 @@ async function getMiNegocio(req, res) {
         `SELECT p.*,
           COALESCE(
             json_agg(
-              json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_descuento)
+              json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
             ) FILTER (WHERE pd.id IS NOT NULL),
             '[]'
           ) AS descuentos

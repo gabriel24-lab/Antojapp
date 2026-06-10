@@ -12,7 +12,7 @@ async function getPlatos(req, res) {
       `SELECT p.*,
         COALESCE(
           json_agg(
-            json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_descuento)
+            json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
           ) FILTER (WHERE pd.id IS NOT NULL),
           '[]'
         ) AS descuentos
@@ -33,22 +33,28 @@ async function getPlatos(req, res) {
 // POST /api/negocios/:id/platos
 async function crearPlato(req, res) {
   const { id: negocioId } = req.params;
-  const { nombre, descripcion, tipo, precio, disponible = true, descuentos = [] } = req.body;
+  const { nombre, descripcion, tipo, precio, disponible = true, descuentos = [], foto_menu_b } = req.body;
 
-  // tipo: 'estrella' | 'economico' | 'premium' | 'menu'
-  if (!nombre || !tipo || precio === undefined)
-    return res.status(400).json({ error: "nombre, tipo y precio son obligatorios" });
+  const esMenu = tipo?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "menu";
 
-  const tiposValidos = ["estrella", "economico", "premium", "menu"];
-  if (!tiposValidos.includes(tipo))
-    return res.status(400).json({ error: `tipo debe ser uno de: ${tiposValidos.join(", ")}` });
+  if (!nombre || !tipo)
+    return res.status(400).json({ error: "nombre y tipo son obligatorios" });
+
+  // Los menús no requieren precio
+  if (!esMenu && precio === undefined)
+    return res.status(400).json({ error: "El precio es obligatorio para platos que no son menú" });
+
+  if (tipo.length > 50)
+    return res.status(400).json({ error: "El tipo no puede superar 50 caracteres" });
 
   try {
+    const precioFinal = esMenu ? null : parseInt(precio);
+
     const result = await pool.query(
-      `INSERT INTO platos (negocio_id, nombre, descripcion, tipo, precio, disponible)
-       VALUES ($1,$2,$3,$4,$5,$6)
+      `INSERT INTO platos (negocio_id, nombre, descripcion, tipo, precio, foto_menu_b, disponible)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING *`,
-      [negocioId, nombre.trim(), descripcion || "", tipo, precio, disponible]
+      [negocioId, nombre.trim(), descripcion || "", tipo, precioFinal, foto_menu_b || null, disponible]
     );
 
     const plato = result.rows[0];
@@ -57,8 +63,8 @@ async function crearPlato(req, res) {
     if (descuentos.length > 0) {
       const descPromises = descuentos.map(d =>
         pool.query(
-          "INSERT INTO plato_descuentos (plato_id, dia, precio_descuento) VALUES ($1,$2,$3)",
-          [plato.id, d.dia, d.precio_descuento]
+          "INSERT INTO plato_descuentos (plato_id, dia, precio_desc) VALUES ($1,$2,$3)",
+          [plato.id, d.dia, d.precio_desc]
         )
       );
       await Promise.all(descPromises);
@@ -74,7 +80,7 @@ async function crearPlato(req, res) {
 // PUT /api/negocios/:id/platos/:platoId
 async function actualizarPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
-  const { nombre, descripcion, tipo, precio, disponible, descuentos } = req.body;
+  const { nombre, descripcion, tipo, precio, disponible, descuentos, foto_menu_b } = req.body;
 
   try {
     const result = await pool.query(
@@ -84,10 +90,11 @@ async function actualizarPlato(req, res) {
          descripcion = COALESCE($2, descripcion),
          tipo        = COALESCE($3, tipo),
          precio      = COALESCE($4, precio),
-         disponible  = COALESCE($5, disponible)
-       WHERE id = $6 AND negocio_id = $7
+         disponible  = COALESCE($5, disponible),
+         foto_menu_b = COALESCE($6, foto_menu_b)
+       WHERE id = $7 AND negocio_id = $8
        RETURNING *`,
-      [nombre, descripcion, tipo, precio, disponible, platoId, negocioId]
+      [nombre, descripcion, tipo, precio !== undefined ? precio : null, disponible, foto_menu_b, platoId, negocioId]
     );
 
     if (result.rows.length === 0)
@@ -99,8 +106,8 @@ async function actualizarPlato(req, res) {
       if (descuentos.length > 0) {
         const descPromises = descuentos.map(d =>
           pool.query(
-            "INSERT INTO plato_descuentos (plato_id, dia, precio_descuento) VALUES ($1,$2,$3)",
-            [platoId, d.dia, d.precio_descuento]
+            "INSERT INTO plato_descuentos (plato_id, dia, precio_desc) VALUES ($1,$2,$3)",
+            [platoId, d.dia, d.precio_desc]
           )
         );
         await Promise.all(descPromises);
@@ -146,15 +153,18 @@ async function eliminarPlato(req, res) {
 }
 
 // POST /api/negocios/:id/platos/:platoId/foto  — subir foto del plato
+// Query param ?lado=b para guardar en foto_menu_b (segunda cara del menú)
 async function subirFotoPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
+  const lado = req.query.lado === "b" ? "b" : "a";
 
   if (!req.file)
     return res.status(400).json({ error: "No se recibió ningún archivo" });
 
   try {
     const ext      = req.file.originalname.split(".").pop();
-    const filename = `${negocioId}/${platoId}-${Date.now()}.${ext}`;
+    const suffix   = lado === "b" ? "-menu-b" : "";
+    const filename = `${negocioId}/${platoId}${suffix}-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("platos")
@@ -169,8 +179,9 @@ async function subirFotoPlato(req, res) {
       .from("platos")
       .getPublicUrl(filename);
 
+    const columna = lado === "b" ? "foto_menu_b" : "foto";
     await pool.query(
-      "UPDATE platos SET foto = $1 WHERE id = $2 AND negocio_id = $3",
+      `UPDATE platos SET ${columna} = $1 WHERE id = $2 AND negocio_id = $3`,
       [publicUrl, platoId, negocioId]
     );
 
