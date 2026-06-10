@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
     })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(userData => {
-        setUser(userData);
+        setUser(userData); // incluye 'rol' que devuelve el backend
         return fetch(`${API_URL}/favoritos/ids`, {
           headers: { Authorization: `Bearer ${token}` }
         });

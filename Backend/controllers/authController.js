@@ -4,7 +4,7 @@ const pool   = require("../db/pool");
 
 function generarToken(usuario) {
   return jwt.sign(
-    { id: usuario.id, nombre: usuario.nombre, email: usuario.email },
+    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -12,13 +12,15 @@ function generarToken(usuario) {
 
 // POST /api/auth/registro
 async function registro(req, res) {
-  const { nombre, email, password } = req.body;
+  const { nombre, email, password, rol } = req.body;
 
   if (!nombre || !email || !password)
     return res.status(400).json({ error: "Todos los campos son obligatorios" });
 
   if (password.length < 6)
     return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+
+  const rolValido = ["usuario", "negocio"].includes(rol) ? rol : "usuario";
 
   try {
     // Verificar si el email ya existe
@@ -29,8 +31,8 @@ async function registro(req, res) {
     const hash = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO usuarios (nombre, email, password) VALUES ($1, $2, $3) RETURNING id, nombre, email",
-      [nombre.trim(), email.toLowerCase(), hash]
+      "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
+      [nombre.trim(), email.toLowerCase(), hash, rolValido]
     );
 
     const usuario = result.rows[0];
@@ -72,7 +74,7 @@ async function login(req, res) {
 
     res.json({
       token,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email }
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
     });
   } catch (err) {
     console.error("Error en login:", err);
@@ -84,7 +86,7 @@ async function login(req, res) {
 async function me(req, res) {
   try {
     const result = await pool.query(
-      "SELECT id, nombre, email, creado_en FROM usuarios WHERE id = $1",
+      "SELECT id, nombre, email, rol, creado_en FROM usuarios WHERE id = $1",
       [req.usuario.id]
     );
 

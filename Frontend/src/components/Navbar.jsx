@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
-export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
+export default function Navbar({ onAbrirAuth, onVerFavoritos, onAbrirPanel, onAbrirFormulario, vistaActual }) {
   const { user, logout } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(false);
+
+  const esPropietario = user?.rol === "negocio";
 
   return (
     <header style={{
@@ -37,7 +39,9 @@ export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
 
         {/* Acciones */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {user && (
+
+          {/* Botón Guardados — solo clientes */}
+          {user && !esPropietario && (
             <button
               onClick={() => onVerFavoritos(true)}
               style={{
@@ -50,6 +54,23 @@ export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
               }}
             >
               <span>♥</span> Guardados
+            </button>
+          )}
+
+          {/* Botón Mi Panel — solo propietarios */}
+          {esPropietario && (
+            <button
+              onClick={onAbrirPanel}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                background: vistaActual === "panel" ? "rgba(232,70,10,.25)" : "rgba(255,255,255,.07)",
+                color: vistaActual === "panel" ? "#E8460A" : "rgba(255,255,255,.75)",
+                border: "none", padding: "7px 14px", borderRadius: 8,
+                fontSize: 14, fontWeight: 500, cursor: "pointer",
+                transition: "background 0.18s"
+              }}
+            >
+              <span>📊</span> Mi panel
             </button>
           )}
 
@@ -67,7 +88,7 @@ export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
               >
                 <div style={{
                   width: 26, height: 26, borderRadius: "50%",
-                  background: "#E8460A",
+                  background: esPropietario ? "#1A8C5B" : "#E8460A",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 12, fontWeight: 700, color: "#fff"
                 }}>
@@ -82,12 +103,48 @@ export default function Navbar({ onAbrirAuth, onVerFavoritos, vistaActual }) {
                   position: "absolute", right: 0, top: "calc(100% + 8px)",
                   background: "#fff", borderRadius: 10, border: "1px solid #E2DBD5",
                   boxShadow: "0 8px 24px rgba(0,0,0,.12)",
-                  minWidth: 180, overflow: "hidden", zIndex: 200
+                  minWidth: 200, overflow: "hidden", zIndex: 200
                 }}>
                   <div style={{ padding: "12px 16px", borderBottom: "1px solid #F0EBE5" }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1208" }}>{user.nombre}</div>
                     <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>{user.email}</div>
+                    <div style={{
+                      marginTop: 6, fontSize: 11, fontWeight: 700,
+                      color: esPropietario ? "#1A8C5B" : "#E8460A",
+                      background: esPropietario ? "#E8F6EE" : "#FFF0EB",
+                      display: "inline-block", padding: "2px 8px", borderRadius: 10,
+                    }}>
+                      {esPropietario ? "🏪 Propietario" : "🍽️ Cliente"}
+                    </div>
                   </div>
+
+                  {esPropietario && (
+                    <>
+                      <button
+                        onClick={() => { onAbrirPanel(); setMenuAbierto(false); }}
+                        style={{
+                          width: "100%", padding: "11px 16px", textAlign: "left",
+                          fontSize: 14, color: "#1A1208", fontWeight: 500,
+                          background: "none", border: "none", cursor: "pointer",
+                          borderBottom: "1px solid #F0EBE5",
+                        }}
+                      >
+                        📊 Mi panel de estadísticas
+                      </button>
+                      <button
+                        onClick={() => { onAbrirFormulario(); setMenuAbierto(false); }}
+                        style={{
+                          width: "100%", padding: "11px 16px", textAlign: "left",
+                          fontSize: 14, color: "#1A1208", fontWeight: 500,
+                          background: "none", border: "none", cursor: "pointer",
+                          borderBottom: "1px solid #F0EBE5",
+                        }}
+                      >
+                        ✏️ Registrar / editar negocio
+                      </button>
+                    </>
+                  )}
+
                   <button
                     onClick={() => { logout(); setMenuAbierto(false); }}
                     style={{

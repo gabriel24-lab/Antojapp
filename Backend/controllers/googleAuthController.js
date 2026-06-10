@@ -6,7 +6,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 function generarToken(usuario) {
   return jwt.sign(
-    { id: usuario.id, nombre: usuario.nombre, email: usuario.email },
+    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -30,7 +30,7 @@ async function googleLogin(req, res) {
     });
 
     const payload = ticket.getPayload();
-    const { sub: googleId, email, name: nombre, picture: avatar } = payload;
+    const { email, name: nombre } = payload;
 
     if (!email) {
       return res.status(400).json({ error: "No se pudo obtener el correo de Google" });
@@ -38,7 +38,7 @@ async function googleLogin(req, res) {
 
     // 2. Buscar usuario por email
     let result = await pool.query(
-      "SELECT id, nombre, email FROM usuarios WHERE email = $1",
+      "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
       [email.toLowerCase()]
     );
 
@@ -52,11 +52,11 @@ async function googleLogin(req, res) {
         [usuario.id]
       );
     } else {
-      // Usuario nuevo — crearlo sin password
+      // Usuario nuevo — crearlo sin password, rol 'usuario' por defecto
       const insert = await pool.query(
-        `INSERT INTO usuarios (nombre, email, es_google)
-         VALUES ($1, $2, TRUE)
-         RETURNING id, nombre, email`,
+        `INSERT INTO usuarios (nombre, email, es_google, rol)
+         VALUES ($1, $2, TRUE, 'usuario')
+         RETURNING id, nombre, email, rol`,
         [nombre || email.split("@")[0], email.toLowerCase()]
       );
       usuario = insert.rows[0];
@@ -67,7 +67,7 @@ async function googleLogin(req, res) {
 
     res.json({
       token,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email },
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     });
 
   } catch (err) {

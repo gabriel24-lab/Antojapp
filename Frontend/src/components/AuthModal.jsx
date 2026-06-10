@@ -5,7 +5,7 @@ import API_URL from "../api";
 export default function AuthModal({ onCerrar }) {
   const { login } = useAuth();
   const [vista,    setVista]    = useState("login"); // login | registro | recuperar
-  const [form,     setForm]     = useState({ nombre: "", email: "", password: "", confirmar: "" });
+  const [form,     setForm]     = useState({ nombre: "", email: "", password: "", confirmar: "", rol: "usuario" });
   const [error,    setError]    = useState("");
   const [cargando, setCargando] = useState(false);
   const [exito,    setExito]    = useState("");
@@ -114,7 +114,7 @@ export default function AuthModal({ onCerrar }) {
       const res  = await fetch(`${API_URL}/auth/registro`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password }),
+        body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password, rol: form.rol }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
@@ -232,6 +232,38 @@ export default function AuthModal({ onCerrar }) {
           {/* FORMULARIO REGISTRO */}
           {vista === "registro" && (
             <form onSubmit={handleRegistro} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+              {/* ── Selector de rol ── */}
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 8 }}>¿Cómo vas a usar Antojapp?</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {[
+                    { valor: "usuario",  emoji: "🍽️", titulo: "Soy cliente",      sub: "Busco dónde comer" },
+                    { valor: "negocio",  emoji: "🏪", titulo: "Soy propietario",  sub: "Registro mi negocio" },
+                  ].map(({ valor, emoji, titulo, sub }) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() => set("rol", valor)}
+                      style={{
+                        border:        form.rol === valor ? "2px solid #E8460A" : "2px solid #E2DBD5",
+                        borderRadius:  12,
+                        padding:       "12px 8px",
+                        background:    form.rol === valor ? "#FFF4F0" : "#FAFAF9",
+                        cursor:        "pointer",
+                        textAlign:     "center",
+                        transition:    "all .18s ease",
+                        outline:       "none",
+                      }}
+                    >
+                      <div style={{ fontSize: 26, marginBottom: 4 }}>{emoji}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: form.rol === valor ? "#E8460A" : "#3D2B1F" }}>{titulo}</div>
+                      <div style={{ fontSize: 11, color: "#A8988A", marginTop: 2 }}>{sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 5 }}>Tu nombre</label>
                 <input className="input" type="text" placeholder="Cómo te llamamos" value={form.nombre} onChange={e => set("nombre", e.target.value)} required />

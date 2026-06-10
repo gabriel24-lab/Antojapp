@@ -5,6 +5,7 @@ const cors    = require("cors");
 const authRoutes      = require("./routes/auth");
 const negociosRoutes  = require("./routes/negocios");
 const favoritosRoutes = require("./routes/favoritos");
+const panelRoutes     = require("./routes/panel");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use("/api/auth",      authRoutes);
 app.use("/api/negocios",  negociosRoutes);
 app.use("/api/favoritos", favoritosRoutes);
+app.use("/api/panel",     panelRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get("/api/health", (req, res) => {
