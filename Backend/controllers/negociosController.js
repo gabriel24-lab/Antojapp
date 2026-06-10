@@ -57,7 +57,7 @@ async function getNegocios(req, res) {
     query += " GROUP BY n.id ORDER BY n.calificacion DESC";
 
     const result = await pool.query(query, valores);
-    let negocios = result.rows;
+    let negocios = result.rows.map(formatearNegocio);
 
     // El filtro de "solo abiertos" se hace en JS porque depende de la hora actual
     if (soloAbiertos === "true") {
@@ -90,11 +90,11 @@ async function getNegocioById(req, res) {
       [id]
     );
 
-    res.json({
+    res.json(formatearNegocio({
       ...negocio.rows[0],
       sedes:   sedes.rows,
       resenas: resenas.rows,
-    });
+    }));
   } catch (err) {
     console.error("Error en getNegocioById:", err);
     res.status(500).json({ error: "Error interno del servidor" });
@@ -115,6 +115,19 @@ async function getCategorias(req, res) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
+
+// Convierte los campos snake_case de la BD al formato que espera el frontend
+function formatearNegocio(n) {
+  return {
+    ...n,
+    totalResenas: n.total_resenas,
+    abierto: estaAbierto(n.sedes || []),
+    platoEstrella:  { nombre: n.plato_estrella_nombre,  precio: n.plato_estrella_precio  },
+    platoEconomico: { nombre: n.plato_economico_nombre, precio: n.plato_economico_precio },
+    platoPremium:   { nombre: n.plato_premium_nombre,   precio: n.plato_premium_precio   },
+  };
+}
+
 const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
 
 function estaAbierto(sedes) {
