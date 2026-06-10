@@ -20,6 +20,14 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
     toggleFavorito(negocio.id);
   };
 
+  // Normalizar plato estrella: el backend puede devolver objeto anidado
+  // (datos mock) o columnas planas (datos reales de la BD)
+  const platoEstrella = negocio.platoEstrella ?? (
+    negocio.plato_estrella_nombre
+      ? { nombre: negocio.plato_estrella_nombre, precio: negocio.plato_estrella_precio }
+      : null
+  );
+
   return (
     <article
       className="card"
@@ -97,24 +105,26 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
           {negocio.descripcion}
         </p>
 
-        {/* Plato estrella */}
-        <div style={{
-          marginTop: 12, padding: "9px 12px",
-          background: "#FFF0EB", borderRadius: 8,
-          display: "flex", alignItems: "center", justifyContent: "space-between"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>⭐</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: "#1A1208" }}>{negocio.platoEstrella.nombre}</span>
+        {/* Plato estrella — solo si existe */}
+        {platoEstrella && (
+          <div style={{
+            marginTop: 12, padding: "9px 12px",
+            background: "#FFF0EB", borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "space-between"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 15 }}>⭐</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: "#1A1208" }}>{platoEstrella.nombre}</span>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#E8460A" }}>
+              ${platoEstrella.precio?.toLocaleString("es-CO")}
+            </span>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#E8460A" }}>
-            ${negocio.platoEstrella.precio.toLocaleString("es-CO")}
-          </span>
-        </div>
+        )}
 
         {/* Tags */}
         <div style={{ marginTop: 10, display: "flex", gap: 5, flexWrap: "wrap" }}>
-          {negocio.etiquetas.slice(0, 3).map(tag => (
+          {(negocio.etiquetas || []).slice(0, 3).map(tag => (
             <span key={tag} style={{
               fontSize: 11, padding: "3px 8px", borderRadius: 20,
               background: "#F7F4F1", color: "#6B5E52", border: "1px solid #E2DBD5"
