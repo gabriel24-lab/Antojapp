@@ -3,15 +3,18 @@ require("dotenv").config();
 
 const pool = new Pool({
   host:     process.env.DB_HOST,
-  port:     process.env.DB_PORT,
+  port:     parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME,
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  ssl:      { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: false },
 });
 
 pool.connect()
-  .then(() => console.log("✅ Conectado a PostgreSQL"))
-  .catch((err) => console.error("❌ Error conectando a la BD:", err.message));
+  .then(client => {
+    console.log("Conectado a PostgreSQL (Supabase)");
+    client.release();
+  })
+  .catch(err => console.error("Error conectando a la BD:", err.message));
 
 module.exports = pool;

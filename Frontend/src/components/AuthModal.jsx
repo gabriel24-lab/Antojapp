@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
 
@@ -9,9 +9,78 @@ export default function AuthModal({ onCerrar }) {
   const [error,    setError]    = useState("");
   const [cargando, setCargando] = useState(false);
   const [exito,    setExito]    = useState("");
+  const googleBtnRef            = useRef(null);
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setError(""); };
 
+  // ── Google Identity Services ────────────────────────────
+  useEffect(() => {
+    if (vista === "recuperar") return;
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return; // no configurado aún
+
+    const cargarGIS = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+
+      window.google.accounts.id.initialize({
+        client_id:        clientId,
+        callback:         handleGoogleCredential,
+        ux_mode:          "popup",
+        context:          "signin",
+      });
+
+      // Renderiza el botón oficial de Google
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme:            "outline",
+        size:             "large",
+        shape:            "rectangular",
+        text:             vista === "registro" ? "signup_with" : "signin_with",
+        width:            364,   // ancho del contenedor (max-width 420 - 2*28 padding)
+        locale:           "es",
+      });
+    };
+
+    // Si el script ya cargó, úsalo; si no, espera
+    if (window.google?.accounts?.id) {
+      cargarGIS();
+    } else {
+      // Agrega el script GIS si no existe
+      if (!document.getElementById("gis-script")) {
+        const script = document.createElement("script");
+        script.id  = "gis-script";
+        script.src = "https://accounts.google.com/gsi/client";
+        script.onload = cargarGIS;
+        document.head.appendChild(script);
+      } else {
+        // Script ya en el DOM pero aún cargando
+        document.getElementById("gis-script").addEventListener("load", cargarGIS, { once: true });
+      }
+    }
+  }, [vista]); // Re-render el botón al cambiar entre login/registro
+
+  // Callback que GIS llama con el id_token
+  const handleGoogleCredential = async ({ credential }) => {
+    setCargando(true);
+    setError("");
+    try {
+      const res  = await fetch(`${API_URL}/auth/google`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Error al iniciar sesión con Google"); return; }
+      login(data.token, data.usuario);
+      onCerrar();
+    } catch {
+      setError("No se pudo conectar con el servidor");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // ── Formularios email/password ──────────────────────────
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -20,7 +89,7 @@ export default function AuthModal({ onCerrar }) {
       const res  = await fetch(`${API_URL}/auth/login`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ email: form.email, password: form.password })
+        body:    JSON.stringify({ email: form.email, password: form.password }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al iniciar sesión"); return; }
@@ -36,16 +105,16 @@ export default function AuthModal({ onCerrar }) {
   const handleRegistro = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.nombre.trim())          return setError("Ingresa tu nombre.");
-    if (!form.email.includes("@"))    return setError("Correo no válido.");
-    if (form.password.length < 6)     return setError("La contraseña debe tener al menos 6 caracteres.");
-    if (form.password !== form.confirmar) return setError("Las contraseñas no coinciden.");
+    if (!form.nombre.trim())               return setError("Ingresa tu nombre.");
+    if (!form.email.includes("@"))         return setError("Correo no válido.");
+    if (form.password.length < 6)          return setError("La contraseña debe tener al menos 6 caracteres.");
+    if (form.password !== form.confirmar)  return setError("Las contraseñas no coinciden.");
     setCargando(true);
     try {
       const res  = await fetch(`${API_URL}/auth/registro`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password })
+        body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
@@ -63,18 +132,8 @@ export default function AuthModal({ onCerrar }) {
     setError("");
     if (!form.email.includes("@")) return setError("Ingresa un correo válido.");
     setCargando(true);
-    // Simulado por ahora (requiere servicio de email en el backend)
     await new Promise(r => setTimeout(r, 800));
     setExito(`Enviamos instrucciones a ${form.email}`);
-    setCargando(false);
-  };
-
-  const handleGoogleMock = async () => {
-    setCargando(true);
-    await new Promise(r => setTimeout(r, 600));
-    // Google auth real requiere OAuth2 — por ahora sigue siendo mock
-    login(null, { nombre: "Usuario Google", email: "google@antojapp.co", esGoogle: true });
-    onCerrar();
     setCargando(false);
   };
 
@@ -85,18 +144,18 @@ export default function AuthModal({ onCerrar }) {
         position: "fixed", inset: 0, zIndex: 500,
         background: "rgba(26,18,8,.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 20
+        padding: 20,
       }}
     >
       <div style={{
         background: "#fff", borderRadius: 20, width: "100%", maxWidth: 420,
         boxShadow: "0 24px 60px rgba(0,0,0,.18)",
-        overflow: "hidden", animation: "slideUp .22s ease"
+        overflow: "hidden", animation: "slideUp .22s ease",
       }}>
         {/* Header */}
         <div style={{
           background: "#1A1208", padding: "24px 28px 20px",
-          display: "flex", alignItems: "center", justifyContent: "space-between"
+          display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
             <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>
@@ -112,37 +171,33 @@ export default function AuthModal({ onCerrar }) {
           </div>
           <button onClick={onCerrar} style={{
             color: "rgba(255,255,255,.5)", fontSize: 22, lineHeight: 1,
-            background: "none", border: "none", cursor: "pointer", padding: 4
+            background: "none", border: "none", cursor: "pointer", padding: 4,
           }}>×</button>
         </div>
 
         <div style={{ padding: "24px 28px" }}>
 
-          {/* BOTÓN GOOGLE */}
+          {/* BOTÓN GOOGLE (GIS renderiza aquí) */}
           {vista !== "recuperar" && (
             <>
-              <button
-                onClick={handleGoogleMock}
-                disabled={cargando}
-                style={{
-                  width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                  background: "#fff", border: "1.5px solid #E2DBD5",
-                  padding: "11px 16px", borderRadius: 12,
-                  fontSize: 15, fontWeight: 500, cursor: "pointer",
-                  transition: "border-color 0.18s, box-shadow 0.18s",
-                  boxShadow: "0 1px 3px rgba(0,0,0,.06)"
-                }}
-                onMouseOver={e => e.currentTarget.style.borderColor = "#A8988A"}
-                onMouseOut={e  => e.currentTarget.style.borderColor = "#E2DBD5"}
-              >
-                <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                </svg>
-                Continuar con Google
-              </button>
+              {/* Contenedor del botón oficial de Google */}
+              <div
+                ref={googleBtnRef}
+                style={{ minHeight: 44, display: "flex", justifyContent: "center" }}
+              />
+
+              {/* Fallback: si VITE_GOOGLE_CLIENT_ID no está configurado */}
+              {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+                <div style={{
+                  fontSize: 12, color: "#A8988A", textAlign: "center",
+                  padding: "8px 0",
+                  border: "1.5px dashed #E2DBD5", borderRadius: 10,
+                }}>
+                  Google OAuth no configurado —<br />
+                  agrega <code>VITE_GOOGLE_CLIENT_ID</code> en <code>.env</code>
+                </div>
+              )}
+
               <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "18px 0" }}>
                 <div style={{ flex: 1, height: 1, background: "#E2DBD5" }} />
                 <span style={{ fontSize: 13, color: "#A8988A" }}>o con correo</span>
