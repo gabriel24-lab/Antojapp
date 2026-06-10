@@ -32,9 +32,9 @@ const Field = ({ children }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>{children}</div>
 );
 
-const SectionTitle = ({ icon, children }) => (
+const SectionTitle = ({ icon, children, iconProps = {} }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, marginTop: 4 }}>
-    <AppIcon name={icon} size={18} color="#E8460A" fill={icon === "star" ? "currentColor" : "none"} />
+    <AppIcon name={icon} size={18} color="#E8460A" fill={icon === "star" ? "currentColor" : "none"} {...iconProps} />
     <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 15, fontWeight: 700, color: "#1A1208" }}>{children}</h3>
   </div>
 );
@@ -116,7 +116,7 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>📍</span>
+          <AppIcon name="mapPin" size={16} color="#E8460A" />
           <span style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>
             {sede.nombre || `Sede ${index + 1}`}
           </span>
@@ -125,10 +125,10 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
           {!esUnica && (
             <button
               type="button" onClick={e => { e.stopPropagation(); onEliminar(); }}
-              style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA" }}
-            >✕ Eliminar</button>
+              style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+            ><AppIcon name="x" size={13} /> Eliminar</button>
           )}
-          <span style={{ fontSize: 12, color: "#A8988A" }}>{expandida ? "▲" : "▼"}</span>
+          <AppIcon name={expandida ? "chevronUp" : "chevronDown"} size={14} color="#A8988A" />
         </div>
       </div>
 
@@ -158,7 +158,7 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
             <input className="input" value={sede.maps_url || ""} onChange={e => set("maps_url", e.target.value)} placeholder="https://maps.app.goo.gl/..." />
           </Field>
           <Divider />
-          <SectionTitle icon="🕐">Horario de atención</SectionTitle>
+          <SectionTitle icon="clock">Horario de atención</SectionTitle>
           <HorarioEditor horario={sede.horario} onChange={h => set("horario", h)} />
         </div>
       )}
@@ -216,7 +216,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {plato.foto
             ? <img src={plato.foto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-            : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F0EBE5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🍴</div>
+            : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F0EBE5", display: "flex", alignItems: "center", justifyContent: "center", color: "#A8988A" }}><AppIcon name="utensils" size={18} /></div>
           }
           <div>
             <div style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>{plato.nombre || `Plato ${index + 1}`}</div>
@@ -226,9 +226,9 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
             type="button" onClick={e => { e.stopPropagation(); onEliminar(); }}
-            style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA" }}
-          >✕</button>
-          <span style={{ fontSize: 12, color: "#A8988A" }}>{expandido ? "▲" : "▼"}</span>
+            style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+          ><AppIcon name="x" size={13} /></button>
+          <AppIcon name={expandido ? "chevronUp" : "chevronDown"} size={14} color="#A8988A" />
         </div>
       </div>
 
@@ -288,7 +288,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
             >
               {plato.foto
                 ? <img src={plato.foto} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }} />
-                : <span style={{ fontSize: 28 }}>📸</span>
+                : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
               }
               <div style={{ textAlign: "left" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>{subiendo ? "Subiendo..." : plato.foto ? "Cambiar foto" : "Subir foto"}</div>
@@ -325,7 +325,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
 
           {/* Descuentos por día */}
           <Divider />
-          <SectionTitle icon="🏷️">Descuentos por día</SectionTitle>
+          <SectionTitle icon="tag">Descuentos por día</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {DIAS.map(dia => {
               const desc = (plato.descuentos || []).find(d => d.dia === dia);
@@ -339,9 +339,10 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                       borderColor: desc ? "#E8460A" : "#E2DBD5",
                       background: desc ? "#FFF4F0" : "#F7F4F1",
                       color: desc ? "#E8460A" : "#A8988A",
+                      display: "flex", alignItems: "center", gap: 4,
                     }}
                   >
-                    {DIAS_LABEL[dia]} {desc ? "✓" : "+"}
+                    {DIAS_LABEL[dia]} {desc ? <AppIcon name="check" size={12} /> : <AppIcon name="plus" size={12} />}
                   </button>
                   {desc && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -529,14 +530,15 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
         <div style={{ background: "#1A1208", padding: "22px 28px 18px", borderRadius: "20px 20px 0 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div>
-              <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 17, color: "#fff" }}>
-                {esEdicion ? "✏️ Editar negocio" : "🏪 Registrar negocio"}
+              <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                <AppIcon name={esEdicion ? "edit" : "store"} size={18} />
+                {esEdicion ? "Editar negocio" : "Registrar negocio"}
               </div>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", marginTop: 2 }}>
                 Paso {paso} de {pasos.length}: <strong style={{ color: "rgba(255,255,255,.8)" }}>{pasos[paso - 1]}</strong>
               </div>
             </div>
-            <button onClick={() => onCerrar(false)} style={{ color: "rgba(255,255,255,.4)", fontSize: 22, lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 4 }}>×</button>
+            <button onClick={() => onCerrar(false)} style={{ color: "rgba(255,255,255,.4)", lineHeight: 1, background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}><AppIcon name="x" size={22} /></button>
           </div>
           {/* Stepper */}
           <div style={{ display: "flex", gap: 6 }}>
@@ -552,7 +554,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {/* ══ PASO 1: INFORMACIÓN GENERAL ══ */}
           {paso === 1 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <SectionTitle icon="ℹ️">Datos del negocio</SectionTitle>
+              <SectionTitle icon="info">Datos del negocio</SectionTitle>
               <Field>
                 <Label required>Nombre del negocio</Label>
                 <input className="input" value={info.nombre} onChange={e => setInfoField("nombre", e.target.value)} placeholder="Ej: Fritos Donde la Negra" />
@@ -585,7 +587,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>Separa las etiquetas con comas. Ayudan a que te encuentren en la búsqueda.</div>
               </Field>
               <Divider />
-              <SectionTitle icon="📲">Redes y contacto</SectionTitle>
+              <SectionTitle icon="smartphone">Redes y contacto</SectionTitle>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <Field>
                   <Label>WhatsApp</Label>
@@ -606,7 +608,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {/* ══ PASO 2: SEDES ══ */}
           {paso === 2 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <SectionTitle icon="📍">Ubicaciones / Sedes</SectionTitle>
+              <SectionTitle icon="mapPin">Ubicaciones / Sedes</SectionTitle>
               {sedes.map((sede, i) => (
                 <SedeCard
                   key={i} sede={sede} index={i}
@@ -635,13 +637,13 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {/* ══ PASO 3: MENÚ / PLATOS ══ */}
           {paso === 3 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <SectionTitle icon="🍽️">Menú y platos</SectionTitle>
+              <SectionTitle icon="utensils">Menú y platos</SectionTitle>
               <div style={{ fontSize: 13, color: "#A8988A", marginBottom: 4 }}>
                 Agrega tus platos principales. Puedes añadir descuentos por días de la semana.
               </div>
               {platos.length === 0 && (
                 <div style={{ textAlign: "center", padding: "32px 0", color: "#A8988A", fontSize: 14 }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>🍴</div>
+                  <div style={{ fontSize: 36, marginBottom: 8, color: "#C8BDB5" }}><AppIcon name="utensils" size={36} /></div>
                   <div>Aún no has agregado platos.</div>
                   <div style={{ fontSize: 13, marginTop: 4 }}>Puedes saltarte este paso y agregarlos después.</div>
                 </div>
@@ -674,7 +676,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {/* ══ PASO 4: IMÁGENES ══ */}
           {paso === 4 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <SectionTitle icon="🖼️">Imágenes del negocio</SectionTitle>
+              <SectionTitle icon="image">Imágenes del negocio</SectionTitle>
 
               {/* Portada */}
               <Field>
@@ -692,7 +694,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                     ? <img src={portadaPreview} alt="Portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : (
                       <div style={{ textAlign: "center", color: "#A8988A" }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>🌄</div>
+                        <div style={{ marginBottom: 8 }}><AppIcon name="image" size={36} /></div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>Subir foto de portada</div>
                         <div style={{ fontSize: 12, marginTop: 4 }}>Recomendado: 1200×600px · JPG o PNG · Máx 5 MB</div>
                       </div>
@@ -707,7 +709,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                       onMouseEnter={e => e.currentTarget.style.opacity = 1}
                       onMouseLeave={e => e.currentTarget.style.opacity = 0}
                     >
-                      <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>✏️ Cambiar portada</span>
+                      <span style={{ color: "#fff", fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><AppIcon name="camera" size={16} /> Cambiar portada</span>
                     </div>
                   )}
                 </div>
@@ -731,7 +733,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                   >
                     {iconoPreview
                       ? <img src={iconoPreview} alt="Ícono" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontSize: 28 }}>🏪</span>
+                      : <span style={{ color: "#A8988A" }}><AppIcon name="store" size={28} /></span>
                     }
                   </div>
                   <div>
@@ -752,7 +754,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
 
               {/* Éxito */}
               <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 12, padding: 16, textAlign: "center" }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
+                <div style={{ marginBottom: 6, color: "#1A8C5B", display: "flex", justifyContent: "center" }}><AppIcon name="sparkles" size={28} /></div>
                 <div style={{ fontWeight: 700, color: "#1A8C5B", fontFamily: "'Sora',sans-serif", fontSize: 15 }}>
                   ¡Tu negocio está casi listo!
                 </div>
@@ -771,9 +773,9 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
             <button
               type="button" className="btn-secondary"
               onClick={() => paso === 1 ? onCerrar(false) : setPaso(p => p - 1)}
-              style={{ minWidth: 100 }}
+              style={{ minWidth: 100, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
             >
-              {paso === 1 ? "Cancelar" : "← Atrás"}
+              {paso === 1 ? "Cancelar" : <><AppIcon name="arrowLeft" size={15} /> Atrás</>}
             </button>
 
             {paso < 4 ? (
@@ -781,13 +783,13 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 type="button" className="btn-primary"
                 disabled={guardando}
                 onClick={paso === 1 ? guardarPaso1 : paso === 2 ? guardarPaso2 : guardarPaso3}
-                style={{ minWidth: 140 }}
+                style={{ minWidth: 140, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
               >
-                {guardando ? "Guardando..." : paso === 3 && platos.length === 0 ? "Omitir →" : "Guardar y continuar →"}
+                {guardando ? "Guardando..." : paso === 3 && platos.length === 0 ? <>Omitir <AppIcon name="arrowRight" size={15} /></> : <>Guardar y continuar <AppIcon name="arrowRight" size={15} /></>}
               </button>
             ) : (
-              <button type="button" className="btn-primary" onClick={finalizar} style={{ minWidth: 140 }}>
-                ✓ Finalizar
+              <button type="button" className="btn-primary" onClick={finalizar} style={{ minWidth: 140, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                <AppIcon name="check" size={16} /> Finalizar
               </button>
             )}
           </div>
