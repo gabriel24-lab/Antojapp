@@ -110,9 +110,10 @@ function Estrellas({ valor, total = 5 }) {
 
 // ── Componente principal: PanelPropietario ─────────────────────
 export default function PanelPropietario({ onAbrirFormulario }) {
-  const [datos,    setDatos]    = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error,    setError]    = useState("");
+  const [datos,          setDatos]          = useState(null);
+  const [cargando,       setCargando]       = useState(true);
+  const [error,          setError]          = useState("");
+  const [cargandoEditar, setCargandoEditar] = useState(false);
 
   const cargar = async () => {
     setCargando(true); setError("");
@@ -123,6 +124,17 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   };
 
   useEffect(() => { cargar(); }, []);
+
+  // Carga los datos completos del negocio (info + sedes + platos)
+  // antes de abrir el formulario de edición.
+  const abrirEdicion = async () => {
+    if (!datos?.negocio?.id) return;
+    setCargandoEditar(true);
+    const { data, error: err } = await apiFetch("/negocios/mio/negocio");
+    setCargandoEditar(false);
+    if (err) { alert("No se pudieron cargar los datos del negocio: " + err); return; }
+    onAbrirFormulario(data);
+  };
 
   // ── Estado: cargando ──
   if (cargando) return (
@@ -207,10 +219,11 @@ export default function PanelPropietario({ onAbrirFormulario }) {
         </div>
         <button
           className="btn-primary"
-          onClick={() => onAbrirFormulario({ id: negocio.id })}
+          onClick={abrirEdicion}
+          disabled={cargandoEditar}
           style={{ padding: "10px 22px", fontSize: 14, flexShrink: 0 }}
         >
-          <AppIcon name="edit" size={16} /> Editar negocio
+          {cargandoEditar ? "Cargando..." : <><AppIcon name="edit" size={16} /> Editar negocio</>}
         </button>
       </div>
 
@@ -340,9 +353,10 @@ export default function PanelPropietario({ onAbrirFormulario }) {
               <button
                 className="btn-primary"
                 style={{ width: "100%", justifyContent: "flex-start", gap: 10, fontSize: 14 }}
-                onClick={() => onAbrirFormulario({ id: negocio.id })}
+                onClick={abrirEdicion}
+                disabled={cargandoEditar}
               >
-                <AppIcon name="edit" size={16} /> Editar información
+                {cargandoEditar ? "Cargando..." : <><AppIcon name="edit" size={16} /> Editar información</>}
               </button>
               <button
                 className="btn-secondary"

@@ -44,7 +44,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
       onMouseOver={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(26,18,8,.12)"; }}
       onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = ""; }}
     >
-      {/* Imagen */}
+      {/* Imagen de portada */}
       <div style={{ position: "relative", height: 180, overflow: "hidden" }}>
         <img
           src={negocio.portada}
@@ -55,8 +55,9 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
         {/* Overlay degradado */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to top, rgba(26,18,8,.55) 0%, transparent 50%)"
+          background: "linear-gradient(to top, rgba(26,18,8,.65) 0%, transparent 55%)"
         }} />
+
         {/* Badge abierto/cerrado */}
         <div style={{ position: "absolute", top: 12, left: 12 }}>
           <span className={`badge ${negocio.abierto ? "badge-open" : "badge-closed"}`}>
@@ -64,6 +65,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
             {negocio.abierto ? "Abierto" : "Cerrado"}
           </span>
         </div>
+
         {/* Botón favorito */}
         <button
           onClick={handleFavorito}
@@ -87,11 +89,37 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
             fill={favorito ? "currentColor" : "none"}
           />
         </button>
-        {/* Nombre sobre la imagen */}
-        <div style={{ position: "absolute", bottom: 12, left: 12, right: 50 }}>
+
+        {/* Icono del negocio + nombre — parte inferior de la imagen */}
+        <div style={{
+          position: "absolute", bottom: 12, left: 12, right: 50,
+          display: "flex", alignItems: "center", gap: 9
+        }}>
+          {/* Icono/logo del negocio */}
+          <div style={{
+            width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+            border: "2px solid rgba(255,255,255,.35)",
+            overflow: "hidden",
+            background: "#2A1F10",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,.35)"
+          }}>
+            {negocio.icono ? (
+              <img
+                src={negocio.icono}
+                alt={`Logo ${negocio.nombre}`}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <AppIcon name="store" size={20} color="rgba(255,255,255,.7)" />
+            )}
+          </div>
+
+          {/* Nombre */}
           <h3 style={{
-            fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 17,
-            color: "#fff", lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,.4)"
+            fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16,
+            color: "#fff", lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,.4)",
+            margin: 0
           }}>
             {negocio.nombre}
           </h3>

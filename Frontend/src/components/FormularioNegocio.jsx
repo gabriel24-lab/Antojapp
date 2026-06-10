@@ -380,7 +380,9 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
     nombre:      negocioInicial?.nombre      || "",
     categoria:   negocioInicial?.categoria   || "",
     descripcion: negocioInicial?.descripcion || "",
-    etiquetas:   (negocioInicial?.etiquetas  || []).join(", "),
+    etiquetas:   Array.isArray(negocioInicial?.etiquetas)
+      ? negocioInicial.etiquetas.join(", ")
+      : (negocioInicial?.etiquetas || ""),
     whatsapp:    negocioInicial?.whatsapp    || "",
     instagram:   negocioInicial?.instagram   || "",
     maps_url:    negocioInicial?.maps_url    || "",
@@ -433,17 +435,23 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
 
     try {
       if (esEdicion && negocioInicial?.sedes) {
-        // En edición: determinar sedes nuevas vs existentes
-        const existentes = negocioInicial.sedes.map(s => s.id);
-        const actuales   = sedes.filter(s => s.id);
-        const nuevas     = sedes.filter(s => !s.id);
+        // En edición: separar sedes existentes, nuevas y eliminadas
+        const idsActuales   = sedes.filter(s => s.id).map(s => s.id);
+        const idsOriginales = negocioInicial.sedes.map(s => s.id);
+        const idsEliminadas = idsOriginales.filter(id => !idsActuales.includes(id));
+        const sedesActuales = sedes.filter(s => s.id);
+        const sedesNuevas   = sedes.filter(s => !s.id);
 
+        // Eliminar las que el propietario quitó
+        await Promise.all(idsEliminadas.map(id =>
+          apiDelete(`/negocios/${negocioId}/sedes/${id}`)
+        ));
         // Actualizar las existentes
-        await Promise.all(actuales.map(s =>
+        await Promise.all(sedesActuales.map(s =>
           apiMutate("PUT", `/negocios/${negocioId}/sedes/${s.id}`, s)
         ));
         // Crear las nuevas
-        await Promise.all(nuevas.map(s =>
+        await Promise.all(sedesNuevas.map(s =>
           apiMutate("POST", `/negocios/${negocioId}/sedes`, s)
         ));
       } else {
