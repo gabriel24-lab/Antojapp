@@ -9,13 +9,15 @@ async function crearResena(req, res) {
   if (!estrellas || estrellas < 1 || estrellas > 5)
     return res.status(400).json({ error: "Las estrellas deben estar entre 1 y 5" });
 
+  // Limitar longitud del comentario
+  if (comentario && comentario.length > 1000)
+    return res.status(400).json({ error: "El comentario no puede superar 1000 caracteres" });
+
   try {
-    // Verificar que el negocio exista
     const negocio = await pool.query("SELECT id FROM negocios WHERE id = $1", [negocioId]);
     if (negocio.rows.length === 0)
       return res.status(404).json({ error: "Negocio no encontrado" });
 
-    // Insertar reseña
     const result = await pool.query(
       `INSERT INTO resenas (negocio_id, usuario_id, usuario_nombre, estrellas, comentario)
        VALUES ($1, $2, $3, $4, $5)
@@ -23,7 +25,6 @@ async function crearResena(req, res) {
       [negocioId, usuarioId, nombre, estrellas, comentario || ""]
     );
 
-    // Recalcular calificación promedio del negocio
     await pool.query(
       `UPDATE negocios
        SET calificacion   = (SELECT ROUND(AVG(estrellas)::numeric, 1) FROM resenas WHERE negocio_id = $1),
@@ -34,7 +35,11 @@ async function crearResena(req, res) {
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("Error en crearResena:", err);
+    // Capturar violación de constraint UNIQUE(negocio_id, usuario_id)
+    if (err.code === "23505")
+      return res.status(409).json({ error: "Ya dejaste una reseña en este negocio" });
+
+    console.error("[crearResena]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -50,7 +55,7 @@ async function getResenas(req, res) {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("Error en getResenas:", err);
+    console.error("[getResenas]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

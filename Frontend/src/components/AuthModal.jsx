@@ -159,7 +159,7 @@ export default function AuthModal({ onCerrar }) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>
+            <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>
               {vista === "login"     && "¡Bienvenido de nuevo!"}
               {vista === "registro"  && "Crea tu cuenta"}
               {vista === "recuperar" && "Recuperar contraseña"}

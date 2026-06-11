@@ -13,30 +13,32 @@ function generarToken(usuario) {
 }
 
 // POST /api/auth/google
-// El frontend envía el `credential` (id_token) que devuelve Google Identity Services (GIS).
-// Este endpoint lo verifica con Google, busca o crea el usuario, y retorna nuestro JWT.
 async function googleLogin(req, res) {
   const { credential } = req.body;
 
-  if (!credential) {
+  if (!credential)
     return res.status(400).json({ error: "Token de Google no proporcionado" });
-  }
+
+  // Rechazar tokens obviantemente malformados antes de llamar a Google
+  if (typeof credential !== "string" || credential.length > 4096)
+    return res.status(400).json({ error: "Token de Google inválido" });
 
   try {
-    // 1. Verificar el id_token con Google
     const ticket = await client.verifyIdToken({
       idToken:  credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
-    const { email, name: nombre } = payload;
+    const { email, name: nombre, email_verified } = payload;
 
-    if (!email) {
+    if (!email)
       return res.status(400).json({ error: "No se pudo obtener el correo de Google" });
-    }
 
-    // 2. Buscar usuario por email
+    // Rechazar cuentas de Google sin email verificado
+    if (!email_verified)
+      return res.status(400).json({ error: "El correo de Google no está verificado" });
+
     let result = await pool.query(
       "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
       [email.toLowerCase()]
@@ -45,14 +47,9 @@ async function googleLogin(req, res) {
     let usuario;
 
     if (result.rows.length > 0) {
-      // Usuario existente — actualizar es_google si aún no estaba marcado
       usuario = result.rows[0];
-      await pool.query(
-        "UPDATE usuarios SET es_google = TRUE WHERE id = $1",
-        [usuario.id]
-      );
+      await pool.query("UPDATE usuarios SET es_google = TRUE WHERE id = $1", [usuario.id]);
     } else {
-      // Usuario nuevo — crearlo sin password, rol 'usuario' por defecto
       const insert = await pool.query(
         `INSERT INTO usuarios (nombre, email, es_google, rol)
          VALUES ($1, $2, TRUE, 'usuario')
@@ -62,20 +59,17 @@ async function googleLogin(req, res) {
       usuario = insert.rows[0];
     }
 
-    // 3. Emitir nuestro JWT y responder
     const token = generarToken(usuario);
-
     res.json({
       token,
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     });
 
   } catch (err) {
-    console.error("Error en googleLogin:", err.message);
+    console.error("[googleLogin]", err.message);
 
-    if (err.message?.includes("Token used too late") || err.message?.includes("Invalid token")) {
+    if (err.message?.includes("Token used too late") || err.message?.includes("Invalid token"))
       return res.status(401).json({ error: "Token de Google inválido o expirado" });
-    }
 
     res.status(500).json({ error: "Error al autenticar con Google" });
   }

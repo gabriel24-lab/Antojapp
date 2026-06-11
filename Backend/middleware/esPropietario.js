@@ -20,7 +20,7 @@ async function esPropietario(req, res, next) {
 
     next();
   } catch (err) {
-    console.error("Error en esPropietario:", err);
+    console.error("[esPropietario]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

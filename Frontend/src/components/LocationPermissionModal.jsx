@@ -203,7 +203,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           </div>
 
           <h2 style={{
-            fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800,
+            fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 800,
             color: "#1A1208", marginBottom: 6, lineHeight: 1.25,
           }}>
             {t.title}

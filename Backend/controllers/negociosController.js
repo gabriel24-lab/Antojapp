@@ -76,7 +76,7 @@ async function getNegocios(req, res) {
 
     res.json(negocios);
   } catch (err) {
-    console.error("Error en getNegocios:", err);
+    console.error("[getNegocios]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -123,7 +123,7 @@ async function getNegocioById(req, res) {
     pool.query(
       "INSERT INTO visitas (negocio_id) VALUES ($1)",
       [id]
-    ).catch(e => console.error("Error registrando visita:", e));
+    ).catch(e => console.error("[registrarVisita]", e.message));
 
     res.json({
       ...formatearNegocio({
@@ -134,7 +134,7 @@ async function getNegocioById(req, res) {
       platos: platos.rows,
     });
   } catch (err) {
-    console.error("Error en getNegocioById:", err);
+    console.error("[getNegocioById]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -147,7 +147,7 @@ async function getCategorias(req, res) {
     );
     res.json(result.rows.map(r => r.categoria));
   } catch (err) {
-    console.error("Error en getCategorias:", err);
+    console.error("[getCategorias]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -211,7 +211,7 @@ async function crearNegocio(req, res) {
 
     res.status(201).json(negocio);
   } catch (err) {
-    console.error("Error en crearNegocio:", err);
+    console.error("[crearNegocio]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -243,7 +243,7 @@ async function actualizarNegocio(req, res) {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error en actualizarNegocio:", err);
+    console.error("[actualizarNegocio]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -286,7 +286,7 @@ async function subirImagen(req, res) {
 
     res.json({ url: publicUrl });
   } catch (err) {
-    console.error("Error en subirImagen:", err);
+    console.error("[subirImagen]", err.message);
     res.status(500).json({ error: "Error al subir la imagen" });
   }
 }
@@ -323,7 +323,7 @@ async function subirFoto(req, res) {
 
     res.json({ url: publicUrl });
   } catch (err) {
-    console.error("Error en subirFoto:", err);
+    console.error("[subirFoto]", err.message);
     res.status(500).json({ error: "Error al subir la foto" });
   }
 }
@@ -349,7 +349,7 @@ async function eliminarFoto(req, res) {
 
     res.json({ mensaje: "Foto eliminada" });
   } catch (err) {
-    console.error("Error en eliminarFoto:", err);
+    console.error("[eliminarFoto]", err.message);
     res.status(500).json({ error: "Error al eliminar la foto" });
   }
 }
@@ -392,7 +392,7 @@ async function getMiNegocio(req, res) {
       platos: platos.rows,
     });
   } catch (err) {
-    console.error("Error en getMiNegocio:", err);
+    console.error("[getMiNegocio]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

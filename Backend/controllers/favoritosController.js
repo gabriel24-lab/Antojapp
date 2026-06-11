@@ -28,7 +28,7 @@ async function getFavoritos(req, res) {
 
     res.json(result.rows);
   } catch (err) {
-    console.error("Error en getFavoritos:", err);
+    console.error("[getFavoritos]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -47,7 +47,7 @@ async function agregarFavorito(req, res) {
     );
     res.status(201).json({ mensaje: "Favorito agregado" });
   } catch (err) {
-    console.error("Error en agregarFavorito:", err);
+    console.error("[agregarFavorito]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -64,7 +64,7 @@ async function quitarFavorito(req, res) {
     );
     res.json({ mensaje: "Favorito eliminado" });
   } catch (err) {
-    console.error("Error en quitarFavorito:", err);
+    console.error("[quitarFavorito]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -80,7 +80,7 @@ async function getFavoritosIds(req, res) {
     );
     res.json(result.rows.map(r => r.negocio_id));
   } catch (err) {
-    console.error("Error en getFavoritosIds:", err);
+    console.error("[getFavoritosIds]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

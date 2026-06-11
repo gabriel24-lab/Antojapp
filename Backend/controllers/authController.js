@@ -10,6 +10,17 @@ function generarToken(usuario) {
   );
 }
 
+// ── Validaciones reutilizables ─────────────────────────────────
+function validarPassword(password) {
+  if (!password || password.length < 8)
+    return "La contraseña debe tener al menos 8 caracteres";
+  if (!/[A-Z]/.test(password))
+    return "La contraseña debe contener al menos una letra mayúscula";
+  if (!/[0-9]/.test(password))
+    return "La contraseña debe contener al menos un número";
+  return null;
+}
+
 // POST /api/auth/registro
 async function registro(req, res) {
   const { nombre, email, password, rol } = req.body;
@@ -17,18 +28,18 @@ async function registro(req, res) {
   if (!nombre || !email || !password)
     return res.status(400).json({ error: "Todos los campos son obligatorios" });
 
-  if (password.length < 6)
-    return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
+  const errorPassword = validarPassword(password);
+  if (errorPassword)
+    return res.status(400).json({ error: errorPassword });
 
   const rolValido = ["usuario", "negocio"].includes(rol) ? rol : "usuario";
 
   try {
-    // Verificar si el email ya existe
-    const existe = await pool.query("SELECT id FROM usuarios WHERE email = $1", [email]);
+    const existe = await pool.query("SELECT id FROM usuarios WHERE email = $1", [email.toLowerCase()]);
     if (existe.rows.length > 0)
       return res.status(409).json({ error: "Este correo ya está registrado" });
 
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 12); // salt 12 (más seguro que 10)
 
     const result = await pool.query(
       "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
@@ -40,7 +51,7 @@ async function registro(req, res) {
 
     res.status(201).json({ token, usuario });
   } catch (err) {
-    console.error("Error en registro:", err);
+    console.error("[registro]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -58,8 +69,11 @@ async function login(req, res) {
       [email.toLowerCase()]
     );
 
-    if (result.rows.length === 0)
+    // Respuesta genérica para no revelar si el email existe
+    if (result.rows.length === 0) {
+      await bcrypt.hash("dummy_para_tiempo_constante", 12); // evitar timing attack
       return res.status(401).json({ error: "Correo o contraseña incorrectos" });
+    }
 
     const usuario = result.rows[0];
 
@@ -77,7 +91,7 @@ async function login(req, res) {
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
     });
   } catch (err) {
-    console.error("Error en login:", err);
+    console.error("[login]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -95,7 +109,7 @@ async function me(req, res) {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error en /me:", err);
+    console.error("[me]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

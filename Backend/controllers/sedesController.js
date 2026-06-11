@@ -24,7 +24,7 @@ async function crearSede(req, res) {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error("Error en crearSede:", err);
+    console.error("[crearSede]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -60,7 +60,7 @@ async function actualizarSede(req, res) {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error en actualizarSede:", err);
+    console.error("[actualizarSede]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -80,7 +80,7 @@ async function eliminarSede(req, res) {
 
     res.json({ mensaje: "Sede eliminada" });
   } catch (err) {
-    console.error("Error en eliminarSede:", err);
+    console.error("[eliminarSede]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

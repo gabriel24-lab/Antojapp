@@ -28,7 +28,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
         <div style={{ marginBottom: 16, color: "#E8460A" }}>
           <AppIcon name="heart" size={52} fill="currentColor" />
         </div>
-        <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
+        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
           Guarda tus antojos favoritos
         </h2>
         <p style={{ fontSize: 15, color: "#6B5E52", marginBottom: 24, lineHeight: 1.6 }}>
@@ -44,7 +44,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px 60px" }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "'Sora',sans-serif", fontWeight: 800, fontSize: 26, color: "#1A1208", marginBottom: 6 }}>
+        <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 26, color: "#1A1208", marginBottom: 6 }}>
           Tus guardados
         </h1>
         <p style={{ fontSize: 14, color: "#6B5E52" }}>

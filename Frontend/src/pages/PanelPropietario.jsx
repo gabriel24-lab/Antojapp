@@ -80,7 +80,7 @@ function StatCard({ icon, label, valor, sub, color = "#E8460A", bg = "#FFF4F0" }
         color, flexShrink: 0,
       }}><AppIcon name={icon} size={25} fill={icon === "heart" || icon === "star" ? "currentColor" : "none"} /></div>
       <div>
-        <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Sora',sans-serif", color: "#1A1208", lineHeight: 1 }}>
+        <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "#1A1208", lineHeight: 1 }}>
           {valor}
         </div>
         <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52", marginTop: 4 }}>{label}</div>
@@ -149,7 +149,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   if (error === "No tienes ningún negocio registrado") return (
     <div style={{ maxWidth: 540, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
       <div style={{ marginBottom: 16, color: "#E8460A" }}><AppIcon name="store" size={64} /></div>
-      <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
+      <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
         Aún no tienes un negocio registrado
       </h2>
       <p style={{ color: "#A8988A", fontSize: 14, lineHeight: 1.7, marginBottom: 28 }}>
@@ -199,7 +199,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
             Panel del propietario
           </div>
           <h1 style={{
-            fontFamily: "'Sora',sans-serif", fontSize: 24, fontWeight: 700,
+            fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 700,
             color: "#fff", lineHeight: 1.2,
           }}>
             {negocio.nombre}
@@ -258,7 +258,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208" }}>
+            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208" }}>
               Visitas por día
             </h2>
             <div style={{ fontSize: 13, color: "#A8988A", marginTop: 3 }}>Últimos 30 días</div>
@@ -291,7 +291,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
           background: "#fff", borderRadius: 18, padding: "24px 28px",
           border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
         }}>
-          <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208", marginBottom: 18 }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208", marginBottom: 18 }}>
             Últimas reseñas
           </h2>
 
@@ -346,7 +346,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
             background: "#fff", borderRadius: 18, padding: "22px",
             border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
           }}>
-            <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 14 }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 14 }}>
               Acciones rápidas
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -373,11 +373,11 @@ export default function PanelPropietario({ onAbrirFormulario }) {
             background: "#fff", borderRadius: 18, padding: "22px",
             border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
           }}>
-            <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 16 }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 16 }}>
               Calificación promedio
             </h3>
             <div style={{ textAlign: "center", marginBottom: 12 }}>
-              <div style={{ fontSize: 42, fontWeight: 700, fontFamily: "'Sora',sans-serif", color: "#1A1208", lineHeight: 1 }}>
+              <div style={{ fontSize: 42, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "#1A1208", lineHeight: 1 }}>
                 {resenas.promedio.toFixed(1)}
               </div>
               <Estrellas valor={resenas.promedio} />

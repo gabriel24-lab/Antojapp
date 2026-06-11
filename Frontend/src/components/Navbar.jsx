@@ -81,7 +81,7 @@ export default function Navbar({
             }}
           />
           <span style={{
-            fontFamily: "'Sora', sans-serif", fontWeight: 700,
+            fontFamily: "'Manrope', sans-serif", fontWeight: 700,
             fontSize: compacto ? 17 : 19, color: "#fff", letterSpacing: "-0.5px",
             transition: "font-size 0.3s",
           }}>
@@ -91,7 +91,7 @@ export default function Navbar({
 
         {/* ── 3. Links de navegación ── */}
         <nav style={{ display: "flex", gap: 2, flexShrink: 0 }}>
-          <button style={navLinkStyle(vistaActual === "home")}     onClick={onIrInicio}>Inicio</button>
+          <button style={navLinkStyle(vistaActual === "home")} onClick={onIrInicio}>Inicio</button>
           <button style={navLinkStyle(vistaActual === "negocios")} onClick={onIrNegocios}>Negocios</button>
         </nav>
 
@@ -103,7 +103,7 @@ export default function Navbar({
           }}><AppIcon name="search" size={15} /></span>
           <input
             type="text"
-            placeholder="Busca: carne, empanadas, jugos…"
+            placeholder="Carne, empanadas, jugos…"
             value={busqueda}
             onChange={e => onBusqueda(e.target.value)}
             onFocus={() => { if (vistaActual !== "home" && vistaActual !== "negocios") onIrInicio(); }}

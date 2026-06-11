@@ -34,7 +34,7 @@ const Field = ({ children }) => (
 const SectionTitle = ({ icon, children, iconProps = {} }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, marginTop: 4 }}>
     <AppIcon name={icon} size={18} color="#E8460A" fill={icon === "star" ? "currentColor" : "none"} {...iconProps} />
-    <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 15, fontWeight: 700, color: "#1A1208" }}>{children}</h3>
+    <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 15, fontWeight: 700, color: "#1A1208" }}>{children}</h3>
   </div>
 );
 
@@ -656,7 +656,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
         <div style={{ background: "#1A1208", padding: "22px 28px 18px", borderRadius: "20px 20px 0 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div>
-              <div style={{ fontFamily: "'Sora',sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
                 <AppIcon name={esEdicion ? "edit" : "store"} size={18} />
                 {esEdicion ? "Editar negocio" : "Registrar negocio"}
               </div>
@@ -881,7 +881,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
               {/* Éxito */}
               <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 12, padding: 16, textAlign: "center" }}>
                 <div style={{ marginBottom: 6, color: "#1A8C5B", display: "flex", justifyContent: "center" }}><AppIcon name="sparkles" size={28} /></div>
-                <div style={{ fontWeight: 700, color: "#1A8C5B", fontFamily: "'Sora',sans-serif", fontSize: 15 }}>
+                <div style={{ fontWeight: 700, color: "#1A8C5B", fontFamily: "'Manrope', sans-serif", fontSize: 15 }}>
                   ¡Tu negocio está casi listo!
                 </div>
                 <div style={{ fontSize: 13, color: "#6B5E52", marginTop: 6 }}>

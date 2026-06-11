@@ -128,7 +128,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
 
           {/* Nombre */}
           <h3 style={{
-            fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16,
+            fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 16,
             color: "#fff", lineHeight: 1.2, textShadow: "0 1px 4px rgba(0,0,0,.4)",
             margin: 0
           }}>

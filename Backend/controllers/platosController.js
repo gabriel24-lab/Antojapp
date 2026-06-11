@@ -25,7 +25,7 @@ async function getPlatos(req, res) {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("Error en getPlatos:", err);
+    console.error("[getPlatos]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -72,7 +72,7 @@ async function crearPlato(req, res) {
 
     res.status(201).json(plato);
   } catch (err) {
-    console.error("Error en crearPlato:", err);
+    console.error("[crearPlato]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -116,7 +116,7 @@ async function actualizarPlato(req, res) {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Error en actualizarPlato:", err);
+    console.error("[actualizarPlato]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -147,7 +147,7 @@ async function eliminarPlato(req, res) {
 
     res.json({ mensaje: "Plato eliminado" });
   } catch (err) {
-    console.error("Error en eliminarPlato:", err);
+    console.error("[eliminarPlato]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -187,7 +187,7 @@ async function subirFotoPlato(req, res) {
 
     res.json({ url: publicUrl });
   } catch (err) {
-    console.error("Error en subirFotoPlato:", err);
+    console.error("[subirFotoPlato]", err.message);
     res.status(500).json({ error: "Error al subir la foto del plato" });
   }
 }

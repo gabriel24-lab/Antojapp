@@ -99,7 +99,7 @@ async function getEstadisticas(req, res) {
       },
     });
   } catch (err) {
-    console.error("Error en getEstadisticas:", err);
+    console.error("[getEstadisticas]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

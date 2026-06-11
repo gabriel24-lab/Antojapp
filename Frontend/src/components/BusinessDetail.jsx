@@ -106,7 +106,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
         <img src={negocio.portada} alt={negocio.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,.7) 30%, transparent 70%)" }} />
         <div style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}>
-          <h1 style={{ fontFamily: "'Sora',sans-serif", fontWeight: 800, fontSize: 30, color: "#fff", marginBottom: 8, lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 30, color: "#fff", marginBottom: 8, lineHeight: 1.1 }}>
             {negocio.nombre}
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -163,7 +163,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
               <AppIcon name={icon} size={14} fill={icon === "star" ? "currentColor" : "none"} /> {label}
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1208", marginBottom: 3 }}>{plato.nombre}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'Sora',sans-serif" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'Manrope', sans-serif" }}>
               ${plato.precio.toLocaleString("es-CO")}
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       {/* Sedes */}
       <div className="card" style={{ marginBottom: 24, overflow: "hidden" }}>
         <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid #E2DBD5" }}>
-          <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 12 }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 12 }}>
             <AppIcon name="mapPin" size={18} color="#E8460A" /> {negocio.sedes.length > 1 ? `${negocio.sedes.length} sedes` : "Ubicación"}
           </h2>
           {negocio.sedes.length > 1 && (
@@ -282,7 +282,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
       {/* Reseñas */}
       <div className="card" style={{ padding: "20px" }}>
-        <h2 style={{ fontFamily: "'Sora',sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 16 }}>
+        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 16 }}>
           <AppIcon name="message" size={18} color="#E8460A" /> Reseñas de la comunidad
         </h2>
 

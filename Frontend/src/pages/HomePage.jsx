@@ -115,13 +115,13 @@ export default function HomePage({
               Descubre lo que está cerca
             </p>
             <h1 style={{
-              fontFamily: "'Sora', sans-serif", fontWeight: 800,
+              fontFamily: "'Manrope', sans-serif", fontWeight: 800,
               fontSize: "clamp(28px, 5vw, 44px)", color: "#fff", lineHeight: 1.15, marginBottom: 16,
             }}>
-              ¿Qué se te antoja<br /><span style={{ color: "#E8460A" }}>hoy?</span>
+              Tu antojo comienza <br /><span style={{ color: "#E8460A" }}>aquí</span>
             </h1>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,.55)", marginBottom: 28, lineHeight: 1.6 }}>
-              Busca por antojo real: "carne jugosa", "algo dulce",<br />"desgranado" — no por nombre del restaurante.
+              Comida, tiendas, servicios y emprendimientos de tu zona en un solo lugar
             </p>
             <div style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}>
               <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#A8988A", pointerEvents: "none" }}>
@@ -129,7 +129,7 @@ export default function HomePage({
               </span>
               <input
                 className="input" type="text"
-                placeholder="Ej: carne asada, empanadas, corozo, ramen…"
+                placeholder="Carne asada, empanadas, corozo, ramen…"
                 value={busqueda}
                 onChange={e => onBusqueda(e.target.value)}
                 style={{ paddingLeft: 46, paddingRight: busqueda ? 40 : 14, fontSize: 15, borderRadius: 50, height: 52, boxShadow: "0 4px 20px rgba(0,0,0,.3)", border: "2px solid rgba(255,255,255,.1)" }}
@@ -188,7 +188,7 @@ export default function HomePage({
               display: "flex", alignItems: "center", gap: 8,
             }}>
               <AppIcon name="info" size={14} />
-              Mostrando negocios de ejemplo — el backend no está disponible.
+              Mostrando negocios de ejemplo
             </div>
           )}
 
@@ -254,7 +254,7 @@ export default function HomePage({
           {!cargando && !error && negociosFiltrados.length === 0 && (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
               <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
-              <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
+              <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
                 {busqueda
                   ? `No encontramos "${busqueda}" aquí`
                   : paisSeleccionado

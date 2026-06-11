@@ -104,7 +104,7 @@ export default function LocationSelector({
               transition: "background 0.12s",
             }}
           >
-            <span style={{ fontSize: 15 }}>🌎</span>
+            <span style={{ fontSize: 15 }}></span>
             <span>Todo el mundo</span>
           </button>
         </div>
