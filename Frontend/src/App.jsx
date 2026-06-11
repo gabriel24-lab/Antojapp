@@ -18,7 +18,22 @@ function AppContent() {
   const [negocioEditar,  setNegocioEditar]  = useState(null);
   const [busqueda,       setBusqueda]       = useState("");
 
-  const irInicio = () => { setVista("home");     setNegocioActivo(null); setBusqueda(""); };
+  // ── Estado de ubicación global (Navbar → HomePage) ──────────────────────
+  const [paisSeleccionado,         setPaisSeleccionado]         = useState(null); // iso2 code
+  const [paisNombre,               setPaisNombre]               = useState(null); // legible
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState(null);
+  const [ciudadSeleccionada,       setCiudadSeleccionada]       = useState(null);
+
+  // Acepta { iso2, nombre, departamento, ciudad } (desde NavLocationPicker)
+  // o     { pais, departamento, ciudad }          (legado desde HomePage GPS)
+  const handleCambiarUbicacion = ({ iso2, nombre, pais, departamento, ciudad }) => {
+    setPaisSeleccionado(iso2 || pais || null);
+    setPaisNombre(nombre || null);
+    setDepartamentoSeleccionado(departamento || null);
+    setCiudadSeleccionada(ciudad || null);
+  };
+
+  const irInicio   = () => { setVista("home");     setNegocioActivo(null); setBusqueda(""); };
   const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
 
   const verDetalle = (negocio) => {
@@ -40,7 +55,6 @@ function AppContent() {
     if (refrescar) setVista("panel");
   };
 
-  // Si escribe en el navbar desde una vista interna, lo lleva a home
   const handleBusqueda = (valor) => {
     setBusqueda(valor);
     if (vista !== "home" && vista !== "negocios") setVista("home");
@@ -61,6 +75,12 @@ function AppContent() {
         onBusqueda={handleBusqueda}
         onIrInicio={irInicio}
         onIrNegocios={irNegocios}
+        // Ubicación
+        paisSeleccionado={paisSeleccionado}
+        paisNombre={paisNombre}
+        departamentoSeleccionado={departamentoSeleccionado}
+        ciudadSeleccionada={ciudadSeleccionada}
+        onCambiarUbicacion={handleCambiarUbicacion}
       />
 
       <main style={{ flex: 1 }}>
@@ -71,6 +91,12 @@ function AppContent() {
             busqueda={busqueda}
             onBusqueda={setBusqueda}
             modoNegocios={vista === "negocios"}
+            // Ubicación desde el navbar
+            paisSeleccionado={paisSeleccionado}
+            paisNombre={paisNombre}
+            departamentoSeleccionado={departamentoSeleccionado}
+            ciudadSeleccionada={ciudadSeleccionada}
+            onCambiarUbicacion={handleCambiarUbicacion}
           />
         )}
 
@@ -101,7 +127,7 @@ function AppContent() {
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
       />
 
-      {authAbierto  && <AuthModal onCerrar={() => setAuthAbierto(false)} />}
+      {authAbierto   && <AuthModal onCerrar={() => setAuthAbierto(false)} />}
       {formularioOpen && (
         <FormularioNegocio negocioInicial={negocioEditar} onCerrar={cerrarFormulario} />
       )}

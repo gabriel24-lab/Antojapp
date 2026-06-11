@@ -1,19 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import AppIcon from "./AppIcon";
+import NavLocationPicker from "./NavLocationPicker";
 
 export default function Navbar({
   onAbrirAuth, onVerFavoritos, onAbrirPanel,
   onAbrirFormulario, vistaActual,
   busqueda, onBusqueda, onIrInicio, onIrNegocios,
+  // Props de ubicación
+  paisSeleccionado, paisNombre, departamentoSeleccionado, ciudadSeleccionada,
+  onCambiarUbicacion,
 }) {
   const { user, logout } = useAuth();
-  const [menuAbierto,  setMenuAbierto]  = useState(false);
-  const [compacto,     setCompacto]     = useState(false);   // efecto scroll
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [compacto,    setCompacto]    = useState(false);
   const prevScrollY = useRef(0);
   const esPropietario = user?.rol === "negocio";
 
-  /* ── efecto scroll: se vuelve compacto + semitransparente al bajar ── */
   useEffect(() => {
     const handler = () => {
       const y = window.scrollY;
@@ -43,17 +46,28 @@ export default function Navbar({
       WebkitBackdropFilter: compacto ? "blur(12px)" : "none",
       position: "sticky", top: 0, zIndex: 100,
       borderBottom: `1px solid rgba(255,255,255,${compacto ? 0.1 : 0.07})`,
-      transition: "background 0.3s, height 0.3s, backdrop-filter 0.3s",
+      transition: "background 0.3s, height 0.3s",
       height: navH,
     }}>
       <div style={{
         maxWidth: 1100, margin: "0 auto",
         padding: "0 20px", height: "100%",
         display: "flex", alignItems: "center", gap: 10,
-        transition: "height 0.3s",
       }}>
 
-        {/* ── Logo ── */}
+        {/* ── 1. Selector de ubicación (estilo Rappi) — izquierda del logo ── */}
+        <NavLocationPicker
+          paisSeleccionado={paisSeleccionado}
+          paisNombre={paisNombre}
+          departamentoSeleccionado={departamentoSeleccionado}
+          ciudadSeleccionada={ciudadSeleccionada}
+          onCambiar={onCambiarUbicacion}
+        />
+
+        {/* Divisor sutil */}
+        <div style={{ width: 1, height: 22, background: "rgba(255,255,255,.12)", flexShrink: 0 }} />
+
+        {/* ── 2. Logo ── */}
         <button
           onClick={onIrInicio}
           style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
@@ -75,13 +89,13 @@ export default function Navbar({
           </span>
         </button>
 
-        {/* ── Links ── */}
+        {/* ── 3. Links de navegación ── */}
         <nav style={{ display: "flex", gap: 2, flexShrink: 0 }}>
-          <button style={navLinkStyle(vistaActual === "home")}    onClick={onIrInicio}>Inicio</button>
+          <button style={navLinkStyle(vistaActual === "home")}     onClick={onIrInicio}>Inicio</button>
           <button style={navLinkStyle(vistaActual === "negocios")} onClick={onIrNegocios}>Negocios</button>
         </nav>
 
-        {/* ── Barra de búsqueda ── */}
+        {/* ── 4. Barra de búsqueda ── */}
         <div style={{ flex: 1, maxWidth: 380, position: "relative" }}>
           <span style={{
             position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
@@ -117,7 +131,7 @@ export default function Navbar({
           )}
         </div>
 
-        {/* ── Acciones derecha ── */}
+        {/* ── 5. Acciones derecha ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", flexShrink: 0 }}>
 
           {user && !esPropietario && (

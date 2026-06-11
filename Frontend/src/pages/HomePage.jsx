@@ -1,54 +1,42 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import BusinessCard from "../components/BusinessCard";
-import LocationSelector from "../components/LocationSelector";
 import LocationPermissionModal from "../components/LocationPermissionModal";
-import { useUbicacion } from "../hooks/useUbicacion";
 import { NEGOCIOS, PAISES } from "../data/mockData";
 import API_URL from "../api";
 import AppIcon from "../components/AppIcon";
 
-export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusqueda, modoNegocios }) {
-  // ── Negocios del backend ──────────────────────────────────────
+export default function HomePage({
+  onVerDetalle, onAbrirAuth, busqueda, onBusqueda, modoNegocios,
+  // Ubicación controlada desde App (via Navbar)
+  paisSeleccionado, paisNombre, departamentoSeleccionado, ciudadSeleccionada,
+  onCambiarUbicacion,
+}) {
   const [negocios,     setNegocios]     = useState([]);
   const [categorias,   setCategorias]   = useState(["Todas"]);
   const [categoria,    setCategoria]    = useState("Todas");
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [cargando,     setCargando]     = useState(true);
   const [error,        setError]        = useState("");
+  const [usandoMock,   setUsandoMock]   = useState(false);
 
-  // ── Ubicación ─────────────────────────────────────────────────
-  const [modalUbicacion,   setModalUbicacion]   = useState(false);
-  const [paisSeleccionado, setPaisSeleccionado] = useState(null);
-  const [ciudadSeleccionada, setCiudadSeleccionada] = useState(null);
-  const [usandoMock,       setUsandoMock]       = useState(false);
-  const { estado: ubicEstado, paisDetectado, solicitarUbicacion } = useUbicacion();
+  const [modalUbicacion, setModalUbicacion] = useState(false);
 
   const resultadosRef = useRef(null);
 
-  // Mostrar modal de permiso al cargar (solo una vez)
+  // Modal de permiso al cargar (solo una vez)
   useEffect(() => {
     const ya = sessionStorage.getItem("ubicacion_preguntado");
-    if (!ya) {
-      setTimeout(() => setModalUbicacion(true), 800);
-    }
+    if (!ya) setTimeout(() => setModalUbicacion(true), 800);
   }, []);
 
-  // Cuando se detecta el país por GPS, aplicarlo
-  useEffect(() => {
-    if (paisDetectado && ubicEstado === "concedida") {
-      setPaisSeleccionado(paisDetectado);
-      setCiudadSeleccionada(null);
-    }
-  }, [paisDetectado, ubicEstado]);
-
-  // Scroll automático a resultados en modo "Negocios"
+  // Scroll en modo Negocios
   useEffect(() => {
     if (modoNegocios && resultadosRef.current) {
       setTimeout(() => resultadosRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     }
   }, [modoNegocios]);
 
-  // Cargar categorías del backend
+  // Cargar categorías
   useEffect(() => {
     fetch(`${API_URL}/negocios/categorias`)
       .then(r => r.json())
@@ -56,25 +44,18 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
       .catch(() => {});
   }, []);
 
-  // Cargar negocios del backend con debounce
+  // Cargar negocios con debounce
   const cargarNegocios = useCallback(() => {
     setCargando(true); setError("");
     const p = new URLSearchParams();
-    if (busqueda?.trim())      p.set("busqueda",  busqueda.trim());
-    if (categoria !== "Todas") p.set("categoria", categoria);
+    if (busqueda?.trim())      p.set("busqueda",    busqueda.trim());
+    if (categoria !== "Todas") p.set("categoria",   categoria);
     if (soloAbiertos)          p.set("soloAbiertos", "true");
     fetch(`${API_URL}/negocios?${p}`)
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        setNegocios(data);
-        setUsandoMock(false);
-        setCargando(false);
-      })
+      .then(data => { setNegocios(data); setUsandoMock(false); setCargando(false); })
       .catch(() => {
-        // Si el backend no está disponible, usar mockData
         let mock = NEGOCIOS;
-
-        // Filtrar por búsqueda
         if (busqueda?.trim()) {
           const q = busqueda.trim().toLowerCase();
           mock = mock.filter(n =>
@@ -84,22 +65,12 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
             n.etiquetas?.some(t => t.toLowerCase().includes(q))
           );
         }
-        // Filtrar por categoría
-        if (categoria !== "Todas") {
-          mock = mock.filter(n => n.categoria === categoria);
-        }
-        // Filtrar por abiertos
-        if (soloAbiertos) {
-          mock = mock.filter(n => n.abierto);
-        }
-
+        if (categoria !== "Todas") mock = mock.filter(n => n.categoria === categoria);
+        if (soloAbiertos)          mock = mock.filter(n => n.abierto);
         setNegocios(mock);
         setUsandoMock(true);
         setCargando(false);
-
-        // Extraer categorías del mock
-        const cats = ["Todas", ...new Set(NEGOCIOS.map(n => n.categoria))];
-        setCategorias(cats);
+        setCategorias(["Todas", ...new Set(NEGOCIOS.map(n => n.categoria))]);
       });
   }, [busqueda, categoria, soloAbiertos]);
 
@@ -108,7 +79,7 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
     return () => clearTimeout(t);
   }, [cargarNegocios, busqueda]);
 
-  // ── Filtrado por país / ciudad (frontend) ─────────────────────
+  // Filtrado por ubicación (frontend)
   const negociosFiltrados = negocios.filter(n => {
     if (!paisSeleccionado) return true;
     if (n.pais !== paisSeleccionado) return false;
@@ -116,33 +87,27 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
     return true;
   });
 
-  // ── Handlers de ubicación ─────────────────────────────────────
-  const handlePermitirUbicacion = () => {
+  // El modal ahora maneja GPS + departamento + ciudad internamente
+  const handleConfirmarUbicacion = ({ iso2, nombre, departamento, ciudad }) => {
     setModalUbicacion(false);
     sessionStorage.setItem("ubicacion_preguntado", "1");
-    solicitarUbicacion();
+    onCambiarUbicacion({ iso2, nombre, departamento, ciudad });
   };
-
-  const handleRechazarUbicacion = () => {
+  const handleSaltarUbicacion = () => {
     setModalUbicacion(false);
     sessionStorage.setItem("ubicacion_preguntado", "1");
-  };
-
-  const handleSolicitarDesdePanel = () => {
-    solicitarUbicacion();
   };
 
   return (
     <div>
-      {/* ── Modal de permiso ── */}
       {modalUbicacion && (
         <LocationPermissionModal
-          onPermitir={handlePermitirUbicacion}
-          onRechazar={handleRechazarUbicacion}
+          onConfirmar={handleConfirmarUbicacion}
+          onSaltar={handleSaltarUbicacion}
         />
       )}
 
-      {/* ── Hero — oculto en modo Negocios ── */}
+      {/* ── Hero ── */}
       {!modoNegocios && (
         <section style={{ background: "#1A1208", padding: "52px 20px 44px", textAlign: "center" }}>
           <div style={{ maxWidth: 620, margin: "0 auto" }}>
@@ -158,7 +123,6 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
             <p style={{ fontSize: 16, color: "rgba(255,255,255,.55)", marginBottom: 28, lineHeight: 1.6 }}>
               Busca por antojo real: "carne jugosa", "algo dulce",<br />"desgranado" — no por nombre del restaurante.
             </p>
-            {/* Barra hero */}
             <div style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}>
               <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#A8988A", pointerEvents: "none" }}>
                 <AppIcon name="search" size={19} />
@@ -213,115 +177,107 @@ export default function HomePage({ onVerDetalle, onAbrirAuth, busqueda, onBusque
         </div>
       </section>
 
-      {/* ── Layout principal: sidebar izquierdo + grid ── */}
+      {/* ── Layout principal: solo grid (sin sidebar) ── */}
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 20px 60px" }}>
-        <div style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
+        <section ref={resultadosRef}>
+          {/* Banner modo mock */}
+          {usandoMock && (
+            <div style={{
+              background: "#FFF9EC", border: "1px solid #F0D58C", borderRadius: 10,
+              padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#8A6A00",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <AppIcon name="info" size={14} />
+              Mostrando negocios de ejemplo — el backend no está disponible.
+            </div>
+          )}
 
-          {/* ── Sidebar de ubicación ── */}
-          <LocationSelector
-            paisSeleccionado={paisSeleccionado}
-            ciudadSeleccionada={ciudadSeleccionada}
-            onCambiarPais={(p) => { setPaisSeleccionado(p); setCiudadSeleccionada(null); }}
-            onCambiarCiudad={setCiudadSeleccionada}
-            ubicacionEstado={ubicEstado}
-            onSolicitarUbicacion={handleSolicitarDesdePanel}
-            totalNegocios={negocios.length}
-          />
+          {error && (
+            <div style={{ background: "#FDECEA", border: "1px solid #C0392B", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#C0392B", display: "flex", alignItems: "center", gap: 8 }}>
+              <AppIcon name="alert" size={18} /> {error}
+            </div>
+          )}
 
-          {/* ── Columna de resultados ── */}
-          <section ref={resultadosRef} style={{ flex: 1, minWidth: 0 }}>
-            {/* Banner de datos de prueba */}
-            {usandoMock && (
-              <div style={{
-                background: "#FFF9EC", border: "1px solid #F0D58C", borderRadius: 10,
-                padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#8A6A00",
-                display: "flex", alignItems: "center", gap: 8,
-              }}>
-                <AppIcon name="info" size={14} />
-                Mostrando negocios de ejemplo — el backend no está disponible.
-              </div>
-            )}
-
-            {error && (
-              <div style={{ background: "#FDECEA", border: "1px solid #C0392B", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "#C0392B", display: "flex", alignItems: "center", gap: 8 }}>
-                <AppIcon name="alert" size={18} /> {error}
-              </div>
-            )}
-
-            {/* Contador y contexto de ubicación */}
-            {!cargando && !error && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-                <p style={{ fontSize: 14, color: "#6B5E52", margin: 0 }}>
-                  {busqueda ? <><strong style={{ color: "#1A1208" }}>"{busqueda}"</strong> — </> : ""}
-                  <strong style={{ color: "#1A1208" }}>{negociosFiltrados.length}</strong>{" "}
-                  {negociosFiltrados.length === 1 ? "negocio" : "negocios"}
-                  {paisSeleccionado && (
-                    <span style={{ color: "#A8988A" }}>
-                      {" "}en {(() => {
-                        const p = PAISES.find(p => p.codigo === paisSeleccionado);
-                        return ciudadSeleccionada ? `${ciudadSeleccionada}, ${p?.nombre}` : p?.nombre;
-                      })()}
-                    </span>
-                  )}
-                </p>
+          {/* Contador + filtro activo */}
+          {!cargando && !error && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
+              <p style={{ fontSize: 14, color: "#6B5E52", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                {busqueda ? <><strong style={{ color: "#1A1208" }}>"{busqueda}"</strong> — </> : ""}
+                <strong style={{ color: "#1A1208" }}>{negociosFiltrados.length}</strong>{" "}
+                {negociosFiltrados.length === 1 ? "negocio" : "negocios"}
                 {paisSeleccionado && (
-                  <button
-                    onClick={() => { setPaisSeleccionado(null); setCiudadSeleccionada(null); }}
-                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 20, border: "1px solid #E2DBD5", background: "#fff", color: "#6B5E52", fontSize: 12, cursor: "pointer" }}
-                  >
-                    <AppIcon name="x" size={11} /> Quitar filtro
-                  </button>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    background: "#FFF0EB", color: "#E8460A",
+                    padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                  }}>
+                    <AppIcon name="mapPin" size={11} />
+                    {ciudadSeleccionada
+                      ? `${ciudadSeleccionada}${departamentoSeleccionado ? `, ${departamentoSeleccionado}` : ""}`
+                      : departamentoSeleccionado
+                        ? `${departamentoSeleccionado}, ${paisNombre}`
+                        : paisNombre
+                    }
+                  </span>
                 )}
-              </div>
-            )}
-
-            {/* Skeletons cargando */}
-            {cargando && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} style={{ height: 320, background: "#F0EBE5", borderRadius: 12, animation: "pulse 1.5s infinite" }} />
-                ))}
-              </div>
-            )}
-
-            {/* Grid de negocios */}
-            {!cargando && negociosFiltrados.length > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-                {negociosFiltrados.map(negocio => (
-                  <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} />
-                ))}
-              </div>
-            )}
-
-            {/* Estado vacío */}
-            {!cargando && !error && negociosFiltrados.length === 0 && (
-              <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
-                <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
-                <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
-                  {busqueda
-                    ? `No encontramos "${busqueda}" aquí`
-                    : paisSeleccionado
-                      ? `No hay negocios en ${PAISES.find(p => p.codigo === paisSeleccionado)?.nombre || paisSeleccionado} aún`
-                      : "No hay negocios disponibles"
-                  }
-                </h3>
-                <p style={{ fontSize: 15, lineHeight: 1.6 }}>
-                  {paisSeleccionado
-                    ? "Prueba seleccionando \"Todo el mundo\" o cambiando de país."
-                    : "Intenta con otras palabras: \"carne\", \"frito\", \"dulce\"…"
-                  }
-                </p>
+              </p>
+              {paisSeleccionado && (
                 <button
-                  className="btn-secondary"
-                  onClick={() => { onBusqueda(""); setCategoria("Todas"); setPaisSeleccionado(null); setCiudadSeleccionada(null); }}
-                  style={{ marginTop: 20 }}
+                  onClick={() => onCambiarUbicacion({ iso2: null, nombre: null, departamento: null, ciudad: null })}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 20, border: "1px solid #E2DBD5", background: "#fff", color: "#6B5E52", fontSize: 12, cursor: "pointer" }}
                 >
-                  Ver todos los negocios
+                  <AppIcon name="x" size={11} /> Quitar filtro de zona
                 </button>
-              </div>
-            )}
-          </section>
-        </div>
+              )}
+            </div>
+          )}
+
+          {/* Skeletons */}
+          {cargando && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} style={{ height: 320, background: "#F0EBE5", borderRadius: 12, animation: "pulse 1.5s infinite" }} />
+              ))}
+            </div>
+          )}
+
+          {/* Grid */}
+          {!cargando && negociosFiltrados.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+              {negociosFiltrados.map(negocio => (
+                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} />
+              ))}
+            </div>
+          )}
+
+          {/* Vacío */}
+          {!cargando && !error && negociosFiltrados.length === 0 && (
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#A8988A" }}>
+              <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
+              <h3 style={{ fontFamily: "'Sora',sans-serif", fontSize: 20, color: "#6B5E52", marginBottom: 8 }}>
+                {busqueda
+                  ? `No encontramos "${busqueda}" aquí`
+                  : paisSeleccionado
+                    ? `No hay negocios en ${ciudadSeleccionada || paisNombre || paisSeleccionado} aún`
+                    : "No hay negocios disponibles"
+                }
+              </h3>
+              <p style={{ fontSize: 15, lineHeight: 1.6 }}>
+                {paisSeleccionado
+                  ? "Prueba cambiando la zona desde el selector arriba."
+                  : "Intenta con otras palabras: \"carne\", \"frito\", \"dulce\"…"
+                }
+              </p>
+              <button
+                className="btn-secondary"
+                onClick={() => { onBusqueda(""); setCategoria("Todas"); onCambiarUbicacion({ iso2: null, nombre: null, departamento: null, ciudad: null }); }}
+                style={{ marginTop: 20 }}
+              >
+                Ver todos los negocios
+              </button>
+            </div>
+          )}
+        </section>
       </div>
 
       <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
