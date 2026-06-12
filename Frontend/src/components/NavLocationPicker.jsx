@@ -17,7 +17,7 @@ export default function NavLocationPicker({
   const [abierto, setAbierto]     = useState(false);
   const [paso, setPaso]           = useState("pais"); // "pais" | "departamento" | "ciudad"
   const [paisTemp, setPaisTemp]   = useState(null);   // { iso2, nombre }
-  const [deptTemp, setDeptTemp]   = useState(null);   // string
+  const [deptTemp, setDeptTemp]   = useState(null);   // { display, original }
   const [busqueda, setBusqueda]   = useState("");
 
   // Estados y ciudades cargados dinámicamente
@@ -64,25 +64,28 @@ export default function NavLocationPicker({
     setPaso("departamento");
     setEstados([]);
     setLoadingEstados(true);
+    // fetchStates ahora devuelve [{ display, original }, ...]
     const result = await fetchStates(pais.nombre);
     setEstados(result);
     setLoadingEstados(false);
   };
 
   // ── Cargar ciudades al elegir departamento ──
+  // dept = { display: "Cesar", original: "Cesar Department" }
   const elegirDept = async (dept) => {
     setDeptTemp(dept);
     setBusqueda("");
     setPaso("ciudad");
     setCiudades([]);
     setLoadingCiudades(true);
-    const result = await fetchCities(paisTemp.nombre, dept);
+    // Usamos dept.original para que la API lo reconozca correctamente
+    const result = await fetchCities(paisTemp.nombre, dept.original);
     setCiudades(result);
     setLoadingCiudades(false);
   };
 
   const elegirCiudad = (ciudad) => {
-    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp, ciudad });
+    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp.display, ciudad });
     setAbierto(false);
     resetTemp();
   };
@@ -94,7 +97,7 @@ export default function NavLocationPicker({
   };
 
   const elegirSoloDept = () => {
-    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp, ciudad: null });
+    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp.display, ciudad: null });
     setAbierto(false);
     resetTemp();
   };
@@ -111,7 +114,7 @@ export default function NavLocationPicker({
     ? countries.filter((p) => p.nombre.toLowerCase().includes(q))
     : countries;
   const estadosFiltrados = q
-    ? estados.filter((e) => e.toLowerCase().includes(q))
+    ? estados.filter((e) => e.display.toLowerCase().includes(q))
     : estados;
   const ciudadesFiltradas = q
     ? ciudades.filter((c) => c.toLowerCase().includes(q))
@@ -124,9 +127,9 @@ export default function NavLocationPicker({
     : departamentoSeleccionado || null;
 
   const titulos = {
-    pais:        "¿En qué país?",
+    pais:         "¿En qué país?",
     departamento: paisTemp ? `Departamento · ${paisTemp.nombre}` : "Departamento / Estado",
-    ciudad:      deptTemp  ? `Ciudad en ${deptTemp}` : "Ciudad",
+    ciudad:       deptTemp ? `Ciudad en ${deptTemp.display}` : "Ciudad",
   };
 
   return (
@@ -221,7 +224,7 @@ export default function NavLocationPicker({
                   )}
                   {deptTemp && (
                     <span style={{ fontSize: 10, background: "#F0EBE5", color: "#6B5E52", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
-                      {deptTemp}
+                      {deptTemp.display}
                     </span>
                   )}
                 </div>
@@ -236,7 +239,7 @@ export default function NavLocationPicker({
                   autoFocus
                   type="text"
                   placeholder={
-                    paso === "pais"        ? "Buscar país…"         :
+                    paso === "pais"         ? "Buscar país…"         :
                     paso === "departamento" ? "Buscar departamento…" :
                                              "Buscar ciudad…"
                   }
@@ -301,11 +304,11 @@ export default function NavLocationPicker({
                   ) : estadosFiltrados.length > 0 ? (
                     estadosFiltrados.map((d) => (
                       <ItemBtn
-                        key={d}
+                        key={d.original}
                         onClick={() => elegirDept(d)}
-                        activo={departamentoSeleccionado === d && !ciudadSeleccionada}
+                        activo={departamentoSeleccionado === d.display && !ciudadSeleccionada}
                         icon="📍"
-                        label={d}
+                        label={d.display}
                         chevron
                       />
                     ))
@@ -320,9 +323,9 @@ export default function NavLocationPicker({
                 <>
                   <ItemBtn
                     onClick={elegirSoloDept}
-                    activo={departamentoSeleccionado === deptTemp && !ciudadSeleccionada}
+                    activo={departamentoSeleccionado === deptTemp?.display && !ciudadSeleccionada}
                     icon="📍"
-                    label={`Todo ${deptTemp}`}
+                    label={`Todo ${deptTemp?.display}`}
                     sub="Sin filtro de ciudad"
                   />
                   {loadingCiudades ? (

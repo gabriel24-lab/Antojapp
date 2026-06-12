@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { AuthProvider } from "./context/AuthContext";
+import { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { apiFetch } from "./apiClient";
+import API_URL from "./api";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AuthModal from "./components/AuthModal";
@@ -11,6 +13,7 @@ import PanelPropietario from "./pages/PanelPropietario";
 import "./index.css";
 
 function AppContent() {
+  const { user } = useAuth();
   const [vista,          setVista]          = useState("home");
   const [negocioActivo,  setNegocioActivo]  = useState(null);
   const [authAbierto,    setAuthAbierto]    = useState(false);
@@ -18,14 +21,30 @@ function AppContent() {
   const [negocioEditar,  setNegocioEditar]  = useState(null);
   const [busqueda,       setBusqueda]       = useState("");
 
+  // ── Conteo de negocios del propietario (para el límite) ─────────────────
+  const [totalNegocios,  setTotalNegocios]  = useState(0);
+  const [limiteNegocios, setLimiteNegocios] = useState(4);
+
   // ── Estado de ubicación global (Navbar → HomePage) ──────────────────────
-  const [paisSeleccionado,         setPaisSeleccionado]         = useState(null); // iso2 code
-  const [paisNombre,               setPaisNombre]               = useState(null); // legible
+  const [paisSeleccionado,         setPaisSeleccionado]         = useState(null);
+  const [paisNombre,               setPaisNombre]               = useState(null);
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState(null);
   const [ciudadSeleccionada,       setCiudadSeleccionada]       = useState(null);
 
-  // Acepta { iso2, nombre, departamento, ciudad } (desde NavLocationPicker)
-  // o     { pais, departamento, ciudad }          (legado desde HomePage GPS)
+  // Cargar conteo de negocios cuando el propietario inicia sesión
+  useEffect(() => {
+    if (user?.rol !== "negocio") {
+      setTotalNegocios(0);
+      return;
+    }
+    apiFetch("/negocios/mio/negocio").then(({ data }) => {
+      if (data?.total !== undefined) {
+        setTotalNegocios(data.total);
+        setLimiteNegocios(data.limite ?? 4);
+      }
+    });
+  }, [user]);
+
   const handleCambiarUbicacion = ({ iso2, nombre, pais, departamento, ciudad }) => {
     setPaisSeleccionado(iso2 || pais || null);
     setPaisNombre(nombre || null);
@@ -36,10 +55,25 @@ function AppContent() {
   const irInicio   = () => { setVista("home");     setNegocioActivo(null); setBusqueda(""); };
   const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
 
-  const verDetalle = (negocio) => {
+  // Llama a GET /api/negocios/:id para registrar la visita en la BD
+  // y obtener los datos más frescos (reseñas actualizadas, etc.)
+  const verDetalle = async (negocio) => {
+    // Mostrar el detalle de inmediato con los datos que ya tenemos
     setNegocioActivo(negocio);
     setVista("detalle");
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Llamar al backend en segundo plano: registra la visita y refresca los datos
+    try {
+      const res = await fetch(`${API_URL}/negocios/${negocio.id}`);
+      if (res.ok) {
+        const datos = await res.json();
+        // Actualizar con los datos frescos del servidor
+        setNegocioActivo(datos);
+      }
+    } catch {
+      // Si falla la red, el detalle sigue mostrándose con los datos en caché
+    }
   };
 
   const volver = () => { setVista("home"); setNegocioActivo(null); };
@@ -52,7 +86,13 @@ function AppContent() {
   const cerrarFormulario = (refrescar) => {
     setFormularioOpen(false);
     setNegocioEditar(null);
-    if (refrescar) setVista("panel");
+    if (refrescar) {
+      setVista("panel");
+      // Recargar el conteo de negocios al crear uno nuevo
+      apiFetch("/negocios/mio/negocio").then(({ data }) => {
+        if (data?.total !== undefined) setTotalNegocios(data.total);
+      });
+    }
   };
 
   const handleBusqueda = (valor) => {
@@ -81,6 +121,9 @@ function AppContent() {
         departamentoSeleccionado={departamentoSeleccionado}
         ciudadSeleccionada={ciudadSeleccionada}
         onCambiarUbicacion={handleCambiarUbicacion}
+        // Límite de negocios
+        totalNegociosPropietario={totalNegocios}
+        limiteNegocios={limiteNegocios}
       />
 
       <main style={{ flex: 1 }}>
@@ -91,7 +134,6 @@ function AppContent() {
             busqueda={busqueda}
             onBusqueda={setBusqueda}
             modoNegocios={vista === "negocios"}
-            // Ubicación desde el navbar
             paisSeleccionado={paisSeleccionado}
             paisNombre={paisNombre}
             departamentoSeleccionado={departamentoSeleccionado}

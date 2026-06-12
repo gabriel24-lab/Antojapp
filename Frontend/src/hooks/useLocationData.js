@@ -67,8 +67,11 @@ export function useLocationData() {
 
   /**
    * Obtener departamentos/estados de un país por nombre.
+   * Retorna objetos { display, original } donde:
+   *   - display: nombre limpio para mostrar en UI ("Cesar")
+   *   - original: nombre exacto que espera la API ("Cesar Department")
    * @param {string} countryName - Nombre del país en inglés
-   * @returns {Promise<string[]>}
+   * @returns {Promise<{ display: string, original: string }[]>}
    */
   const fetchStates = useCallback(async (countryName) => {
     if (!countryName) return [];
@@ -81,9 +84,9 @@ export function useLocationData() {
       });
       const data = await res.json();
       const states = (data.data?.states || [])
-        .map((s) => cleanStateName(s.name))
-        .filter(Boolean)
-        .sort();
+        .map((s) => ({ display: cleanStateName(s.name), original: s.name }))
+        .filter((s) => s.display)
+        .sort((a, b) => a.display.localeCompare(b.display));
       cache.states[countryName] = states;
       return states;
     } catch {
@@ -94,7 +97,7 @@ export function useLocationData() {
   /**
    * Obtener ciudades de un estado/departamento específico.
    * @param {string} countryName
-   * @param {string} stateName
+   * @param {string} stateName - Nombre original del estado tal como lo devuelve la API
    * @returns {Promise<string[]>}
    */
   const fetchCities = useCallback(async (countryName, stateName) => {

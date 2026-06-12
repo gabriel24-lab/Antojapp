@@ -1,6 +1,8 @@
 const pool     = require("../db/pool");
 const supabase = require("../db/supabase");
 
+const LIMITE_NEGOCIOS = 4;
+
 // ── Lectura pública ────────────────────────────────────────────
 
 // GET /api/negocios
@@ -167,15 +169,16 @@ async function crearNegocio(req, res) {
     return res.status(400).json({ error: "Nombre y categoría son obligatorios" });
 
   try {
-    // Verificar que el usuario no tenga ya un negocio registrado
-    const existe = await pool.query(
+    // Verificar que el propietario no haya alcanzado el límite de negocios
+    const existentes = await pool.query(
       "SELECT id FROM negocios WHERE propietario_id = $1",
       [propietarioId]
     );
-    if (existe.rows.length > 0)
+    if (existentes.rows.length >= LIMITE_NEGOCIOS)
       return res.status(409).json({
-        error: "Ya tienes un negocio registrado. Edítalo desde tu panel.",
-        negocio_id: existe.rows[0].id,
+        error: `Has alcanzado el límite de ${LIMITE_NEGOCIOS} negocios registrados.`,
+        limite: LIMITE_NEGOCIOS,
+        total: existentes.rows.length,
       });
 
     const result = await pool.query(
@@ -249,10 +252,9 @@ async function actualizarNegocio(req, res) {
 }
 
 // POST /api/negocios/:id/imagen  — subir icono o foto de portada
-// Body: multipart/form-data con campo 'imagen' (archivo) y 'tipo' ("icono" | "portada")
 async function subirImagen(req, res) {
   const { id }  = req.params;
-  const { tipo } = req.body; // "icono" | "portada"
+  const { tipo } = req.body;
 
   if (!req.file)
     return res.status(400).json({ error: "No se recibió ningún archivo" });
@@ -277,7 +279,6 @@ async function subirImagen(req, res) {
       .from("negocios")
       .getPublicUrl(filename);
 
-    // Guardar la URL en la columna correspondiente
     const columna = tipo === "icono" ? "icono" : "portada";
     await pool.query(
       `UPDATE negocios SET ${columna} = $1 WHERE id = $2`,
@@ -315,7 +316,6 @@ async function subirFoto(req, res) {
       .from("negocios")
       .getPublicUrl(filename);
 
-    // Agregar al array fotos[]
     await pool.query(
       "UPDATE negocios SET fotos = array_append(fotos, $1) WHERE id = $2",
       [publicUrl, id]
@@ -337,16 +337,12 @@ async function eliminarFoto(req, res) {
     return res.status(400).json({ error: "URL de la foto es obligatoria" });
 
   try {
-    // Extraer el path relativo dentro del bucket
     const path = url.split("/negocios/")[1];
-
     await supabase.storage.from("negocios").remove([path]);
-
     await pool.query(
       "UPDATE negocios SET fotos = array_remove(fotos, $1) WHERE id = $2",
       [url, id]
     );
-
     res.json({ mensaje: "Foto eliminada" });
   } catch (err) {
     console.error("[eliminarFoto]", err.message);
@@ -354,42 +350,53 @@ async function eliminarFoto(req, res) {
   }
 }
 
-// GET /api/negocios/mio  — negocio del propietario autenticado
+// GET /api/negocios/mio/negocio  — todos los negocios del propietario autenticado
 async function getMiNegocio(req, res) {
   const propietarioId = req.usuario.id;
 
   try {
-    const negocio = await pool.query(
-      "SELECT * FROM negocios WHERE propietario_id = $1",
+    const negociosResult = await pool.query(
+      "SELECT * FROM negocios WHERE propietario_id = $1 ORDER BY id",
       [propietarioId]
     );
 
-    if (negocio.rows.length === 0)
+    if (negociosResult.rows.length === 0)
       return res.status(404).json({ error: "No tienes ningún negocio registrado" });
 
-    const id = negocio.rows[0].id;
+    // Cargar sedes y platos de todos los negocios en paralelo
+    const negociosCompletos = await Promise.all(
+      negociosResult.rows.map(async (negocio) => {
+        const [sedes, platos] = await Promise.all([
+          pool.query("SELECT * FROM sedes WHERE negocio_id = $1 ORDER BY id", [negocio.id]),
+          pool.query(
+            `SELECT p.*,
+              COALESCE(
+                json_agg(
+                  json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
+                ) FILTER (WHERE pd.id IS NOT NULL),
+                '[]'
+              ) AS descuentos
+             FROM platos p
+             LEFT JOIN plato_descuentos pd ON pd.plato_id = p.id
+             WHERE p.negocio_id = $1
+             GROUP BY p.id ORDER BY p.tipo, p.nombre`,
+            [negocio.id]
+          ),
+        ]);
+        return {
+          ...formatearNegocio({ ...negocio, sedes: sedes.rows }),
+          platos: platos.rows,
+        };
+      })
+    );
 
-    const [sedes, platos] = await Promise.all([
-      pool.query("SELECT * FROM sedes WHERE negocio_id = $1 ORDER BY id", [id]),
-      pool.query(
-        `SELECT p.*,
-          COALESCE(
-            json_agg(
-              json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
-            ) FILTER (WHERE pd.id IS NOT NULL),
-            '[]'
-          ) AS descuentos
-         FROM platos p
-         LEFT JOIN plato_descuentos pd ON pd.plato_id = p.id
-         WHERE p.negocio_id = $1
-         GROUP BY p.id ORDER BY p.tipo, p.nombre`,
-        [id]
-      ),
-    ]);
-
+    // Mantener compatibilidad: si solo hay 1 negocio, devolver el formato original
+    // Además incluir el array completo y el total para que el frontend pueda mostrar el límite
     res.json({
-      ...formatearNegocio({ ...negocio.rows[0], sedes: sedes.rows }),
-      platos: platos.rows,
+      negocio:   negociosCompletos[0],   // primer negocio (compatibilidad con PanelPropietario)
+      negocios:  negociosCompletos,      // todos los negocios
+      total:     negociosCompletos.length,
+      limite:    LIMITE_NEGOCIOS,
     });
   } catch (err) {
     console.error("[getMiNegocio]", err.message);

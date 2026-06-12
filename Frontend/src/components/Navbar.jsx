@@ -10,12 +10,17 @@ export default function Navbar({
   // Props de ubicación
   paisSeleccionado, paisNombre, departamentoSeleccionado, ciudadSeleccionada,
   onCambiarUbicacion,
+  // Datos de negocios del propietario (para controlar el límite)
+  totalNegociosPropietario,
+  limiteNegocios,
 }) {
   const { user, logout } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [compacto,    setCompacto]    = useState(false);
   const prevScrollY = useRef(0);
   const esPropietario = user?.rol === "negocio";
+
+  const limiteAlcanzado = totalNegociosPropietario >= (limiteNegocios ?? 4);
 
   useEffect(() => {
     const handler = () => {
@@ -38,6 +43,15 @@ export default function Navbar({
     transition: "background 0.15s, color 0.15s",
     whiteSpace: "nowrap",
   });
+
+  const handleAgregarNegocio = () => {
+    if (limiteAlcanzado) {
+      alert(`Has alcanzado el límite de ${limiteNegocios ?? 4} negocios. No puedes registrar más.`);
+      return;
+    }
+    onAbrirFormulario();
+    setMenuAbierto(false);
+  };
 
   return (
     <header style={{
@@ -210,12 +224,18 @@ export default function Navbar({
 
                     {esPropietario && (
                       <>
-                        <MenuBtn onClick={() => { onAbrirPanel();      setMenuAbierto(false); }} icon="barChart">Mi panel</MenuBtn>
-                        <MenuBtn onClick={() => { onAbrirFormulario(); setMenuAbierto(false); }} icon="edit">Editar negocio</MenuBtn>
+                        <MenuBtn onClick={() => { onAbrirPanel(); setMenuAbierto(false); }} icon="barChart">
+                          Mi panel
+                        </MenuBtn>
+                        <MenuBtn onClick={handleAgregarNegocio} icon="plusCircle" disabled={limiteAlcanzado}>
+                          Agregar negocio
+                        </MenuBtn>
                       </>
                     )}
                     {user && !esPropietario && (
-                      <MenuBtn onClick={() => { onVerFavoritos(true); setMenuAbierto(false); }} icon="heart">Mis guardados</MenuBtn>
+                      <MenuBtn onClick={() => { onVerFavoritos(true); setMenuAbierto(false); }} icon="heart">
+                        Mis guardados
+                      </MenuBtn>
                     )}
                     <MenuBtn onClick={() => { logout(); setMenuAbierto(false); }} danger>Cerrar sesión</MenuBtn>
                   </div>
@@ -240,22 +260,24 @@ export default function Navbar({
   );
 }
 
-function MenuBtn({ children, onClick, danger, icon }) {
+function MenuBtn({ children, onClick, danger, icon, disabled }) {
   const [hover, setHover] = useState(false);
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
         width: "100%", padding: "11px 16px", textAlign: "left",
         fontSize: 14, fontWeight: 500,
-        color: danger ? "#C0392B" : "#1A1208",
-        background: hover ? (danger ? "#FFF0EE" : "#F7F4F1") : "none",
+        color: danger ? "#C0392B" : disabled ? "#C0B8B0" : "#1A1208",
+        background: hover && !disabled ? (danger ? "#FFF0EE" : "#F7F4F1") : "none",
         border: "none", borderTop: danger ? "1px solid #F0EBE5" : "none",
         borderBottom: danger ? "none" : "1px solid #F0EBE5",
-        cursor: "pointer", transition: "background 0.15s",
+        cursor: disabled ? "not-allowed" : "pointer",
+        transition: "background 0.15s",
         display: "flex", alignItems: "center", gap: 9,
+        opacity: disabled ? 0.5 : 1,
       }}
     >
       {icon && <AppIcon name={icon} size={16} fill={icon === "heart" ? "currentColor" : "none"} />}
