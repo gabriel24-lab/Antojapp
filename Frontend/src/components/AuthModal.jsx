@@ -5,24 +5,22 @@ import AppIcon from "./AppIcon";
 
 export default function AuthModal({ onCerrar }) {
   const { login } = useAuth();
-  const [vista,    setVista]    = useState("login"); // login | registro | recuperar | google_rol
+  const [vista,    setVista]    = useState("login"); // login | registro | recuperar
   const [form,     setForm]     = useState({ nombre: "", email: "", password: "", confirmar: "", rol: "usuario" });
   const [error,    setError]    = useState("");
   const [cargando, setCargando] = useState(false);
   const [exito,    setExito]    = useState("");
-  const [loginExito, setLoginExito] = useState(null); // { nombre, esNuevo }
+  const googleBtnRef            = useRef(null);
 
-  // Datos temporales del usuario Google mientras elige rol
-  const [googlePendiente, setGooglePendiente] = useState(null); // { credential, nombre, email }
-  const [rolGoogle, setRolGoogle] = useState("usuario");
-
-  const googleBtnRef = useRef(null);
+  // ── Estado para Google: usuario nuevo pendiente de elegir rol ──
+  const [pendienteGoogle, setPendienteGoogle] = useState(null);
+  // { credential, nombre, email }
 
   const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setError(""); };
 
   // ── Google Identity Services ────────────────────────────
   useEffect(() => {
-    if (vista === "recuperar" || vista === "google_rol") return;
+    if (vista === "recuperar") return;
 
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!clientId) return;
@@ -31,19 +29,19 @@ export default function AuthModal({ onCerrar }) {
       if (!window.google?.accounts?.id || !googleBtnRef.current) return;
 
       window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback:  handleGoogleCredential,
-        ux_mode:   "popup",
-        context:   "signin",
+        client_id:        clientId,
+        callback:         handleGoogleCredential,
+        ux_mode:          "popup",
+        context:          "signin",
       });
 
       window.google.accounts.id.renderButton(googleBtnRef.current, {
-        theme:  "outline",
-        size:   "large",
-        shape:  "rectangular",
-        text:   vista === "registro" ? "signup_with" : "signin_with",
-        width:  364,
-        locale: "es",
+        theme:            "outline",
+        size:             "large",
+        shape:            "rectangular",
+        text:             vista === "registro" ? "signup_with" : "signin_with",
+        width:            364,
+        locale:           "es",
       });
     };
 
@@ -62,8 +60,7 @@ export default function AuthModal({ onCerrar }) {
     }
   }, [vista]);
 
-  // ── Callback de Google ──────────────────────────────────
-  // Primer intento: sin rol. Si el backend dice "pendiente", mostrar selector.
+  // Callback que GIS llama con el id_token
   const handleGoogleCredential = async ({ credential }) => {
     setCargando(true);
     setError("");
@@ -75,19 +72,20 @@ export default function AuthModal({ onCerrar }) {
       });
       const data = await res.json();
 
-      if (!res.ok) { setError(data.error || "Error al iniciar sesión con Google"); return; }
-
-      if (data.pendiente) {
-        // Usuario nuevo → pedir rol
-        setGooglePendiente({ credential, nombre: data.nombre, email: data.email });
-        setRolGoogle("usuario");
-        setVista("google_rol");
+      if (!res.ok) {
+        setError(data.error || "Error al iniciar sesión con Google");
         return;
       }
 
-      // Usuario existente o ya tenía rol
+      // ── Usuario NUEVO: el backend pide que elijamos rol ──
+      if (data.pendiente) {
+        setPendienteGoogle({ credential, nombre: data.nombre, email: data.email });
+        return;
+      }
+
+      // ── Usuario existente: login directo ──
       login(data.token, data.usuario);
-      cerrarConExito(data.usuario.nombre, data.esNuevo);
+      cerrarConExito(data.usuario.nombre);
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -95,29 +93,37 @@ export default function AuthModal({ onCerrar }) {
     }
   };
 
-  // ── Confirmar rol elegido para Google ──────────────────
-  const handleConfirmarRolGoogle = async () => {
-    if (!googlePendiente) return;
+  // Confirmar rol para usuario nuevo de Google
+  const handleConfirmarRolGoogle = async (rolElegido) => {
+    if (!pendienteGoogle) return;
     setCargando(true);
     setError("");
     try {
-      const res  = await fetch(`${API_URL}/auth/google`, {
+      const res = await fetch(`${API_URL}/auth/google`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ credential: googlePendiente.credential, rol: rolGoogle }),
+        body:    JSON.stringify({ credential: pendienteGoogle.credential, rol: rolElegido }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
+
+      if (!res.ok) {
+        setError(data.error || "Error al crear la cuenta con Google");
+        return;
+      }
+
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre, true);
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
       setCargando(false);
+      setPendienteGoogle(null);
     }
   };
 
   // ── Formularios email/password ──────────────────────────
+  const [loginExito, setLoginExito] = useState(null);
+
   const cerrarConExito = (nombre, esNuevo = false) => {
     setLoginExito({ nombre, esNuevo });
     setTimeout(() => onCerrar(), 1400);
@@ -147,10 +153,10 @@ export default function AuthModal({ onCerrar }) {
   const handleRegistro = async (e) => {
     e.preventDefault();
     setError("");
-    if (!form.nombre.trim())              return setError("Ingresa tu nombre.");
-    if (!form.email.includes("@"))        return setError("Correo no válido.");
-    if (form.password.length < 6)         return setError("La contraseña debe tener al menos 6 caracteres.");
-    if (form.password !== form.confirmar) return setError("Las contraseñas no coinciden.");
+    if (!form.nombre.trim())               return setError("Ingresa tu nombre.");
+    if (!form.email.includes("@"))         return setError("Correo no válido.");
+    if (form.password.length < 6)          return setError("La contraseña debe tener al menos 6 caracteres.");
+    if (form.password !== form.confirmar)  return setError("Las contraseñas no coinciden.");
     setCargando(true);
     try {
       const res  = await fetch(`${API_URL}/auth/registro`, {
@@ -179,20 +185,11 @@ export default function AuthModal({ onCerrar }) {
     setCargando(false);
   };
 
-  // ── Título según vista ──────────────────────────────────
-  const titulo = {
-    login:      "¡Bienvenido de nuevo!",
-    registro:   "Crea tu cuenta",
-    recuperar:  "Recuperar contraseña",
-    google_rol: "Un último paso",
-  }[vista];
-
-  const subtitulo = {
-    login:      "Inicia sesión para guardar tus antojos",
-    registro:   "Es gratis y toma menos de un minuto",
-    recuperar:  "Te enviamos un correo con instrucciones",
-    google_rol: "¿Cómo vas a usar Antojapp?",
-  }[vista];
+  // ── Opciones de rol para el selector ──
+  const opcionesRol = [
+    { valor: "usuario",  icon: "utensils", titulo: "Soy cliente",      sub: "Busco dónde comer" },
+    { valor: "negocio",  icon: "store",    titulo: "Soy propietario",  sub: "Registro mi negocio" },
+  ];
 
   return (
     <div
@@ -201,7 +198,7 @@ export default function AuthModal({ onCerrar }) {
         position: "fixed", inset: 0, zIndex: 500,
         background: "rgba(26,18,8,.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "12px var(--content-px, 16px)",
+        padding: 20,
       }}
     >
       <div style={{
@@ -209,17 +206,23 @@ export default function AuthModal({ onCerrar }) {
         boxShadow: "0 24px 60px rgba(0,0,0,.18)",
         overflow: "hidden", animation: "slideUp .22s ease",
       }}>
-        {/* ── Header ── */}
+        {/* Header */}
         <div style={{
           background: "#1A1208", padding: "24px 28px 20px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
             <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 18, color: "#fff" }}>
-              {titulo}
+              {pendienteGoogle           && "¡Una cosa más!"}
+              {!pendienteGoogle && vista === "login"     && "¡Bienvenido de nuevo!"}
+              {!pendienteGoogle && vista === "registro"  && "Crea tu cuenta"}
+              {!pendienteGoogle && vista === "recuperar" && "Recuperar contraseña"}
             </div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", marginTop: 3 }}>
-              {subtitulo}
+              {pendienteGoogle           && `Hola ${pendienteGoogle.nombre?.split(" ")[0]}, ¿cómo usarás Antojapp?`}
+              {!pendienteGoogle && vista === "login"     && "Inicia sesión para guardar tus antojos"}
+              {!pendienteGoogle && vista === "registro"  && "Es gratis y toma menos de un minuto"}
+              {!pendienteGoogle && vista === "recuperar" && "Te enviamos un correo con instrucciones"}
             </div>
           </div>
           <button onClick={onCerrar} style={{
@@ -255,7 +258,9 @@ export default function AuthModal({ onCerrar }) {
                 Bienvenido{loginExito.esNuevo ? "" : " de nuevo"},{" "}
                 <strong style={{ color: "#1A1208" }}>{loginExito.nombre?.split(" ")[0]}</strong>
               </div>
-              <div style={{ marginTop: 20, height: 4, background: "#F0EBE5", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{
+                marginTop: 20, height: 4, background: "#F0EBE5", borderRadius: 2, overflow: "hidden",
+              }}>
                 <div style={{
                   height: "100%", background: "#1A8C5B", borderRadius: 2,
                   animation: "progreso 1.4s linear forwards",
@@ -264,70 +269,47 @@ export default function AuthModal({ onCerrar }) {
             </div>
           )}
 
-          {/* ── SELECTOR DE ROL PARA GOOGLE ── */}
-          {!loginExito && vista === "google_rol" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* ── SELECTOR DE ROL PARA GOOGLE (usuario nuevo) ── */}
+          {!loginExito && pendienteGoogle && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <p style={{ fontSize: 14, color: "#6B5E52", margin: 0, textAlign: "center" }}>
+                Elige cómo quieres usar Antojapp con tu cuenta de Google:
+              </p>
 
-              {/* Info del usuario Google */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: 12,
-                background: "#F7F4F1", borderRadius: 12, padding: "12px 14px",
-              }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: "50%",
-                  background: "#E8460A",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 18, fontWeight: 700, color: "#fff", flexShrink: 0,
-                }}>
-                  {googlePendiente?.nombre?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1208" }}>{googlePendiente?.nombre}</div>
-                  <div style={{ fontSize: 12, color: "#A8988A" }}>{googlePendiente?.email}</div>
-                </div>
-                {/* Logo Google */}
-                <svg style={{ marginLeft: "auto", flexShrink: 0 }} width="18" height="18" viewBox="0 0 48 48">
-                  <path fill="#4285F4" d="M46.145 24.498c0-1.58-.14-3.1-.402-4.56H24v8.622h12.445c-.537 2.895-2.17 5.348-4.626 6.993v5.81h7.49c4.382-4.036 6.836-9.98 6.836-16.865z"/>
-                  <path fill="#34A853" d="M24 48c6.24 0 11.472-2.07 15.294-5.608l-7.49-5.81c-2.073 1.39-4.723 2.21-7.804 2.21-6.002 0-11.084-4.054-12.898-9.503H3.394v6.002C7.2 42.66 15.042 48 24 48z"/>
-                  <path fill="#FBBC05" d="M11.102 29.289A14.976 14.976 0 0 1 10.286 24c0-1.84.316-3.626.816-5.29V12.71H3.394A23.99 23.99 0 0 0 0 24c0 3.865.928 7.52 2.565 10.712l8.537-5.423z"/>
-                  <path fill="#EA4335" d="M24 9.545c3.387 0 6.43 1.164 8.822 3.454l6.617-6.617C35.466 2.378 30.234 0 24 0 15.042 0 7.2 5.34 3.394 13.29l8.537 5.42C13.916 13.598 18.998 9.545 24 9.545z"/>
-                </svg>
-              </div>
-
-              {/* Selector de rol */}
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", marginBottom: 10 }}>
-                  Elige cómo usarás Antojapp:
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {[
-                    { valor: "usuario", icon: "utensils", titulo: "Soy cliente",     sub: "Busco dónde comer" },
-                    { valor: "negocio", icon: "store",    titulo: "Soy propietario", sub: "Registro mi negocio" },
-                  ].map(({ valor, icon, titulo, sub }) => (
-                    <button
-                      key={valor}
-                      type="button"
-                      onClick={() => setRolGoogle(valor)}
-                      style={{
-                        border:     rolGoogle === valor ? "2px solid #E8460A" : "2px solid #E2DBD5",
-                        borderRadius: 12,
-                        padding:    "14px 8px",
-                        background: rolGoogle === valor ? "#FFF4F0" : "#FAFAF9",
-                        cursor:     "pointer",
-                        textAlign:  "center",
-                        transition: "all .18s ease",
-                        outline:    "none",
-                        minHeight:  90,
-                      }}
-                    >
-                      <div style={{ marginBottom: 6, color: rolGoogle === valor ? "#E8460A" : "#6B5E52" }}>
-                        <AppIcon name={icon} size={28} />
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: rolGoogle === valor ? "#E8460A" : "#3D2B1F" }}>{titulo}</div>
-                      <div style={{ fontSize: 11, color: "#A8988A", marginTop: 2 }}>{sub}</div>
-                    </button>
-                  ))}
-                </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {opcionesRol.map(({ valor, icon, titulo, sub }) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => handleConfirmarRolGoogle(valor)}
+                    disabled={cargando}
+                    style={{
+                      border:       "2px solid #E2DBD5",
+                      borderRadius: 12,
+                      padding:      "18px 10px",
+                      background:   "#FAFAF9",
+                      cursor:       cargando ? "not-allowed" : "pointer",
+                      textAlign:    "center",
+                      transition:   "all .18s ease",
+                      outline:      "none",
+                      opacity:      cargando ? 0.6 : 1,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.border = "2px solid #E8460A";
+                      e.currentTarget.style.background = "#FFF4F0";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.border = "2px solid #E2DBD5";
+                      e.currentTarget.style.background = "#FAFAF9";
+                    }}
+                  >
+                    <div style={{ marginBottom: 8, color: "#6B5E52" }}>
+                      <AppIcon name={icon} size={30} />
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#3D2B1F" }}>{titulo}</div>
+                    <div style={{ fontSize: 12, color: "#A8988A", marginTop: 3 }}>{sub}</div>
+                  </button>
+                ))}
               </div>
 
               {error && (
@@ -337,27 +319,20 @@ export default function AuthModal({ onCerrar }) {
               )}
 
               <button
-                className="btn-primary"
-                onClick={handleConfirmarRolGoogle}
-                disabled={cargando}
-                style={{ width: "100%" }}
-              >
-                {cargando ? "Creando cuenta..." : "Continuar con Google"}
-              </button>
-
-              <button
                 type="button"
-                className="btn-ghost"
-                onClick={() => { setVista("login"); setGooglePendiente(null); setError(""); }}
-                style={{ fontSize: 13, justifyContent: "center" }}
+                onClick={() => setPendienteGoogle(null)}
+                style={{
+                  fontSize: 13, color: "#A8988A", background: "none", border: "none",
+                  cursor: "pointer", textAlign: "center", padding: "4px 0",
+                }}
               >
-                <AppIcon name="arrowLeft" size={15} /> Volver
+                ← Volver
               </button>
             </div>
           )}
 
-          {/* ── BOTÓN GOOGLE (GIS) — solo en login/registro ── */}
-          {!loginExito && (vista === "login" || vista === "registro") && (
+          {/* BOTÓN GOOGLE (GIS renderiza aquí) */}
+          {!loginExito && !pendienteGoogle && vista !== "recuperar" && (
             <>
               <div
                 ref={googleBtnRef}
@@ -383,8 +358,8 @@ export default function AuthModal({ onCerrar }) {
             </>
           )}
 
-          {/* ── FORMULARIO LOGIN ── */}
-          {!loginExito && vista === "login" && (
+          {/* FORMULARIO LOGIN */}
+          {!loginExito && !pendienteGoogle && vista === "login" && (
             <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 5 }}>Correo electrónico</label>
@@ -406,29 +381,28 @@ export default function AuthModal({ onCerrar }) {
             </form>
           )}
 
-          {/* ── FORMULARIO REGISTRO ── */}
-          {!loginExito && vista === "registro" && (
+          {/* FORMULARIO REGISTRO */}
+          {!loginExito && !pendienteGoogle && vista === "registro" && (
             <form onSubmit={handleRegistro} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+              {/* ── Selector de rol ── */}
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 8 }}>¿Cómo vas a usar Antojapp?</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {[
-                    { valor: "usuario", icon: "utensils", titulo: "Soy cliente",     sub: "Busco dónde comer" },
-                    { valor: "negocio", icon: "store",    titulo: "Soy propietario", sub: "Registro mi negocio" },
-                  ].map(({ valor, icon, titulo, sub }) => (
+                  {opcionesRol.map(({ valor, icon, titulo, sub }) => (
                     <button
                       key={valor}
                       type="button"
                       onClick={() => set("rol", valor)}
                       style={{
-                        border:     form.rol === valor ? "2px solid #E8460A" : "2px solid #E2DBD5",
-                        borderRadius: 12,
-                        padding:    "12px 8px",
-                        background: form.rol === valor ? "#FFF4F0" : "#FAFAF9",
-                        cursor:     "pointer",
-                        textAlign:  "center",
-                        transition: "all .18s ease",
-                        outline:    "none",
+                        border:        form.rol === valor ? "2px solid #E8460A" : "2px solid #E2DBD5",
+                        borderRadius:  12,
+                        padding:       "12px 8px",
+                        background:    form.rol === valor ? "#FFF4F0" : "#FAFAF9",
+                        cursor:        "pointer",
+                        textAlign:     "center",
+                        transition:    "all .18s ease",
+                        outline:       "none",
                       }}
                     >
                       <div style={{ marginBottom: 5, color: form.rol === valor ? "#E8460A" : "#6B5E52" }}>
@@ -440,6 +414,7 @@ export default function AuthModal({ onCerrar }) {
                   ))}
                 </div>
               </div>
+
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 5 }}>Tu nombre</label>
                 <input className="input" type="text" placeholder="Cómo te llamamos" value={form.nombre} onChange={e => set("nombre", e.target.value)} required />
@@ -463,8 +438,8 @@ export default function AuthModal({ onCerrar }) {
             </form>
           )}
 
-          {/* ── FORMULARIO RECUPERAR ── */}
-          {!loginExito && vista === "recuperar" && (
+          {/* FORMULARIO RECUPERAR */}
+          {!loginExito && !pendienteGoogle && vista === "recuperar" && (
             <form onSubmit={handleRecuperar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {exito ? (
                 <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 10, padding: "16px", textAlign: "center" }}>
@@ -492,8 +467,8 @@ export default function AuthModal({ onCerrar }) {
             </form>
           )}
 
-          {/* ── Toggle login/registro ── */}
-          {!loginExito && (vista === "login" || vista === "registro") && (
+          {/* Toggle login/registro */}
+          {!loginExito && !pendienteGoogle && vista !== "recuperar" && (
             <div style={{ marginTop: 20, textAlign: "center", borderTop: "1px solid #F0EBE5", paddingTop: 18 }}>
               <span style={{ fontSize: 14, color: "#6B5E52" }}>
                 {vista === "login" ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
