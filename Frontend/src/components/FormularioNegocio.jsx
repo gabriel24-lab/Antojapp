@@ -372,7 +372,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                   </div>
                 ))}
               </div>
-              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>⚠️ Guarda el negocio primero para subir fotos</div>}
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
             </Field>
           ) : (
             /* Plato normal: 1 foto */
@@ -397,7 +397,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                 </div>
               </div>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e, "a")} />
-              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>⚠️ Guarda el negocio primero para subir fotos</div>}
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
             </Field>
           )}
 

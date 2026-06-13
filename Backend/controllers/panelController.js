@@ -42,16 +42,24 @@ async function getEstadisticas(req, res) {
         [negocioId]
       ),
 
-      // Visitas agrupadas por día (últimos 30 días) para el gráfico
+      // Visitas agrupadas por día (últimos 30 días) — rellena días sin visitas con 0
       pool.query(
         `SELECT
-           DATE(visitado_en) AS dia,
-           COUNT(*)          AS visitas
-         FROM visitas
-         WHERE negocio_id = $1
-           AND visitado_en >= NOW() - INTERVAL '30 days'
-         GROUP BY DATE(visitado_en)
-         ORDER BY dia ASC`,
+           gs.dia::date                          AS dia,
+           COALESCE(v.visitas, 0)::int           AS visitas
+         FROM generate_series(
+           (NOW() - INTERVAL '29 days')::date,
+           NOW()::date,
+           '1 day'::interval
+         ) AS gs(dia)
+         LEFT JOIN (
+           SELECT DATE(visitado_en) AS dia, COUNT(*) AS visitas
+           FROM visitas
+           WHERE negocio_id = $1
+             AND visitado_en >= NOW() - INTERVAL '30 days'
+           GROUP BY DATE(visitado_en)
+         ) v ON v.dia = gs.dia
+         ORDER BY gs.dia ASC`,
         [negocioId]
       ),
 

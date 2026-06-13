@@ -1,6 +1,7 @@
-// Middleware: solo permite el paso si el usuario tiene rol 'negocio'
+// Middleware: solo permite el paso si el usuario tiene rol 'negocio' o 'propietario'
 function esNegocio(req, res, next) {
-  if (req.usuario?.rol !== "negocio") {
+  const rolesPermitidos = ["negocio", "propietario"];
+  if (!rolesPermitidos.includes(req.usuario?.rol)) {
     return res.status(403).json({ error: "Solo los propietarios de negocio pueden realizar esta acción" });
   }
   next();

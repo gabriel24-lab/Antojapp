@@ -32,18 +32,19 @@ async function registro(req, res) {
   if (errorPassword)
     return res.status(400).json({ error: errorPassword });
 
-  const rolValido = ["usuario", "negocio"].includes(rol) ? rol : "usuario";
+  // Normalizar: "propietario" se guarda como "negocio" para consistencia
+  const rolNormalizado = (rol === "negocio" || rol === "propietario") ? "negocio" : "usuario";
 
   try {
     const existe = await pool.query("SELECT id FROM usuarios WHERE email = $1", [email.toLowerCase()]);
     if (existe.rows.length > 0)
       return res.status(409).json({ error: "Este correo ya está registrado" });
 
-    const hash = await bcrypt.hash(password, 12); // salt 12 (más seguro que 10)
+    const hash = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
       "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
-      [nombre.trim(), email.toLowerCase(), hash, rolValido]
+      [nombre.trim(), email.toLowerCase(), hash, rolNormalizado]
     );
 
     const usuario = result.rows[0];
@@ -84,11 +85,20 @@ async function login(req, res) {
     if (!coincide)
       return res.status(401).json({ error: "Correo o contraseña incorrectos" });
 
-    const token = generarToken(usuario);
+    // Normalizar rol legacy: si alguien quedó con "propietario" en la BD, tratarlo como "negocio"
+    const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
+    const usuarioNormalizado = { ...usuario, rol: rolNormalizado };
+
+    const token = generarToken(usuarioNormalizado);
 
     res.json({
       token,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
+      usuario: {
+        id:     usuarioNormalizado.id,
+        nombre: usuarioNormalizado.nombre,
+        email:  usuarioNormalizado.email,
+        rol:    usuarioNormalizado.rol,
+      }
     });
   } catch (err) {
     console.error("[login]", err.message);
@@ -107,7 +117,12 @@ async function me(req, res) {
     if (result.rows.length === 0)
       return res.status(404).json({ error: "Usuario no encontrado" });
 
-    res.json(result.rows[0]);
+    const usuario = result.rows[0];
+
+    // Normalizar rol legacy
+    const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
+
+    res.json({ ...usuario, rol: rolNormalizado });
   } catch (err) {
     console.error("[me]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });

@@ -122,22 +122,25 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
 
   // ── Títulos por paso ────────────────────────────────────────────
   const titulos = {
-    consent:      { icon: "📍", title: "¿Dónde estás?", sub: "Personaliza tu experiencia según tu ubicación" },
-    detectando:   { icon: "🔍", title: "Detectando tu ubicación…", sub: "Por favor espera un momento" },
-    pais_manual:  { icon: "🌎", title: "Elige tu país", sub: "Selecciona el país donde estás" },
-    departamento: { icon: "📍", title: `Departamento en ${paisElegido?.nombre || "..."}`, sub: "¿En qué departamento o estado estás?" },
-    ciudad:       { icon: "🏙️", title: `Ciudad en ${deptElegido || "..."}`, sub: "Elige tu ciudad para mayor precisión" },
+    consent:      { icon: "mapPin", title: "¿Dónde estás?", sub: "Personaliza tu experiencia según tu ubicación" },
+    detectando:   { icon: "search", title: "Detectando tu ubicación…", sub: "Por favor espera un momento" },
+    pais_manual:  { icon: "globe", title: "Elige tu país", sub: "Selecciona el país donde estás" },
+    departamento: { icon: "mapPin", title: `Departamento en ${paisElegido?.nombre || "..."}`, sub: "¿En qué departamento o estado estás?" },
+    ciudad:       { icon: "store", title: `Ciudad en ${deptElegido || "..."}`, sub: "Elige tu ciudad para mayor precisión" },
   };
 
   const t = titulos[paso] || titulos.consent;
 
   return (
     <>
-      {/* Overlay */}
-      <div style={{
-        position: "fixed", inset: 0, background: "rgba(26,18,8,.60)",
-        zIndex: 900, backdropFilter: "blur(6px)",
-      }} />
+      {/* Overlay — clic para cerrar */}
+      <div
+        onClick={onSaltar}
+        style={{
+          position: "fixed", inset: 0, background: "rgba(26,18,8,.60)",
+          zIndex: 900, backdropFilter: "blur(6px)", cursor: "pointer",
+        }}
+      />
 
       {/* Modal */}
       <div style={{
@@ -164,7 +167,25 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
         )}
 
         {/* ── Header del modal ── */}
-        <div style={{ padding: "28px 28px 20px", textAlign: "center", borderBottom: paso === "consent" ? "none" : "1px solid #F0EBE5" }}>
+        <div style={{ padding: "28px 28px 20px", textAlign: "center", borderBottom: paso === "consent" ? "none" : "1px solid #F0EBE5", position: "relative" }}>
+
+          {/* Botón cerrar — siempre visible */}
+          <button
+            onClick={onSaltar}
+            title="Cerrar"
+            style={{
+              position: "absolute", right: 14, top: 14,
+              width: 30, height: 30,
+              background: "#F7F4F1", border: "none", borderRadius: "50%",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#6B5E52", fontSize: 16, lineHeight: 1,
+              transition: "background 0.15s, color 0.15s",
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = "#E2DBD5"; e.currentTarget.style.color = "#1A1208"; }}
+            onMouseOut={e => { e.currentTarget.style.background = "#F7F4F1"; e.currentTarget.style.color = "#6B5E52"; }}
+          >
+            <AppIcon name="x" size={14} />
+          </button>
           {/* Botón atrás (si no es consent) */}
           {paso !== "consent" && paso !== "detectando" && (
             <button
@@ -198,7 +219,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
                 <AppIcon name="refresh" size={24} color="#E8460A" />
               </div>
             ) : (
-              <span>{t.icon}</span>
+              <AppIcon name={t.icon} size={26} color="#E8460A" />
             )}
           </div>
 
@@ -223,7 +244,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               <span style={{ fontSize: 18 }}>{gpsPais.bandera}</span>
               {gpsPais.nombre}
               <span style={{ fontSize: 10, background: "#E8460A", color: "#fff", padding: "1px 6px", borderRadius: 10, marginLeft: 2 }}>
-                GPS ✓
+                GPS <AppIcon name="check" size={10} color="#fff" />
               </span>
             </div>
           )}
@@ -268,8 +289,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
                 onMouseOver={e => e.currentTarget.style.background = "#F0EBE5"}
                 onMouseOut={e => e.currentTarget.style.background = "#F7F4F1"}
               >
-                <span style={{ fontSize: 16 }}>🌎</span>
-                Elegir país manualmente
+                <><AppIcon name="globe" size={16} />{" "}Elegir país manualmente</>
               </button>
 
               <button
@@ -285,7 +305,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               </button>
             </div>
             <p style={{ fontSize: 10, color: "#C0B8B0", marginTop: 14, textAlign: "center", lineHeight: 1.5 }}>
-              🔒 Tu ubicación no se guarda ni se comparte con terceros.
+              <AppIcon name="lock" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Tu ubicación no se guarda ni se comparte con terceros.
             </p>
           </div>
         )}
@@ -352,7 +372,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               </button>
             }
             renderItem={(d) => ({
-              icon: "📍",
+              icon: "mapPin",
               label: d,
               onClick: () => elegirDept(d),
             })}
@@ -380,7 +400,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
                   display: "flex", alignItems: "center", gap: 8,
                 }}
               >
-                <span style={{ fontSize: 16 }}>📍</span>
+                <AppIcon name="mapPin" size={16} />
                 Solo {deptElegido} (sin ciudad)
               </button>
             }
@@ -480,7 +500,13 @@ function RowBtn({ icon, label, onClick }) {
         marginBottom: 1,
       }}
     >
-      {icon && <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{icon}</span>}
+      {icon && (
+        <span style={{ width: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {(icon === "mapPin" || icon === "globe" || icon === "store" || icon === "search")
+            ? <AppIcon name={icon} size={18} color="#6B5E52" />
+            : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>}
+        </span>
+      )}
       <span style={{ fontSize: 13, fontWeight: 500, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {label}
       </span>
@@ -504,7 +530,6 @@ function SkeletonRows({ count }) {
 }
 
 function getFlagEmoji(iso2) {
-  if (!iso2 || iso2.length !== 2) return "🌐";
+  if (!iso2 || iso2.length !== 2) return null; // no emoji fallback
   return String.fromCodePoint(...[...iso2.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
 }
-

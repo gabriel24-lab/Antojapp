@@ -267,7 +267,7 @@ export default function NavLocationPicker({
                     <ItemBtn
                       onClick={limpiarTodo}
                       activo={!paisSeleccionado}
-                      icon="🌎"
+                      icon="globe"
                       label="Todo el mundo"
                       sub="Ver todos los negocios"
                     />
@@ -295,7 +295,7 @@ export default function NavLocationPicker({
                   <ItemBtn
                     onClick={elegirSoloPais}
                     activo={paisSeleccionado === paisTemp?.iso2 && !departamentoSeleccionado}
-                    icon={paisTemp?.bandera || "🌐"}
+                    icon={paisTemp?.bandera || null}
                     label={`Todo ${paisTemp?.nombre}`}
                     sub="Sin filtro de departamento"
                   />
@@ -307,7 +307,7 @@ export default function NavLocationPicker({
                         key={d.original}
                         onClick={() => elegirDept(d)}
                         activo={departamentoSeleccionado === d.display && !ciudadSeleccionada}
-                        icon="📍"
+                        icon="mapPin"
                         label={d.display}
                         chevron
                       />
@@ -324,7 +324,7 @@ export default function NavLocationPicker({
                   <ItemBtn
                     onClick={elegirSoloDept}
                     activo={departamentoSeleccionado === deptTemp?.display && !ciudadSeleccionada}
-                    icon="📍"
+                    icon="mapPin"
                     label={`Todo ${deptTemp?.display}`}
                     sub="Sin filtro de ciudad"
                   />
@@ -399,7 +399,12 @@ function ItemBtn({ onClick, activo, icon, label, sub, chevron }) {
         transition: "background 0.12s",
       }}
     >
-      <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+      <span style={{ width: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {icon === null ? null
+          : (icon === "globe" || icon === "mapPin" || icon === "store")
+            ? <AppIcon name={icon} size={18} color={activo ? "#E8460A" : "#6B5E52"} />
+            : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>}
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: activo ? 700 : 500, color: activo ? "#E8460A" : "#1A1208", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {label}

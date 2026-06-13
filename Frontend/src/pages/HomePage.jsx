@@ -29,10 +29,12 @@ export default function HomePage({
     if (!ya) setTimeout(() => setModalUbicacion(true), 800);
   }, []);
 
-  // Scroll en modo Negocios
+  // Scroll en modo Negocios / Inicio
   useEffect(() => {
     if (modoNegocios && resultadosRef.current) {
       setTimeout(() => resultadosRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    } else if (!modoNegocios) {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 80);
     }
   }, [modoNegocios]);
 

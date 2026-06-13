@@ -1,5 +1,7 @@
 import {
   AlertTriangle,
+  Globe,
+  Lock,
   ArrowLeft,
   ArrowRight,
   BarChart3,
@@ -41,6 +43,8 @@ import {
 
 const ICONS = {
   alert: AlertTriangle,
+  globe: Globe,
+  lock: Lock,
   arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
   barChart: BarChart3,

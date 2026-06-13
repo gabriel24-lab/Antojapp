@@ -4,26 +4,31 @@ import AppIcon from "../components/AppIcon";
 
 // ── Mini gráfico SVG de línea ──────────────────────────────────
 function LineChart({ datos, color = "#E8460A", altura = 100 }) {
-  if (!datos || datos.length === 0) return (
-    <div style={{ height: altura, display: "flex", alignItems: "center", justifyContent: "center", color: "#A8988A", fontSize: 13 }}>
-      Sin datos en los últimos 30 días
-    </div>
-  );
+  const ancho  = 560;
+  const padX   = 0;
+  const padY   = 12;
 
-  const ancho   = 560;
-  const padX    = 0;
-  const padY    = 10;
-  const valores = datos.map(d => parseInt(d.visitas));
-  const maxVal  = Math.max(...valores, 1);
+  // Si no hay datos o todos son cero → mostrar línea base plana con cuadrícula
+  const sinDatos = !datos || datos.length === 0 || datos.every(d => parseInt(d.visitas) === 0);
+
+  const valores = sinDatos ? [] : datos.map(d => parseInt(d.visitas));
+  const maxVal  = sinDatos ? 1 : Math.max(...valores, 1);
   const minVal  = 0;
+  const n       = sinDatos ? 30 : datos.length;
 
-  const toX = (i) => padX + (i / (datos.length - 1 || 1)) * (ancho - padX * 2);
+  const toX = (i) => padX + (i / (n - 1 || 1)) * (ancho - padX * 2);
   const toY = (v) => padY + (1 - (v - minVal) / (maxVal - minVal || 1)) * (altura - padY * 2);
 
-  const puntos = datos.map((d, i) => `${toX(i)},${toY(parseInt(d.visitas))}`).join(" ");
+  // Líneas de cuadrícula horizontales
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(pct =>
+    padY + pct * (altura - padY * 2)
+  );
 
-  // Área rellena (debajo de la línea)
-  const areaPath = `M ${toX(0)},${toY(parseInt(datos[0].visitas))} ${datos.map((d, i) => `L ${toX(i)},${toY(parseInt(d.visitas))}`).join(" ")} L ${toX(datos.length - 1)},${altura} L ${toX(0)},${altura} Z`;
+  const puntos   = sinDatos ? null : datos.map((d, i) => `${toX(i)},${toY(parseInt(d.visitas))}`).join(" ");
+  const areaPath = sinDatos ? null :
+    `M ${toX(0)},${toY(parseInt(datos[0].visitas))} ` +
+    datos.map((d, i) => `L ${toX(i)},${toY(parseInt(d.visitas))}`).join(" ") +
+    ` L ${toX(datos.length - 1)},${altura} L ${toX(0)},${altura} Z`;
 
   return (
     <div style={{ width: "100%", overflowX: "auto" }}>
@@ -38,26 +43,49 @@ function LineChart({ datos, color = "#E8460A", altura = 100 }) {
             <stop offset="100%" stopColor={color} stopOpacity="0.01" />
           </linearGradient>
         </defs>
-        {/* Área */}
-        <path d={areaPath} fill="url(#areaGrad)" />
-        {/* Línea */}
-        <polyline
-          points={puntos}
-          fill="none"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {/* Puntos */}
-        {datos.map((d, i) => (
-          <circle
-            key={i}
-            cx={toX(i)} cy={toY(parseInt(d.visitas))}
-            r="3.5" fill={color} stroke="#fff" strokeWidth="2"
-          />
+
+        {/* Cuadrícula horizontal */}
+        {gridLines.map((y, i) => (
+          <line key={i} x1={0} y1={y} x2={ancho} y2={y}
+            stroke="#F0EBE5" strokeWidth="1" />
         ))}
+
+        {sinDatos ? (
+          // Línea base plana cuando no hay visitas aún
+          <line
+            x1={0} y1={toY(0)} x2={ancho} y2={toY(0)}
+            stroke="#E2DBD5" strokeWidth="2" strokeDasharray="6 4"
+          />
+        ) : (
+          <>
+            {/* Área */}
+            <path d={areaPath} fill="url(#areaGrad)" />
+            {/* Línea */}
+            <polyline
+              points={puntos}
+              fill="none"
+              stroke={color}
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            {/* Puntos — solo si hay pocos datos, si son 30 días omitir para no saturar */}
+            {datos.length <= 15 && datos.map((d, i) => (
+              <circle
+                key={i}
+                cx={toX(i)} cy={toY(parseInt(d.visitas))}
+                r="3.5" fill={color} stroke="#fff" strokeWidth="2"
+              />
+            ))}
+          </>
+        )}
       </svg>
+
+      {sinDatos && (
+        <div style={{ textAlign: "center", marginTop: 6, fontSize: 12, color: "#A8988A" }}>
+          Aún no hay visitas registradas en los últimos 30 días
+        </div>
+      )}
     </div>
   );
 }
@@ -133,7 +161,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
     const { data, error: err } = await apiFetch("/negocios/mio/negocio");
     setCargandoEditar(false);
     if (err) { alert("No se pudieron cargar los datos del negocio: " + err); return; }
-    onAbrirFormulario(data);
+    onAbrirFormulario(data.negocio);
   };
 
   // ── Estado: cargando ──

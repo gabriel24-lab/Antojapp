@@ -52,7 +52,7 @@ function AppContent() {
     setCiudadSeleccionada(ciudad || null);
   };
 
-  const irInicio   = () => { setVista("home");     setNegocioActivo(null); setBusqueda(""); };
+  const irInicio   = () => { setVista("home"); setNegocioActivo(null); setBusqueda(""); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
 
   // Llama a GET /api/negocios/:id para registrar la visita en la BD
