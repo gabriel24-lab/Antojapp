@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AppIcon from "./AppIcon";
 import { useLocationData } from "../hooks/useLocationData";
 
@@ -8,31 +8,35 @@ import { useLocationData } from "../hooks/useLocationData";
  * Pasos:
  *  "consent"      → pedir permiso GPS
  *  "detectando"   → esperando GPS
- *  "departamento" → elegir departamento/estado del país detectado/elegido
+ *  "departamento" → elegir departamento/estado (opcional)
  *  "ciudad"       → elegir ciudad (opcional)
  *  "pais_manual"  → si rechazó GPS, elegir país manualmente
  *
+ * En cada paso el usuario puede confirmar con la granularidad que desee:
+ *   - Solo país
+ *   - País + departamento
+ *   - País + departamento + ciudad
+ *
  * onConfirmar({ iso2, nombre, departamento, ciudad }) => void
- * onSaltar() => void  (cerrar sin elegir nada)
+ * onSaltar() => void
  */
 export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
-  const [paso, setPaso]             = useState("consent");
+  const [paso, setPaso]               = useState("consent");
   const [paisElegido, setPaisElegido] = useState(null);   // { iso2, nombre, bandera }
-  const [deptElegido, setDeptElegido] = useState(null);   // string
-  const [busqueda, setBusqueda]     = useState("");
+  const [deptElegido, setDeptElegido] = useState(null);   // string (display)
+  const [busqueda, setBusqueda]       = useState("");
 
-  const [estados, setEstados]         = useState([]);
-  const [ciudades, setCiudades]       = useState([]);
-  const [loadingEstados, setLoadingEstados]   = useState(false);
-  const [loadingCiudades, setLoadingCiudades] = useState(false);
+  const [estados, setEstados]                   = useState([]);
+  const [ciudades, setCiudades]                 = useState([]);
+  const [loadingEstados, setLoadingEstados]     = useState(false);
+  const [loadingCiudades, setLoadingCiudades]   = useState(false);
 
-  // Para GPS
-  const [gpsEstado, setGpsEstado]     = useState("idle"); // idle | detectando | ok | error
-  const [gpsPais, setGpsPais]         = useState(null);   // { iso2, nombre }
+  const [gpsEstado, setGpsEstado] = useState("idle");
+  const [gpsPais, setGpsPais]     = useState(null);
 
   const { countries, loadingCountries, fetchStates, fetchCities } = useLocationData();
 
-  // ── Solicitar GPS ──────────────────────────────────────────────
+  // ── GPS ────────────────────────────────────────────────────────
   const solicitarGPS = () => {
     if (!navigator.geolocation) { setGpsEstado("error"); return; }
     setGpsEstado("detectando");
@@ -52,7 +56,6 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
             setGpsPais({ iso2, nombre: nombre || c.nombre, bandera: c.bandera });
             setPaisElegido({ iso2, nombre: nombre || c.nombre, bandera: c.bandera });
             setGpsEstado("ok");
-            // Cargar departamentos automáticamente
             cargarEstados(nombre || c.nombre, "departamento");
           } else {
             setGpsEstado("error");
@@ -63,15 +66,12 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           setPaso("pais_manual");
         }
       },
-      () => {
-        setGpsEstado("error");
-        setPaso("pais_manual");
-      },
+      () => { setGpsEstado("error"); setPaso("pais_manual"); },
       { timeout: 10000, maximumAge: 60000 }
     );
   };
 
-  // ── Cargar departamentos ────────────────────────────────────────
+  // ── Cargar departamentos ───────────────────────────────────────
   const cargarEstados = async (nombrePais, siguientePaso) => {
     setLoadingEstados(true);
     setBusqueda("");
@@ -81,7 +81,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
     setPaso(siguientePaso);
   };
 
-  // ── Cargar ciudades ─────────────────────────────────────────────
+  // ── Cargar ciudades ────────────────────────────────────────────
   const cargarCiudades = async (nombrePais, dept) => {
     setLoadingCiudades(true);
     setBusqueda("");
@@ -91,49 +91,54 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
     setPaso("ciudad");
   };
 
-  // ── Handlers ────────────────────────────────────────────────────
+  // ── Handlers de selección ──────────────────────────────────────
   const elegirPaisManual = (pais) => {
     setPaisElegido(pais);
     cargarEstados(pais.nombre, "departamento");
   };
 
   const elegirDept = (dept) => {
-    setDeptElegido(dept);
-    cargarCiudades(paisElegido.nombre, dept);
+    // dept = { display: "Cesar", original: "Cesar Department" }
+    setDeptElegido(dept.display);
+    cargarCiudades(paisElegido.nombre, dept.original);
   };
 
-  const elegirSoloDept = () => {
-    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad: null });
-  };
-
-  const elegirCiudad = (ciudad) => {
-    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad });
-  };
-
-  const elegirSoloPais = () => {
+  // Confirmar solo con el país
+  const confirmarSoloPais = () => {
     onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: null, ciudad: null });
   };
 
-  // ── Filtrados ───────────────────────────────────────────────────
-  const q = busqueda.toLowerCase();
-  const paisesFiltrados  = q ? countries.filter(p => p.nombre.toLowerCase().includes(q)) : countries;
-  const estadosFiltrados = q ? estados.filter(e => e.toLowerCase().includes(q))           : estados;
-  const ciudadesFiltradas = q ? ciudades.filter(c => c.toLowerCase().includes(q))         : ciudades;
-
-  // ── Títulos por paso ────────────────────────────────────────────
-  const titulos = {
-    consent:      { icon: "mapPin", title: "¿Dónde estás?", sub: "Personaliza tu experiencia según tu ubicación" },
-    detectando:   { icon: "search", title: "Detectando tu ubicación…", sub: "Por favor espera un momento" },
-    pais_manual:  { icon: "globe", title: "Elige tu país", sub: "Selecciona el país donde estás" },
-    departamento: { icon: "mapPin", title: `Departamento en ${paisElegido?.nombre || "..."}`, sub: "¿En qué departamento o estado estás?" },
-    ciudad:       { icon: "store", title: `Ciudad en ${deptElegido || "..."}`, sub: "Elige tu ciudad para mayor precisión" },
+  // Confirmar con país + departamento (sin ciudad)
+  const confirmarSoloDept = () => {
+    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad: null });
   };
 
+  // Confirmar con ciudad
+  const confirmarCiudad = (ciudad) => {
+    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad });
+  };
+
+  // ── Filtrados ──────────────────────────────────────────────────
+  const q = busqueda.toLowerCase();
+  const paisesFiltrados   = q ? countries.filter(p => p.nombre.toLowerCase().includes(q)) : countries;
+  const estadosFiltrados  = q ? estados.filter(e => e.display.toLowerCase().includes(q))  : estados;
+  const ciudadesFiltradas = q ? ciudades.filter(c => c.toLowerCase().includes(q))          : ciudades;
+
+  // ── Títulos por paso ───────────────────────────────────────────
+  const titulos = {
+    consent:      { icon: "mapPin",  title: "¿Dónde estás?",               sub: "Personaliza tu experiencia según tu ubicación" },
+    detectando:   { icon: "search",  title: "Detectando tu ubicación…",    sub: "Por favor espera un momento" },
+    pais_manual:  { icon: "globe",   title: "Elige tu país",               sub: "Selecciona el país donde estás" },
+    departamento: { icon: "mapPin",  title: `Departamento en ${paisElegido?.nombre || "…"}`, sub: "Elige tu zona o confirma solo el país" },
+    ciudad:       { icon: "store",   title: `Ciudad en ${deptElegido || "…"}`,              sub: "Elige tu ciudad o confirma solo el departamento" },
+  };
   const t = titulos[paso] || titulos.consent;
+
+  // ── Progreso visual ────────────────────────────────────────────
+  const progreso = { pais_manual: "25%", departamento: "60%", ciudad: "90%" };
 
   return (
     <>
-      {/* Overlay — clic para cerrar */}
       <div
         onClick={onSaltar}
         style={{
@@ -142,7 +147,6 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
         }}
       />
 
-      {/* Modal */}
       <div style={{
         position: "fixed", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
@@ -154,22 +158,21 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
         animation: "modalIn 0.22s cubic-bezier(.34,1.56,.64,1)",
       }}>
 
-        {/* ── Barra de progreso ── */}
+        {/* Barra de progreso */}
         {paso !== "consent" && paso !== "detectando" && (
           <div style={{ height: 3, background: "#F0EBE5" }}>
             <div style={{
               height: "100%", background: "linear-gradient(90deg, #E8460A, #FF6B35)",
-              width: paso === "pais_manual" ? "25%" : paso === "departamento" ? "60%" : "90%",
-              transition: "width 0.4s ease",
-              borderRadius: 3,
+              width: progreso[paso] || "25%",
+              transition: "width 0.4s ease", borderRadius: 3,
             }} />
           </div>
         )}
 
-        {/* ── Header del modal ── */}
+        {/* Header */}
         <div style={{ padding: "28px 28px 20px", textAlign: "center", borderBottom: paso === "consent" ? "none" : "1px solid #F0EBE5", position: "relative" }}>
 
-          {/* Botón cerrar — siempre visible */}
+          {/* Cerrar */}
           <button
             onClick={onSaltar}
             title="Cerrar"
@@ -178,7 +181,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               width: 30, height: 30,
               background: "#F7F4F1", border: "none", borderRadius: "50%",
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#6B5E52", fontSize: 16, lineHeight: 1,
+              color: "#6B5E52", fontSize: 16,
               transition: "background 0.15s, color 0.15s",
             }}
             onMouseOver={e => { e.currentTarget.style.background = "#E2DBD5"; e.currentTarget.style.color = "#1A1208"; }}
@@ -186,13 +189,14 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           >
             <AppIcon name="x" size={14} />
           </button>
-          {/* Botón atrás (si no es consent) */}
+
+          {/* Atrás */}
           {paso !== "consent" && paso !== "detectando" && (
             <button
               onClick={() => {
                 if (paso === "pais_manual")  setPaso("consent");
-                if (paso === "departamento") setPaso(gpsPais ? "consent" : "pais_manual");
-                if (paso === "ciudad")       setPaso("departamento");
+                if (paso === "departamento") { setPaso(gpsPais ? "consent" : "pais_manual"); }
+                if (paso === "ciudad")        setPaso("departamento");
               }}
               style={{
                 position: "absolute", left: 16, top: 18,
@@ -205,7 +209,7 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
             </button>
           )}
 
-          {/* Icono animado */}
+          {/* Ícono */}
           <div style={{
             width: 60, height: 60, borderRadius: "50%",
             background: paso === "detectando" ? "#F0EBE5" : "linear-gradient(135deg, #FFF0EB, #FFE4D6)",
@@ -223,17 +227,14 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
             )}
           </div>
 
-          <h2 style={{
-            fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 800,
-            color: "#1A1208", marginBottom: 6, lineHeight: 1.25,
-          }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 800, color: "#1A1208", marginBottom: 6, lineHeight: 1.25 }}>
             {t.title}
           </h2>
           <p style={{ fontSize: 13, color: "#6B5E52", margin: 0, lineHeight: 1.55 }}>
             {t.sub}
           </p>
 
-          {/* País detectado badge */}
+          {/* Badge país GPS */}
           {gpsPais && paso === "departamento" && (
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -257,7 +258,6 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           <div style={{ padding: "20px 28px 28px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
-                id="btn-permitir-gps"
                 onClick={solicitarGPS}
                 style={{
                   width: "100%", padding: "14px 20px", borderRadius: 12,
@@ -276,7 +276,6 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               </button>
 
               <button
-                id="btn-elegir-manual"
                 onClick={() => setPaso("pais_manual")}
                 style={{
                   width: "100%", padding: "12px 20px", borderRadius: 12,
@@ -289,23 +288,19 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
                 onMouseOver={e => e.currentTarget.style.background = "#F0EBE5"}
                 onMouseOut={e => e.currentTarget.style.background = "#F7F4F1"}
               >
-                <><AppIcon name="globe" size={16} />{" "}Elegir país manualmente</>
+                <AppIcon name="globe" size={16} /> Elegir país manualmente
               </button>
 
               <button
-                id="btn-saltar-ubicacion"
                 onClick={onSaltar}
-                style={{
-                  width: "100%", padding: "10px", border: "none",
-                  background: "transparent", color: "#A8988A",
-                  cursor: "pointer", fontSize: 12, fontWeight: 500,
-                }}
+                style={{ width: "100%", padding: "10px", border: "none", background: "transparent", color: "#A8988A", cursor: "pointer", fontSize: 12, fontWeight: 500 }}
               >
                 Mostrar todos los negocios sin filtrar
               </button>
             </div>
             <p style={{ fontSize: 10, color: "#C0B8B0", marginTop: 14, textAlign: "center", lineHeight: 1.5 }}>
-              <AppIcon name="lock" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Tu ubicación no se guarda ni se comparte con terceros.
+              <AppIcon name="lock" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+              Tu ubicación no se guarda ni se comparte con terceros.
             </p>
           </div>
         )}
@@ -350,68 +345,60 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
 
         {/* PASO: departamento */}
         {paso === "departamento" && (
-          <StepLista
-            items={estadosFiltrados}
-            loading={loadingEstados}
-            busqueda={busqueda}
-            onBusqueda={setBusqueda}
-            placeholder="Buscar departamento…"
-            headerAction={
-              <button
-                onClick={elegirSoloPais}
-                style={{
-                  width: "100%", padding: "10px 16px", marginBottom: 4,
-                  background: "#F7F4F1", border: "1.5px dashed #D0C8C0",
-                  borderRadius: 10, color: "#6B5E52", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer", textAlign: "left",
-                  display: "flex", alignItems: "center", gap: 8,
-                }}
-              >
-                <span style={{ fontSize: 16 }}>{paisElegido?.bandera}</span>
-                Solo {paisElegido?.nombre} (sin departamento)
-              </button>
-            }
-            renderItem={(d) => ({
-              icon: "mapPin",
-              label: d,
-              onClick: () => elegirDept(d),
-            })}
-            skeletonCount={6}
-            emptyText="No se encontraron departamentos"
-          />
+          <>
+            {/* Opción: confirmar solo con el país */}
+            {!loadingEstados && (
+              <ConfirmBanner
+                icon={paisElegido?.bandera}
+                label={`Ver negocios en todo ${paisElegido?.nombre}`}
+                sublabel="Sin filtrar por departamento ni ciudad"
+                onClick={confirmarSoloPais}
+              />
+            )}
+            <StepLista
+              items={estadosFiltrados}
+              loading={loadingEstados}
+              busqueda={busqueda}
+              onBusqueda={setBusqueda}
+              placeholder="Buscar departamento…"
+              renderItem={(d) => ({
+                icon: "mapPin",
+                label: d.display,
+                onClick: () => elegirDept(d),
+              })}
+              skeletonCount={6}
+              emptyText="No se encontraron departamentos"
+            />
+          </>
         )}
 
         {/* PASO: ciudad */}
         {paso === "ciudad" && (
-          <StepLista
-            items={ciudadesFiltradas}
-            loading={loadingCiudades}
-            busqueda={busqueda}
-            onBusqueda={setBusqueda}
-            placeholder="Buscar ciudad…"
-            headerAction={
-              <button
-                onClick={elegirSoloDept}
-                style={{
-                  width: "100%", padding: "10px 16px", marginBottom: 4,
-                  background: "#F7F4F1", border: "1.5px dashed #D0C8C0",
-                  borderRadius: 10, color: "#6B5E52", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer", textAlign: "left",
-                  display: "flex", alignItems: "center", gap: 8,
-                }}
-              >
-                <AppIcon name="mapPin" size={16} />
-                Solo {deptElegido} (sin ciudad)
-              </button>
-            }
-            renderItem={(c) => ({
-              icon: null,
-              label: c,
-              onClick: () => elegirCiudad(c),
-            })}
-            skeletonCount={5}
-            emptyText="No se encontraron ciudades"
-          />
+          <>
+            {/* Opción: confirmar solo con departamento */}
+            {!loadingCiudades && (
+              <ConfirmBanner
+                icon="mapPin"
+                label={`Ver negocios en todo ${deptElegido}`}
+                sublabel={`Todo el departamento, sin filtrar por ciudad`}
+                onClick={confirmarSoloDept}
+              />
+            )}
+            <StepLista
+              items={ciudadesFiltradas}
+              loading={loadingCiudades}
+              busqueda={busqueda}
+              onBusqueda={setBusqueda}
+              placeholder="Buscar ciudad…"
+              renderItem={(c) => ({
+                icon: null,
+                label: c,
+                onClick: () => confirmarCiudad(c),
+              })}
+              skeletonCount={5}
+              emptyText="No se encontraron ciudades"
+            />
+          </>
         )}
       </div>
 
@@ -437,11 +424,55 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
   );
 }
 
-// ── Sub-componente: lista de selección con buscador ──────────────
-function StepLista({ items, loading, busqueda, onBusqueda, placeholder, renderItem, skeletonCount, emptyText, headerAction }) {
+// ── Banner de confirmación rápida ────────────────────────────────
+// Aparece en los pasos de departamento y ciudad para que el usuario
+// pueda confirmar con la granularidad actual sin tener que seguir.
+function ConfirmBanner({ icon, label, sublabel, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 12,
+        padding: "12px 20px",
+        background: hover ? "#FFF5F0" : "#FFF0EB",
+        border: "none", borderBottom: "1px solid #FFD8C8",
+        cursor: "pointer", textAlign: "left",
+        transition: "background 0.15s",
+      }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+        background: "linear-gradient(135deg, #E8460A, #FF6B35)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {icon === "mapPin"
+          ? <AppIcon name="mapPin" size={16} color="#fff" />
+          : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+        }
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#E8460A", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 11, color: "#A8988A" }}>{sublabel}</div>
+      </div>
+      <div style={{
+        flexShrink: 0, background: "#E8460A", color: "#fff",
+        fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20,
+      }}>
+        Confirmar
+      </div>
+    </button>
+  );
+}
+
+// ── Lista de selección con buscador ─────────────────────────────
+function StepLista({ items, loading, busqueda, onBusqueda, placeholder, renderItem, skeletonCount, emptyText }) {
   return (
     <div>
-      {/* Buscador */}
       <div style={{ padding: "10px 16px", borderBottom: "1px solid #F0EBE5" }}>
         <div style={{ position: "relative" }}>
           <AppIcon name="search" size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#A8988A" }} />
@@ -463,10 +494,7 @@ function StepLista({ items, loading, busqueda, onBusqueda, placeholder, renderIt
         </div>
       </div>
 
-      {/* Lista */}
       <div style={{ maxHeight: 280, overflowY: "auto", padding: "8px 12px 12px" }}>
-        {headerAction && !loading && headerAction}
-
         {loading ? (
           <SkeletonRows count={skeletonCount} />
         ) : items.length > 0 ? (
@@ -500,7 +528,7 @@ function RowBtn({ icon, label, onClick }) {
         marginBottom: 1,
       }}
     >
-      {icon && (
+      {icon !== null && (
         <span style={{ width: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {(icon === "mapPin" || icon === "globe" || icon === "store" || icon === "search")
             ? <AppIcon name={icon} size={18} color="#6B5E52" />
@@ -530,6 +558,6 @@ function SkeletonRows({ count }) {
 }
 
 function getFlagEmoji(iso2) {
-  if (!iso2 || iso2.length !== 2) return null; // no emoji fallback
+  if (!iso2 || iso2.length !== 2) return null;
   return String.fromCodePoint(...[...iso2.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
 }
