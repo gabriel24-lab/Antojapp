@@ -15,8 +15,9 @@ export default function Navbar({
   limiteNegocios,
 }) {
   const { user, logout } = useAuth();
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const [compacto,    setCompacto]    = useState(false);
+  const [menuAbierto,       setMenuAbierto]       = useState(false);
+  const [compacto,          setCompacto]          = useState(false);
+  const [confirmarLogout,   setConfirmarLogout]   = useState(false);
   const prevScrollY = useRef(0);
   const esPropietario = user?.rol === "negocio";
 
@@ -237,7 +238,7 @@ export default function Navbar({
                         Mis guardados
                       </MenuBtn>
                     )}
-                    <MenuBtn onClick={() => { logout(); setMenuAbierto(false); }} danger>Cerrar sesión</MenuBtn>
+                    <MenuBtn onClick={() => { setMenuAbierto(false); setConfirmarLogout(true); }} danger>Cerrar sesión</MenuBtn>
                   </div>
                 </>
               )}
@@ -250,10 +251,74 @@ export default function Navbar({
         </div>
       </div>
 
+      {/* ── Diálogo de confirmación de cierre de sesión ── */}
+      {confirmarLogout && (
+        <div
+          onClick={() => setConfirmarLogout(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 500,
+            background: "rgba(26,18,8,.5)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 18, width: "100%", maxWidth: 360,
+              boxShadow: "0 24px 60px rgba(0,0,0,.2)",
+              overflow: "hidden", animation: "logoutIn .22s cubic-bezier(.34,1.56,.64,1)",
+            }}
+          >
+            {/* Icono */}
+            <div style={{
+              background: "linear-gradient(135deg, #1A1208, #2D1F0F)",
+              padding: "28px 24px 22px", textAlign: "center",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: "50%",
+                background: "rgba(232,70,10,.15)", border: "2px solid rgba(232,70,10,.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                margin: "0 auto 12px",
+              }}>
+                <AppIcon name="partyPopper" size={26} color="#E8460A" />
+              </div>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, color: "#fff" }}>
+                ¿Cerrar sesión?
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", marginTop: 4 }}>
+                Hola, <strong style={{ color: "rgba(255,255,255,.8)" }}>{user?.nombre?.split(" ")[0]}</strong>. ¿Seguro que quieres salir?
+              </div>
+            </div>
+
+            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <button
+                className="btn-primary"
+                style={{ width: "100%", background: "#C0392B", fontSize: 15 }}
+                onClick={() => { logout(); setConfirmarLogout(false); }}
+              >
+                Sí, cerrar sesión
+              </button>
+              <button
+                className="btn-secondary"
+                style={{ width: "100%", fontSize: 15 }}
+                onClick={() => setConfirmarLogout(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes menuSlide {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes logoutIn {
+          from { opacity: 0; transform: scale(.88); }
+          to   { opacity: 1; transform: scale(1); }
         }
       `}</style>
     </header>

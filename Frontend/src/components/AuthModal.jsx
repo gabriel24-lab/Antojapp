@@ -73,7 +73,7 @@ export default function AuthModal({ onCerrar }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al iniciar sesión con Google"); return; }
       login(data.token, data.usuario);
-      onCerrar();
+      cerrarConExito(data.usuario.nombre);
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -82,6 +82,14 @@ export default function AuthModal({ onCerrar }) {
   };
 
   // ── Formularios email/password ──────────────────────────
+  const [loginExito, setLoginExito] = useState(null); // { nombre, esNuevo }
+
+  const cerrarConExito = (nombre, esNuevo = false) => {
+    setLoginExito({ nombre, esNuevo });
+    // Cerrar el modal tras 1.4s para que el usuario vea el feedback
+    setTimeout(() => onCerrar(), 1400);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -95,7 +103,7 @@ export default function AuthModal({ onCerrar }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al iniciar sesión"); return; }
       login(data.token, data.usuario);
-      onCerrar();
+      cerrarConExito(data.usuario.nombre);
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -120,7 +128,7 @@ export default function AuthModal({ onCerrar }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
       login(data.token, data.usuario);
-      onCerrar();
+      cerrarConExito(data.usuario.nombre, true);
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -178,8 +186,44 @@ export default function AuthModal({ onCerrar }) {
 
         <div style={{ padding: "24px 28px" }}>
 
+          {/* ── PANTALLA DE ÉXITO (login / registro) ── */}
+          {loginExito && (
+            <div style={{
+              textAlign: "center", padding: "20px 0 12px",
+              animation: "exitoIn .35s cubic-bezier(.34,1.56,.64,1)",
+            }}>
+              <div style={{
+                width: 68, height: 68, borderRadius: "50%",
+                background: "linear-gradient(135deg, #1A8C5B, #22B573)",
+                margin: "0 auto 16px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 8px 24px rgba(26,140,91,.3)",
+              }}>
+                <AppIcon name="check" size={34} color="#fff" strokeWidth={2.5} />
+              </div>
+              <div style={{
+                fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 700,
+                color: "#1A1208", marginBottom: 8,
+              }}>
+                {loginExito.esNuevo ? "¡Cuenta creada!" : "¡Sesión iniciada!"}
+              </div>
+              <div style={{ fontSize: 14, color: "#6B5E52" }}>
+                Bienvenido{loginExito.esNuevo ? "" : " de nuevo"},{" "}
+                <strong style={{ color: "#1A1208" }}>{loginExito.nombre?.split(" ")[0]}</strong>
+              </div>
+              <div style={{
+                marginTop: 20, height: 4, background: "#F0EBE5", borderRadius: 2, overflow: "hidden",
+              }}>
+                <div style={{
+                  height: "100%", background: "#1A8C5B", borderRadius: 2,
+                  animation: "progreso 1.4s linear forwards",
+                }} />
+              </div>
+            </div>
+          )}
+
           {/* BOTÓN GOOGLE (GIS renderiza aquí) */}
-          {vista !== "recuperar" && (
+          {!loginExito && vista !== "recuperar" && (
             <>
               {/* Contenedor del botón oficial de Google */}
               <div
@@ -208,7 +252,7 @@ export default function AuthModal({ onCerrar }) {
           )}
 
           {/* FORMULARIO LOGIN */}
-          {vista === "login" && (
+          {!loginExito && vista === "login" && (
             <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: "#6B5E52", display: "block", marginBottom: 5 }}>Correo electrónico</label>
@@ -231,7 +275,7 @@ export default function AuthModal({ onCerrar }) {
           )}
 
           {/* FORMULARIO REGISTRO */}
-          {vista === "registro" && (
+          {!loginExito && vista === "registro" && (
             <form onSubmit={handleRegistro} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
               {/* ── Selector de rol ── */}
@@ -291,7 +335,7 @@ export default function AuthModal({ onCerrar }) {
           )}
 
           {/* FORMULARIO RECUPERAR */}
-          {vista === "recuperar" && (
+          {!loginExito && vista === "recuperar" && (
             <form onSubmit={handleRecuperar} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {exito ? (
                 <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 10, padding: "16px", textAlign: "center" }}>
@@ -320,7 +364,7 @@ export default function AuthModal({ onCerrar }) {
           )}
 
           {/* Toggle login/registro */}
-          {vista !== "recuperar" && (
+          {!loginExito && vista !== "recuperar" && (
             <div style={{ marginTop: 20, textAlign: "center", borderTop: "1px solid #F0EBE5", paddingTop: 18 }}>
               <span style={{ fontSize: 14, color: "#6B5E52" }}>
                 {vista === "login" ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
@@ -341,6 +385,14 @@ export default function AuthModal({ onCerrar }) {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes exitoIn {
+          from { opacity: 0; transform: scale(.85); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes progreso {
+          from { width: 0%; }
+          to   { width: 100%; }
         }
       `}</style>
     </div>

@@ -3,64 +3,126 @@ import { apiFetch } from "../apiClient";
 import AppIcon from "../components/AppIcon";
 
 // ── Mini gráfico SVG de línea ──────────────────────────────────
-function LineChart({ datos, color = "#E8460A", altura = 100 }) {
-  const ancho  = 560;
-  const padX   = 0;
-  const padY   = 12;
+function LineChart({ datos, color = "#E8460A", altura = 120 }) {
+  const [tooltip, setTooltip] = useState(null); // { x, y, dia, visitas }
 
-  // Si no hay datos o todos son cero → mostrar línea base plana con cuadrícula
-  const sinDatos = !datos || datos.length === 0 || datos.every(d => parseInt(d.visitas) === 0);
+  const ancho = 560;
+  const padX  = 8;
+  const padY  = 14;
 
-  const valores = sinDatos ? [] : datos.map(d => parseInt(d.visitas));
-  const maxVal  = sinDatos ? 1 : Math.max(...valores, 1);
-  const minVal  = 0;
-  const n       = sinDatos ? 30 : datos.length;
+  // Normalizar: el backend puede devolver { dia: Date | string, visitas: number | string }
+  const filas = (datos || []).map(d => ({
+    dia:     typeof d.dia === "string" ? d.dia : d.dia?.toISOString?.().slice(0, 10) ?? String(d.dia),
+    visitas: parseInt(d.visitas) || 0,
+  }));
 
-  const toX = (i) => padX + (i / (n - 1 || 1)) * (ancho - padX * 2);
-  const toY = (v) => padY + (1 - (v - minVal) / (maxVal - minVal || 1)) * (altura - padY * 2);
+  // Sin datos: solo si el array está vacío (no hay registros en absoluto)
+  // Si hay días con 0 visitas es información válida y debe mostrarse
+  const sinDatos = filas.length === 0;
+  const todoCero = !sinDatos && filas.every(f => f.visitas === 0);
 
-  // Líneas de cuadrícula horizontales
+  const valores = filas.map(f => f.visitas);
+  const maxVal  = sinDatos || todoCero ? 1 : Math.max(...valores, 1);
+  const n       = sinDatos ? 30 : filas.length;
+
+  const toX = (i) => padX + (i / Math.max(n - 1, 1)) * (ancho - padX * 2);
+  const toY = (v) => padY + (1 - v / maxVal) * (altura - padY * 2);
+
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map(pct =>
     padY + pct * (altura - padY * 2)
   );
 
-  const puntos   = sinDatos ? null : datos.map((d, i) => `${toX(i)},${toY(parseInt(d.visitas))}`).join(" ");
-  const areaPath = sinDatos ? null :
-    `M ${toX(0)},${toY(parseInt(datos[0].visitas))} ` +
-    datos.map((d, i) => `L ${toX(i)},${toY(parseInt(d.visitas))}`).join(" ") +
-    ` L ${toX(datos.length - 1)},${altura} L ${toX(0)},${altura} Z`;
+  const puntos = sinDatos || todoCero
+    ? null
+    : filas.map((f, i) => `${toX(i)},${toY(f.visitas)}`).join(" ");
+
+  const areaPath = sinDatos || todoCero
+    ? null
+    : `M ${toX(0)},${toY(filas[0].visitas)} ` +
+      filas.map((f, i) => `L ${toX(i)},${toY(f.visitas)}`).join(" ") +
+      ` L ${toX(filas.length - 1)},${altura - padY} L ${toX(0)},${altura - padY} Z`;
+
+  // Formatear fecha para tooltip y eje X
+  const formatFecha = (diaStr) => {
+    // Parsear como fecha local para evitar desfase de zona horaria
+    const [y, m, d] = diaStr.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+  };
+
+  const handleMouseMove = (e) => {
+    if (sinDatos || todoCero || !filas.length) return;
+    const svg   = e.currentTarget;
+    const rect  = svg.getBoundingClientRect();
+    const xRel  = (e.clientX - rect.left) / rect.width * ancho;
+    const idx   = Math.min(
+      Math.max(0, Math.round((xRel - padX) / (ancho - padX * 2) * (filas.length - 1))),
+      filas.length - 1
+    );
+    const f = filas[idx];
+    setTooltip({
+      x:       toX(idx) / ancho * 100, // porcentaje para posicionar en el div
+      y:       toY(f.visitas),
+      dia:     formatFecha(f.dia),
+      visitas: f.visitas,
+      idx,
+    });
+  };
 
   return (
-    <div style={{ width: "100%", overflowX: "auto" }}>
+    <div style={{ width: "100%", position: "relative" }}>
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          position:      "absolute",
+          left:          `clamp(50px, ${tooltip.x}%, calc(100% - 80px))`,
+          top:           4,
+          transform:     "translateX(-50%)",
+          background:    "#1A1208",
+          color:         "#fff",
+          borderRadius:  8,
+          padding:       "5px 10px",
+          fontSize:      12,
+          fontWeight:    600,
+          pointerEvents: "none",
+          whiteSpace:    "nowrap",
+          zIndex:        10,
+          boxShadow:     "0 2px 8px rgba(0,0,0,.25)",
+        }}>
+          {tooltip.dia} · <span style={{ color }}>{tooltip.visitas} visita{tooltip.visitas !== 1 ? "s" : ""}</span>
+        </div>
+      )}
+
       <svg
         viewBox={`0 0 ${ancho} ${altura}`}
-        preserveAspectRatio="none"
-        style={{ width: "100%", height: altura, display: "block" }}
+        preserveAspectRatio="xMidYMid meet"
+        style={{ width: "100%", height: altura, display: "block", cursor: sinDatos || todoCero ? "default" : "crosshair" }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setTooltip(null)}
       >
         <defs>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.01" />
+            <stop offset="0%"   stopColor={color} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
         {/* Cuadrícula horizontal */}
         {gridLines.map((y, i) => (
-          <line key={i} x1={0} y1={y} x2={ancho} y2={y}
+          <line key={i} x1={padX} y1={y} x2={ancho - padX} y2={y}
             stroke="#F0EBE5" strokeWidth="1" />
         ))}
 
-        {sinDatos ? (
-          // Línea base plana cuando no hay visitas aún
+        {sinDatos || todoCero ? (
+          // Línea base plana cuando no hay visitas en los últimos 30 días
           <line
-            x1={0} y1={toY(0)} x2={ancho} y2={toY(0)}
+            x1={padX} y1={toY(0)} x2={ancho - padX} y2={toY(0)}
             stroke="#E2DBD5" strokeWidth="2" strokeDasharray="6 4"
           />
         ) : (
           <>
-            {/* Área */}
+            {/* Área rellena */}
             <path d={areaPath} fill="url(#areaGrad)" />
-            {/* Línea */}
+            {/* Línea principal */}
             <polyline
               points={puntos}
               fill="none"
@@ -69,20 +131,30 @@ function LineChart({ datos, color = "#E8460A", altura = 100 }) {
               strokeLinejoin="round"
               strokeLinecap="round"
             />
-            {/* Puntos — solo si hay pocos datos, si son 30 días omitir para no saturar */}
-            {datos.length <= 15 && datos.map((d, i) => (
+            {/* Puntos interactivos (solo si hay ≤ 15 días para no saturar) */}
+            {filas.length <= 15 && filas.map((f, i) => (
               <circle
                 key={i}
-                cx={toX(i)} cy={toY(parseInt(d.visitas))}
-                r="3.5" fill={color} stroke="#fff" strokeWidth="2"
+                cx={toX(i)} cy={toY(f.visitas)}
+                r={tooltip?.idx === i ? 5 : 3.5}
+                fill={color} stroke="#fff" strokeWidth="2"
+                style={{ transition: "r .1s" }}
               />
             ))}
+            {/* Línea vertical del cursor al hacer hover */}
+            {tooltip && (
+              <line
+                x1={toX(tooltip.idx)} y1={padY}
+                x2={toX(tooltip.idx)} y2={altura - padY}
+                stroke={color} strokeWidth="1" strokeDasharray="4 3" strokeOpacity="0.5"
+              />
+            )}
           </>
         )}
       </svg>
 
-      {sinDatos && (
-        <div style={{ textAlign: "center", marginTop: 6, fontSize: 12, color: "#A8988A" }}>
+      {todoCero && (
+        <div style={{ textAlign: "center", marginTop: 4, fontSize: 12, color: "#A8988A" }}>
           Aún no hay visitas registradas en los últimos 30 días
         </div>
       )}
@@ -200,15 +272,20 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
   const { negocio, visitas, favoritos, resenas } = datos;
 
-  // Calcular fecha para labels del eje X (cada 7 días)
+  // Calcular fecha para labels del eje X (cada ~5 marcas)
   const etiquetasX = (() => {
     if (!visitas.porDia.length) return [];
     const total = visitas.porDia.length;
     const paso  = Math.max(1, Math.floor(total / 5));
     return visitas.porDia.filter((_, i) => i % paso === 0 || i === total - 1)
       .map(d => {
-        const fecha = new Date(d.dia + "T00:00:00");
-        return fecha.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+        // El backend puede devolver dia como Date object o como string "YYYY-MM-DD"
+        const diaStr = typeof d.dia === "string"
+          ? d.dia
+          : (d.dia?.toISOString?.().slice(0, 10) ?? String(d.dia));
+        // Parsear como fecha local para evitar desfase de zona horaria
+        const [y, m, dd] = diaStr.split("-").map(Number);
+        return new Date(y, m - 1, dd).toLocaleDateString("es-CO", { day: "numeric", month: "short" });
       });
   })();
 

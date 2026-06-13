@@ -95,15 +95,22 @@ async function getEstadisticas(req, res) {
     res.json({
       negocio: negocioResult.rows[0],
       visitas: {
-        total:     parseInt(visitasTotal.rows[0].total),
-        semana:    parseInt(visitasSemana.rows[0].total),
-        porDia:    visitasPorDia.rows,            // [{ dia: "2026-06-01", visitas: 12 }, ...]
+        total:  parseInt(visitasTotal.rows[0].total),
+        semana: parseInt(visitasSemana.rows[0].total),
+        // Serializar dia como string ISO "YYYY-MM-DD" para evitar que el driver
+        // de pg lo envíe como objeto Date, lo que rompe la gráfica en el frontend
+        porDia: visitasPorDia.rows.map(r => ({
+          dia:     r.dia instanceof Date
+            ? r.dia.toISOString().slice(0, 10)
+            : String(r.dia).slice(0, 10),
+          visitas: parseInt(r.visitas) || 0,
+        })),
       },
-      favoritos:   parseInt(totalFavoritos.rows[0].total),
+      favoritos: parseInt(totalFavoritos.rows[0].total),
       resenas: {
-        total:     parseInt(totalResenas.rows[0].total),
-        promedio:  parseFloat(promedioEstrellas.rows[0].promedio) || 0,
-        ultimas:   ultimasResenas.rows,
+        total:   parseInt(totalResenas.rows[0].total),
+        promedio: parseFloat(promedioEstrellas.rows[0].promedio) || 0,
+        ultimas:  ultimasResenas.rows,
       },
     });
   } catch (err) {

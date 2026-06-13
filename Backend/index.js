@@ -2,11 +2,11 @@ require("dotenv").config();
 
 // ── Validación de variables de entorno críticas ────────────────
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  console.error("❌ JWT_SECRET no definido o demasiado corto (mínimo 32 caracteres). Abortando.");
+  console.error("JWT_SECRET no definido o demasiado corto (mínimo 32 caracteres). Abortando.");
   process.exit(1);
 }
 if (!process.env.FRONTEND_URL) {
-  console.error("❌ FRONTEND_URL no definido. Abortando.");
+  console.error(" FRONTEND_URL no definido. Abortando.");
   process.exit(1);
 }
 
