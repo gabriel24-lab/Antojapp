@@ -1,7 +1,3 @@
-// Helper para hacer llamadas autenticadas al backend.
-// La autenticación viaja en la cookie HttpOnly — el browser la adjunta
-// automáticamente con credentials: "include". No se lee ningún token
-// desde localStorage ni se construye un header Authorization manual.
 
 import API_URL from "./api";
 

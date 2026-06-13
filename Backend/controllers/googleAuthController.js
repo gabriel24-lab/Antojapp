@@ -21,14 +21,23 @@ function generarToken(usuario) {
 }
 
 // POST /api/auth/google
+// Body: { credential, rol? }
+//   - Si el usuario ya existe → inicia sesión normalmente (rol ignorado)
+//   - Si es nuevo y viene `rol` → crea la cuenta con ese rol
+//   - Si es nuevo y NO viene `rol` → responde { esNuevo: true } sin crear cuenta
+//     para que el frontend muestre el selector de rol
 async function googleLogin(req, res) {
-  const { credential } = req.body;
+  const { credential, rol } = req.body;
 
   if (!credential)
     return res.status(400).json({ error: "Token de Google no proporcionado" });
 
   if (typeof credential !== "string" || credential.length > 4096)
     return res.status(400).json({ error: "Token de Google inválido" });
+
+  // Validar el rol si viene
+  if (rol && !["usuario", "negocio"].includes(rol))
+    return res.status(400).json({ error: "Rol no válido" });
 
   try {
     const ticket = await client.verifyIdToken({
@@ -45,33 +54,52 @@ async function googleLogin(req, res) {
     if (!email_verified)
       return res.status(400).json({ error: "El correo de Google no está verificado" });
 
-    let result = await pool.query(
+    // ── ¿Ya existe el usuario? ──
+    const result = await pool.query(
       "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
       [email.toLowerCase()]
     );
 
-    let usuario;
-
     if (result.rows.length > 0) {
-      usuario = result.rows[0];
+      // Usuario existente → login normal
+      const usuario = result.rows[0];
       await pool.query("UPDATE usuarios SET es_google = TRUE WHERE id = $1", [usuario.id]);
-    } else {
-      const insert = await pool.query(
-        `INSERT INTO usuarios (nombre, email, es_google, rol)
-         VALUES ($1, $2, TRUE, 'usuario')
-         RETURNING id, nombre, email, rol`,
-        [nombre || email.split("@")[0], email.toLowerCase()]
-      );
-      usuario = insert.rows[0];
+
+      const token = generarToken(usuario);
+      res.cookie("token", token, COOKIE_OPTS);
+      return res.json({
+        token,
+        esNuevo: false,
+        usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+      });
     }
 
+    // ── Usuario nuevo ──
+
+    // Si no se envió rol todavía → pedirlo al frontend
+    if (!rol) {
+      return res.status(200).json({
+        esNuevo:  true,
+        pendiente: true,          // señal: falta elegir rol
+        nombre:   nombre || email.split("@")[0],
+        email:    email.toLowerCase(),
+      });
+    }
+
+    // Ya viene rol → crear la cuenta
+    const insert = await pool.query(
+      `INSERT INTO usuarios (nombre, email, es_google, rol)
+       VALUES ($1, $2, TRUE, $3)
+       RETURNING id, nombre, email, rol`,
+      [nombre || email.split("@")[0], email.toLowerCase(), rol]
+    );
+    const usuario = insert.rows[0];
+
     const token = generarToken(usuario);
-
-    // Emitir JWT en cookie HttpOnly
     res.cookie("token", token, COOKIE_OPTS);
-
-    res.json({
+    return res.json({
       token,
+      esNuevo: true,
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     });
 

@@ -290,7 +290,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   })();
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 60px" }}>
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "20px var(--content-px, 16px) 80px" }}>
 
       {/* ── Header ── */}
       <div style={{

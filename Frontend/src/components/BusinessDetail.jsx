@@ -68,12 +68,12 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
     setEnviando(true);
     setErrorResena("");
     try {
-      const token = null; // token lives in HttpOnly cookie — no localStorage
+      const token = localStorage.getItem("token");
       const res   = await fetch(`${API_URL}/negocios/${negocio.id}/resenas`, {
-        method:      "POST",
-        credentials: "include",
+        method:  "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization:  `Bearer ${token}`
         },
         body: JSON.stringify({
           estrellas:  nuevaResena.estrellas,
@@ -95,18 +95,18 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
   };
 
   return (
-    <div style={{ maxWidth: 820, margin: "0 auto", padding: "24px 20px 60px" }}>
+    <div style={{ maxWidth: 820, margin: "0 auto", padding: "16px var(--content-px, 16px) 80px" }}>
       {/* Volver */}
       <button onClick={onVolver} className="btn-ghost" style={{ marginBottom: 20 }}>
         <AppIcon name="arrowLeft" size={16} /> Volver a resultados
       </button>
 
       {/* Hero */}
-      <div style={{ position: "relative", height: 280, borderRadius: 16, overflow: "hidden", marginBottom: 24 }}>
+      <div style={{ position: "relative", height: "clamp(200px, 40vw, 280px)", borderRadius: 14, overflow: "hidden", marginBottom: 24 }}>
         <img src={negocio.portada} alt={negocio.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,18,8,.7) 30%, transparent 70%)" }} />
         <div style={{ position: "absolute", bottom: 20, left: 24, right: 24 }}>
-          <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 30, color: "#fff", marginBottom: 8, lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: "clamp(22px, 5vw, 30px)", color: "#fff", marginBottom: 8, lineHeight: 1.1 }}>
             {negocio.nombre}
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -141,7 +141,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+      <div className="detail-2col" style={{ marginBottom: 20 }}>
         {/* Descripción */}
         <div className="card" style={{ padding: "18px 20px", gridColumn: "1 / -1" }}>
           <p style={{ fontSize: 15, color: "#6B5E52", lineHeight: 1.7 }}>{negocio.descripcion}</p>
@@ -197,7 +197,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: 200 }}>
+        <div className="sede-grid">
           {/* Info sede */}
           <div style={{ padding: "16px 20px" }}>
             <div style={{ marginBottom: 12 }}>
@@ -271,7 +271,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
             <iframe
               title={`Mapa ${sede.nombre}`}
               width="100%" height="100%"
-              style={{ border: 0, display: "block", minHeight: 220 }}
+              style={{ border: 0, display: "block", minHeight: 220, height: "100%", minHeight: "clamp(200px, 50vw, 280px)" }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               src={`https://maps.google.com/maps?q=${sede.lat},${sede.lng}&z=15&output=embed`}

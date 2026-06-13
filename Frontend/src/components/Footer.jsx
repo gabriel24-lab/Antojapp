@@ -26,7 +26,7 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
       style={{
         background: "#1A1208",
         borderTop: "1px solid rgba(255,255,255,0.08)",
-        padding: "30px 20px",
+        padding: "24px var(--content-px, 16px)",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(20px)",
         transition: "opacity 0.5s ease, transform 0.5s ease",
@@ -35,7 +35,7 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
       <div style={{
         maxWidth: 1100, margin: "0 auto",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        flexWrap: "wrap", gap: 16,
+        flexWrap: "wrap", gap: 12,
       }}>
         {/* Logo */}
         <button

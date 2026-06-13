@@ -11,9 +11,10 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
 
   useEffect(() => {
     if (!user) return;
+    const token = localStorage.getItem("token");
     setCargando(true);
     fetch(`${API_URL}/favoritos`, {
-      credentials: "include",
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.ok ? r.json() : [])
       .then(data => setNegocios(data))
@@ -41,7 +42,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px 60px" }}>
+    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px var(--content-px, 16px) 80px" }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 800, fontSize: 26, color: "#1A1208", marginBottom: 6 }}>
           Tus guardados
@@ -56,7 +57,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
       </div>
 
       {cargando && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(290px, 100%), 1fr))", gap: 16 }}>
           {[1, 2, 3].map(i => (
             <div key={i} className="card" style={{ height: 320, background: "#F0EBE5", animation: "pulse 1.5s infinite" }} />
           ))}
@@ -67,7 +68,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
         <>
           {/* Botón compartir */}
           <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
+            display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap",
             background: "#FFF0EB", border: "1px solid #E8460A22",
             borderRadius: 12, padding: "12px 16px", marginBottom: 24
           }}>
@@ -86,7 +87,7 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(290px, 100%), 1fr))", gap: 16 }}>
             {negocios.map(negocio => (
               <BusinessCard
                 key={negocio.id}

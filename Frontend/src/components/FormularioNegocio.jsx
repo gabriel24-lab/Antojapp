@@ -134,7 +134,7 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
       {/* Cuerpo */}
       {expandida && (
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
             <Field>
               <Label required>Nombre de la sede</Label>
               <input className="input" value={sede.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Sede Centro" />
@@ -319,7 +319,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
 
           {/* Precio y descripción — solo si NO es menú */}
           {!esMenu && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
               <Field>
                 <Label required>Precio ($)</Label>
                 <input className="input" type="number" min="0" value={plato.precio || ""} onChange={e => set("precio", e.target.value)} placeholder="15000" />
@@ -344,7 +344,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
             /* Menú: 2 fotos (cara A y cara B) */
             <Field>
               <Label>Fotos del menú</Label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 10 }}>
                 {[
                   { key: "foto",       ref: fileRef,  handler: (e) => handleFoto(e, "a"), label: "Cara A / Frente",  preview: plato.foto,       subiendo: subiendo  },
                   { key: "foto_menu_b",ref: fileRefB, handler: (e) => handleFoto(e, "b"), label: "Cara B / Reverso", preview: plato.foto_menu_b, subiendo: subiendoB },
@@ -714,7 +714,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
               </Field>
               <Divider />
               <SectionTitle icon="smartphone">Redes y contacto</SectionTitle>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
                 <Field>
                   <Label>WhatsApp</Label>
                   <input className="input" value={info.whatsapp} onChange={e => setInfoField("whatsapp", e.target.value)} placeholder="3001234567" />
