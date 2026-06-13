@@ -24,7 +24,7 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
     <footer
       ref={ref}
       style={{
-        background: "#1A1208",
+        background: "var(--text-1)",
         borderTop: "1px solid rgba(255,255,255,0.08)",
         padding: "24px var(--content-px, 16px)",
         opacity: visible ? 1 : 0,
@@ -43,8 +43,8 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
           style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
         >
           <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 26, height: 26, borderRadius: 6, objectFit: "cover" }} />
-          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 15, color: "#fff" }}>
-            Antoj<span style={{ color: "#E8460A" }}>app</span>
+          <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 15, color: "var(--surface)" }}>
+            Antoj<span style={{ color: "var(--brand)" }}>app</span>
           </span>
         </button>
 
@@ -73,7 +73,7 @@ function FooterLink({ children, onClick }) {
       onMouseLeave={() => setHover(false)}
       style={{
         background: "none", border: "none",
-        color: hover ? "#E8460A" : "rgba(255,255,255,.45)",
+        color: hover ? "var(--brand)" : "rgba(255,255,255,.45)",
         fontSize: 13, cursor: "pointer",
         padding: "4px 10px", borderRadius: 6,
         transition: "color 0.15s",

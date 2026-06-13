@@ -7,7 +7,7 @@ const LIMITE_NEGOCIOS = 4;
 
 // GET /api/negocios
 async function getNegocios(req, res) {
-  const { busqueda, categoria, soloAbiertos, pais, ciudad } = req.query;
+  const { busqueda, categoria, soloAbiertos, pais, departamento, ciudad } = req.query;
 
   try {
     let query = `
@@ -57,6 +57,11 @@ async function getNegocios(req, res) {
     if (pais && pais.trim()) {
       valores.push(pais.trim().toUpperCase());
       condiciones.push(`n.pais = $${valores.length}`);
+    }
+
+    if (departamento && departamento.trim()) {
+      valores.push(departamento.trim());
+      condiciones.push(`LOWER(n.departamento) = LOWER($${valores.length})`);
     }
 
     if (ciudad && ciudad.trim()) {

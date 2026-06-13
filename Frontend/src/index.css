@@ -4,11 +4,15 @@
 :root {
   --brand:       #E8460A;
   --brand-light: #FFF0EB;
+  --brand-hover: #FFF4F0;
   --brand-dark:  #B83508;
   --surface:     #FFFFFF;
+  --surface-2:   #FAFAF9;
+  --surface-3:   #FDFAF8;
   --bg:          #F7F4F1;
   --bg2:         #EDE9E5;
   --text-1:      #1A1208;
+  --text-deep:   #3D2B1F;
   --text-2:      #6B5E52;
   --text-3:      #A8988A;
   --border:      #E2DBD5;
@@ -24,6 +28,13 @@
   --shadow-md:   0 4px 16px rgba(26,18,8,.10);
   --transition:  0.18s ease;
 
+  /* ── Tokens adicionales ── */
+  --text-4:      #C0B8B0;
+  --brand-border: #FFD8C8;
+  --overlay:     #2A1F10;
+  --neutral-text: #7A6A5E;
+  --neutral-bg:  #F2EDE8;
+  --neutral-bdr: #E0D8D2;
   /* ── Layout tokens ── */
   --nav-height:  64px;
   --content-px:  20px;

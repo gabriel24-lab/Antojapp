@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useUbicacionContext } from "../context/UbicacionContext";
 import AppIcon from "./AppIcon";
 import NavLocationPicker from "./NavLocationPicker";
 
@@ -7,12 +8,18 @@ export default function Navbar({
   onAbrirAuth, onVerFavoritos, onAbrirPanel,
   onAbrirFormulario, vistaActual,
   busqueda, onBusqueda, onIrInicio, onIrNegocios,
-  paisSeleccionado, paisNombre, departamentoSeleccionado, ciudadSeleccionada,
-  onCambiarUbicacion,
   totalNegociosPropietario,
   limiteNegocios,
 }) {
   const { user, logout } = useAuth();
+  const { pais, departamento, ciudad, cambiarUbicacion } = useUbicacionContext();
+
+  // Adaptar al shape que NavLocationPicker y el JSX interno esperan
+  const paisSeleccionado         = pais?.iso2         ?? null;
+  const paisNombre               = pais?.nombre       ?? null;
+  const departamentoSeleccionado = departamento;
+  const ciudadSeleccionada       = ciudad;
+  const onCambiarUbicacion       = cambiarUbicacion;
   const [menuAbierto,     setMenuAbierto]     = useState(false);
   const [menuMovil,       setMenuMovil]       = useState(false);
   const [compacto,        setCompacto]        = useState(false);
@@ -42,11 +49,11 @@ export default function Navbar({
   }, [menuMovil]);
 
   const navH    = compacto ? 50 : 64;
-  const bgAlpha = compacto ? "rgba(26,18,8,0.92)" : "#1A1208";
+  const bgAlpha = compacto ? "rgba(26,18,8,0.92)" : "var(--text-1)";
 
   const navLinkStyle = (activo) => ({
     background: activo ? "rgba(232,70,10,.18)" : "none",
-    color: activo ? "#E8460A" : "rgba(255,255,255,.72)",
+    color: activo ? "var(--brand)" : "rgba(255,255,255,.72)",
     border: "none", padding: "6px 13px", borderRadius: 8,
     fontSize: 14, fontWeight: 500, cursor: "pointer",
     transition: "background 0.15s, color 0.15s",
@@ -91,7 +98,7 @@ export default function Navbar({
               width: 38, height: 38, borderRadius: 8,
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.12)",
-              color: "#fff", flexShrink: 0,
+              color: "var(--surface)", flexShrink: 0,
             }}
           >
             <AppIcon name={menuMovil ? "x" : "menu"} size={20} />
@@ -125,10 +132,10 @@ export default function Navbar({
             />
             <span style={{
               fontFamily: "'Manrope', sans-serif", fontWeight: 700,
-              fontSize: compacto ? 16 : 18, color: "#fff", letterSpacing: "-0.5px",
+              fontSize: compacto ? 16 : 18, color: "var(--surface)", letterSpacing: "-0.5px",
               transition: "font-size 0.3s",
             }}>
-              Antoj<span style={{ color: "#E8460A" }}>app</span>
+              Antoj<span style={{ color: "var(--brand)" }}>app</span>
             </span>
           </button>
 
@@ -142,7 +149,7 @@ export default function Navbar({
           <div style={{ flex: 1, maxWidth: 380, position: "relative" }} className={`nav-search${busquedaMovil ? " nav-search--open" : ""}`}>
             <span style={{
               position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-              fontSize: 14, color: "#A8988A", pointerEvents: "none",
+              fontSize: 14, color: "var(--text-3)", pointerEvents: "none",
             }}><AppIcon name="search" size={15} /></span>
             <input
               type="text"
@@ -154,12 +161,12 @@ export default function Navbar({
                 width: "100%", height: compacto ? 34 : 38,
                 background: "rgba(255,255,255,.09)",
                 border: "1.5px solid rgba(255,255,255,.13)",
-                borderRadius: 50, color: "#fff",
+                borderRadius: 50, color: "var(--surface)",
                 fontSize: 13, paddingLeft: 34, paddingRight: busqueda ? 34 : 12,
                 outline: "none", boxSizing: "border-box",
                 transition: "height 0.3s, border-color 0.15s",
               }}
-              onFocus={e => { e.target.style.borderColor = "#E8460A"; if (vistaActual !== "home" && vistaActual !== "negocios") onIrInicio(); }}
+              onFocus={e => { e.target.style.borderColor = "var(--brand)"; if (vistaActual !== "home" && vistaActual !== "negocios") onIrInicio(); }}
               onBlur={e  => { e.target.style.borderColor = "rgba(255,255,255,.13)"; }}
             />
             {busqueda && (
@@ -167,7 +174,7 @@ export default function Navbar({
                 onClick={() => onBusqueda("")}
                 style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", color: "#A8988A",
+                  background: "none", border: "none", color: "var(--text-3)",
                   fontSize: 17, cursor: "pointer", lineHeight: 1, padding: 2,
                 }}
               >×</button>
@@ -184,7 +191,7 @@ export default function Navbar({
               width: 38, height: 38, borderRadius: 8,
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.12)",
-              color: "#fff", flexShrink: 0,
+              color: "var(--surface)", flexShrink: 0,
             }}
             aria-label="Buscar"
           >
@@ -221,14 +228,14 @@ export default function Navbar({
                     background: "rgba(255,255,255,.08)",
                     border: "1px solid rgba(255,255,255,.13)",
                     padding: "5px 11px", borderRadius: 8,
-                    color: "#fff", fontSize: 14, cursor: "pointer",
+                    color: "var(--surface)", fontSize: 14, cursor: "pointer",
                   }}
                 >
                   <div style={{
                     width: 26, height: 26, borderRadius: "50%",
-                    background: esPropietario ? "#1A8C5B" : "#E8460A",
+                    background: esPropietario ? "var(--green)" : "var(--brand)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0,
+                    fontSize: 12, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
                   }}>
                     {user.nombre?.charAt(0).toUpperCase()}
                   </div>
@@ -247,7 +254,7 @@ export default function Navbar({
                     <div style={{ position: "fixed", inset: 0, zIndex: 150 }} onClick={() => setMenuAbierto(false)} />
                     <div style={{
                       position: "absolute", right: 0, top: "calc(100% + 8px)",
-                      background: "#fff", borderRadius: 12, border: "1px solid #E2DBD5",
+                      background: "var(--surface)", borderRadius: 12, border: "1px solid var(--border)",
                       boxShadow: "0 8px 32px rgba(0,0,0,.15)",
                       minWidth: 210, overflow: "hidden", zIndex: 200,
                       animation: "menuSlide 0.18s ease",
@@ -280,9 +287,9 @@ export default function Navbar({
               style={{
                 display: "none",
                 width: 34, height: 34, borderRadius: "50%",
-                background: esPropietario ? "#1A8C5B" : "#E8460A",
+                background: esPropietario ? "var(--green)" : "var(--brand)",
                 alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0,
+                fontSize: 13, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
                 border: "none",
               }}
             >
@@ -297,7 +304,7 @@ export default function Navbar({
               onClick={onAbrirAuth}
               style={{
                 display: "none",
-                background: "#E8460A", color: "#fff",
+                background: "var(--brand)", color: "var(--surface)",
                 fontSize: 13, fontWeight: 600, padding: "6px 14px",
                 borderRadius: 8, border: "none", flexShrink: 0,
               }}
@@ -311,7 +318,7 @@ export default function Navbar({
         {/* ── Barra de búsqueda expandida (móvil) ── */}
         <div className={`mobile-search-bar${busquedaMovil ? " mobile-search-bar--open" : ""}`}
           style={{
-            background: "#1A1208",
+            background: "var(--text-1)",
             padding: busquedaMovil ? "0 16px 12px" : "0 16px",
             maxHeight: busquedaMovil ? "60px" : "0",
             overflow: "hidden",
@@ -319,7 +326,7 @@ export default function Navbar({
           }}
         >
           <div style={{ position: "relative" }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#A8988A", pointerEvents: "none" }}>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)", pointerEvents: "none" }}>
               <AppIcon name="search" size={15} />
             </span>
             <input
@@ -331,13 +338,13 @@ export default function Navbar({
                 width: "100%", height: 40,
                 background: "rgba(255,255,255,.09)",
                 border: "1.5px solid rgba(255,255,255,.2)",
-                borderRadius: 50, color: "#fff",
+                borderRadius: 50, color: "var(--surface)",
                 fontSize: 14, paddingLeft: 36, paddingRight: busqueda ? 36 : 14,
                 outline: "none",
               }}
             />
             {busqueda && (
-              <button onClick={() => onBusqueda("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#A8988A", fontSize: 17, cursor: "pointer" }}>×</button>
+              <button onClick={() => onBusqueda("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-3)", fontSize: 17, cursor: "pointer" }}>×</button>
             )}
           </div>
         </div>
@@ -353,32 +360,32 @@ export default function Navbar({
           <div style={{
             position: "fixed", top: 0, left: 0, bottom: 0,
             width: "min(300px, 85vw)",
-            background: "#fff", zIndex: 400,
+            background: "var(--surface)", zIndex: 400,
             display: "flex", flexDirection: "column",
             animation: "slideInLeft 0.22s cubic-bezier(.34,1.2,.64,1)",
             overflowY: "auto",
           }}>
             {/* Header del panel */}
             <div style={{
-              background: "#1A1208",
+              background: "var(--text-1)",
               padding: "20px 16px 16px",
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
               <button onClick={onIrInicio} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
                 onClick={() => { onIrInicio(); setMenuMovil(false); }}>
                 <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover" }} />
-                <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>
-                  Antoj<span style={{ color: "#E8460A" }}>app</span>
+                <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--surface)" }}>
+                  Antoj<span style={{ color: "var(--brand)" }}>app</span>
                 </span>
               </button>
-              <button onClick={() => setMenuMovil(false)} style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, color: "#fff" }}>
+              <button onClick={() => setMenuMovil(false)} style={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, color: "var(--surface)" }}>
                 <AppIcon name="x" size={18} />
               </button>
             </div>
 
             {/* Ubicación en móvil */}
             <div style={{ padding: "14px 16px", borderBottom: "1px solid #F0EBE5" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#A8988A", letterSpacing: "1px", marginBottom: 8 }}>UBICACIÓN</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: "1px", marginBottom: 8 }}>UBICACIÓN</div>
               <NavLocationPicker
                 paisSeleccionado={paisSeleccionado}
                 paisNombre={paisNombre}
@@ -411,15 +418,15 @@ export default function Navbar({
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
                         width: 38, height: 38, borderRadius: "50%",
-                        background: esPropietario ? "#1A8C5B" : "#E8460A",
+                        background: esPropietario ? "var(--green)" : "var(--brand)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0,
+                        fontSize: 16, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
                       }}>
                         {user.nombre?.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#1A1208" }}>{user.nombre}</div>
-                        <div style={{ fontSize: 12, color: "#A8988A" }}>{user.email}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{user.nombre}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-3)" }}>{user.email}</div>
                       </div>
                     </div>
                   </div>
@@ -451,13 +458,13 @@ export default function Navbar({
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: "#fff", borderRadius: 18, width: "100%", maxWidth: 360,
+              background: "var(--surface)", borderRadius: 18, width: "100%", maxWidth: 360,
               boxShadow: "0 24px 60px rgba(0,0,0,.2)",
               overflow: "hidden", animation: "logoutIn .22s cubic-bezier(.34,1.56,.64,1)",
             }}
           >
             <div style={{
-              background: "linear-gradient(135deg, #1A1208, #2D1F0F)",
+              background: "linear-gradient(135deg, var(--text-1), #2D1F0F)",
               padding: "28px 24px 22px", textAlign: "center",
             }}>
               <div style={{
@@ -466,9 +473,9 @@ export default function Navbar({
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto 12px",
               }}>
-                <AppIcon name="partyPopper" size={26} color="#E8460A" />
+                <AppIcon name="partyPopper" size={26} color="var(--brand)" />
               </div>
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, color: "#fff" }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, color: "var(--surface)" }}>
                 ¿Cerrar sesión?
               </div>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,.5)", marginTop: 4 }}>
@@ -479,7 +486,7 @@ export default function Navbar({
             <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
               <button
                 className="btn-primary"
-                style={{ width: "100%", background: "#C0392B", fontSize: 15 }}
+                style={{ width: "100%", background: "var(--red)", fontSize: 15 }}
                 onClick={() => { logout(); setConfirmarLogout(false); }}
               >
                 Sí, cerrar sesión
@@ -538,12 +545,12 @@ function UserMenuContent({ user, esPropietario, limiteAlcanzado, onPanel, onAgre
   return (
     <>
       <div style={{ padding: "13px 16px", borderBottom: "1px solid #F0EBE5" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1208" }}>{user.nombre}</div>
-        <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>{user.email}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{user.nombre}</div>
+        <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>{user.email}</div>
         <div style={{
           marginTop: 6, fontSize: 11, fontWeight: 700,
-          color: esPropietario ? "#1A8C5B" : "#E8460A",
-          background: esPropietario ? "#E8F6EE" : "#FFF0EB",
+          color: esPropietario ? "var(--green)" : "var(--brand)",
+          background: esPropietario ? "var(--green-bg)" : "var(--brand-light)",
           display: "inline-block", padding: "2px 8px", borderRadius: 10,
         }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -577,8 +584,8 @@ function MenuBtn({ children, onClick, danger, icon, disabled }) {
       style={{
         width: "100%", padding: "11px 16px", textAlign: "left",
         fontSize: 14, fontWeight: 500,
-        color: danger ? "#C0392B" : disabled ? "#C0B8B0" : "#1A1208",
-        background: hover && !disabled ? (danger ? "#FFF0EE" : "#F7F4F1") : "none",
+        color: danger ? "var(--red)" : disabled ? "#C0B8B0" : "var(--text-1)",
+        background: hover && !disabled ? (danger ? "#FFF0EE" : "var(--bg)") : "none",
         border: "none", borderTop: danger ? "1px solid #F0EBE5" : "none",
         borderBottom: danger ? "none" : "1px solid #F0EBE5",
         cursor: disabled ? "not-allowed" : "pointer",
@@ -602,8 +609,8 @@ function MobileNavBtn({ children, icon, activo, onClick, danger, disabled }) {
         width: "100%", padding: "11px 10px",
         display: "flex", alignItems: "center", gap: 12,
         borderRadius: 10,
-        background: activo ? "#FFF0EB" : "none",
-        color: danger ? "#C0392B" : activo ? "#E8460A" : disabled ? "#C0B8B0" : "#1A1208",
+        background: activo ? "var(--brand-light)" : "none",
+        color: danger ? "var(--red)" : activo ? "var(--brand)" : disabled ? "#C0B8B0" : "var(--text-1)",
         fontSize: 15, fontWeight: activo ? 600 : 500,
         cursor: disabled ? "not-allowed" : "pointer",
         border: "none",
@@ -612,7 +619,7 @@ function MobileNavBtn({ children, icon, activo, onClick, danger, disabled }) {
         minHeight: 48,
       }}
     >
-      {icon && <AppIcon name={icon} size={20} color={danger ? "#C0392B" : activo ? "#E8460A" : disabled ? "#C0B8B0" : "#6B5E52"} fill={icon === "heart" ? "currentColor" : "none"} />}
+      {icon && <AppIcon name={icon} size={20} color={danger ? "var(--red)" : activo ? "var(--brand)" : disabled ? "#C0B8B0" : "var(--text-2)"} fill={icon === "heart" ? "currentColor" : "none"} />}
       {children}
     </button>
   );

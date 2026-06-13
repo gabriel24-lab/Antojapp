@@ -95,9 +95,9 @@ function Toast({ toast, onCerrar }) {
   if (!toast) return null;
 
   const colores = {
-    exito: { bg: "#1A8C5B", borde: "#15754C", iconName: "check" },
-    info:  { bg: "#1A1208", borde: "#2D1F0F", iconName: "partyPopper" },
-    error: { bg: "#C0392B", borde: "#9B2D23", iconName: "alert" },
+    exito: { bg: "var(--green)", borde: "#15754C", iconName: "check" },
+    info:  { bg: "var(--text-1)", borde: "#2D1F0F", iconName: "partyPopper" },
+    error: { bg: "var(--red)", borde: "#9B2D23", iconName: "alert" },
   };
   const c = colores[toast.tipo] || colores.exito;
 
@@ -126,11 +126,11 @@ function Toast({ toast, onCerrar }) {
           width: 28, height: 28, borderRadius: "50%",
           background: "rgba(255,255,255,.15)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0, color: "#fff",
+          flexShrink: 0, color: "var(--surface)",
         }}>
           <AppIcon name={c.iconName} size={15} color="#fff" />
         </span>
-        <span style={{ color: "#fff", fontSize: 14, fontWeight: 500, flex: 1 }}>
+        <span style={{ color: "var(--surface)", fontSize: 14, fontWeight: 500, flex: 1 }}>
           {toast.mensaje}
         </span>
         <button
