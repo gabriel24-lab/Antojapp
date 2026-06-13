@@ -1,13 +1,21 @@
-// Helper para hacer llamadas autenticadas al backend.
-// La autenticación viaja en la cookie HttpOnly — el browser la adjunta
-// automáticamente con credentials: "include". No se lee ningún token
-// desde localStorage ni se construye un header Authorization manual.
+// Helper para hacer llamadas autenticadas al backend
+// Devuelve { data, error } en lugar de lanzar excepciones
 
 import API_URL from "./api";
 
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function authHeaders(esFormData = false) {
+  const h = { Authorization: `Bearer ${getToken()}` };
+  if (!esFormData) h["Content-Type"] = "application/json";
+  return h;
+}
+
 // GET
 export async function apiFetch(path) {
-  const res  = await fetch(`${API_URL}${path}`, { credentials: "include" });
+  const res  = await fetch(`${API_URL}${path}`, { headers: authHeaders() });
   const data = await res.json();
   if (!res.ok) return { data: null, error: data.error || "Error desconocido" };
   return { data, error: null };
@@ -17,9 +25,8 @@ export async function apiFetch(path) {
 export async function apiMutate(method, path, body) {
   const res  = await fetch(`${API_URL}${path}`, {
     method,
-    credentials: "include",
-    headers:     { "Content-Type": "application/json" },
-    body:        JSON.stringify(body),
+    headers: authHeaders(),
+    body:    JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) return { data: null, error: data.error || "Error desconocido" };
@@ -29,10 +36,9 @@ export async function apiMutate(method, path, body) {
 // POST con FormData (para subir archivos)
 export async function apiUpload(path, formData) {
   const res  = await fetch(`${API_URL}${path}`, {
-    method:      "POST",
-    credentials: "include",
-    // Sin Content-Type para que el browser ponga el boundary correcto de multipart
-    body:        formData,
+    method:  "POST",
+    headers: authHeaders(true),   // sin Content-Type para que el browser ponga el boundary
+    body:    formData,
   });
   const data = await res.json();
   if (!res.ok) return { data: null, error: data.error || "Error al subir archivo" };
@@ -42,10 +48,9 @@ export async function apiUpload(path, formData) {
 // DELETE
 export async function apiDelete(path, body = null) {
   const res = await fetch(`${API_URL}${path}`, {
-    method:      "DELETE",
-    credentials: "include",
-    headers:     body ? { "Content-Type": "application/json" } : {},
-    body:        body ? JSON.stringify(body) : undefined,
+    method:  "DELETE",
+    headers: authHeaders(),
+    body:    body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
   if (!res.ok) return { data: null, error: data.error || "Error desconocido" };

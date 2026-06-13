@@ -183,8 +183,8 @@ async function crearNegocio(req, res) {
 
     const result = await pool.query(
       `INSERT INTO negocios
-         (propietario_id, nombre, categoria, descripcion, etiquetas, maps_url, whatsapp, instagram, activo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, TRUE)
+         (propietario_id, nombre, categoria, descripcion, etiquetas, maps_url, whatsapp, instagram, activo, estado)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, FALSE, 'pendiente')
        RETURNING *`,
       [
         propietarioId,
@@ -263,8 +263,8 @@ async function subirImagen(req, res) {
     return res.status(400).json({ error: "tipo debe ser 'icono' o 'portada'" });
 
   try {
-    const ext      = req.file.originalname.split(".").pop();
-    const filename = `${id}/${tipo}-${Date.now()}.${ext}`;
+    // Use safeName (UUID.ext) set by the route middleware — never trust originalname
+    const filename = `${id}/${tipo}-${req.file.safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("negocios")
@@ -300,8 +300,7 @@ async function subirFoto(req, res) {
     return res.status(400).json({ error: "No se recibió ningún archivo" });
 
   try {
-    const ext      = req.file.originalname.split(".").pop();
-    const filename = `${id}/fotos/${Date.now()}.${ext}`;
+    const filename = `${id}/fotos/${req.file.safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("negocios")

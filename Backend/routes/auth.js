@@ -1,12 +1,15 @@
 const express    = require("express");
 const router     = express.Router();
 const auth       = require("../middleware/auth");
-const { registro, login, me } = require("../controllers/authController");
-const { googleLogin }         = require("../controllers/googleAuthController");
+const validarBody             = require("../middleware/validarBody");
+const { registroSchema, loginSchema } = require("../schemas/auth");
+const { registro, login, me, logout } = require("../controllers/authController");
+const { googleLogin }                 = require("../controllers/googleAuthController");
 
-router.post("/registro",    registro);
-router.post("/login",       login);
-router.get("/me",           auth, me);
-router.post("/google",      googleLogin);   // ← nuevo: recibe el id_token de GIS
+router.post("/registro",    validarBody(registroSchema), registro);
+router.post("/login",       validarBody(loginSchema),    login);
+router.get( "/me",          auth, me);
+router.post("/logout",      logout);        // limpia cookie HttpOnly
+router.post("/google",      googleLogin);
 
 module.exports = router;

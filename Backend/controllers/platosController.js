@@ -162,9 +162,8 @@ async function subirFotoPlato(req, res) {
     return res.status(400).json({ error: "No se recibió ningún archivo" });
 
   try {
-    const ext      = req.file.originalname.split(".").pop();
     const suffix   = lado === "b" ? "-menu-b" : "";
-    const filename = `${negocioId}/${platoId}${suffix}-${Date.now()}.${ext}`;
+    const filename = `${negocioId}/${platoId}${suffix}-${req.file.safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("platos")

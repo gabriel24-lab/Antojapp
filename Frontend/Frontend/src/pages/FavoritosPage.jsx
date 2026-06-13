@@ -11,9 +11,10 @@ export default function FavoritosPage({ onVerDetalle, onAbrirAuth }) {
 
   useEffect(() => {
     if (!user) return;
+    const token = localStorage.getItem("token");
     setCargando(true);
     fetch(`${API_URL}/favoritos`, {
-      credentials: "include",
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.ok ? r.json() : [])
       .then(data => setNegocios(data))

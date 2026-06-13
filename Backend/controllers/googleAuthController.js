@@ -4,6 +4,14 @@ const pool             = require("../db/pool");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure:   process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge:   7 * 24 * 60 * 60 * 1000,
+  path:     "/",
+};
+
 function generarToken(usuario) {
   return jwt.sign(
     { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
@@ -19,7 +27,6 @@ async function googleLogin(req, res) {
   if (!credential)
     return res.status(400).json({ error: "Token de Google no proporcionado" });
 
-  // Rechazar tokens obviantemente malformados antes de llamar a Google
   if (typeof credential !== "string" || credential.length > 4096)
     return res.status(400).json({ error: "Token de Google inválido" });
 
@@ -35,7 +42,6 @@ async function googleLogin(req, res) {
     if (!email)
       return res.status(400).json({ error: "No se pudo obtener el correo de Google" });
 
-    // Rechazar cuentas de Google sin email verificado
     if (!email_verified)
       return res.status(400).json({ error: "El correo de Google no está verificado" });
 
@@ -60,6 +66,10 @@ async function googleLogin(req, res) {
     }
 
     const token = generarToken(usuario);
+
+    // Emitir JWT en cookie HttpOnly
+    res.cookie("token", token, COOKIE_OPTS);
+
     res.json({
       token,
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },

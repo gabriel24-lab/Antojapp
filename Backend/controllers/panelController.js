@@ -119,4 +119,62 @@ async function getEstadisticas(req, res) {
   }
 }
 
-module.exports = { getEstadisticas };
+
+
+// ── Panel de administración: verificación de negocios ─────────
+// Requiere rol 'admin' (verificado en middleware esAdmin).
+
+// GET /api/panel/admin/negocios?estado=pendiente
+async function getAdminNegocios(req, res) {
+  const { estado = "pendiente" } = req.query;
+
+  const estadosValidos = ["pendiente", "aprobado", "rechazado"];
+  if (!estadosValidos.includes(estado))
+    return res.status(400).json({ error: "Estado inválido" });
+
+  try {
+    const result = await pool.query(
+      `SELECT n.id, n.nombre, n.categoria, n.descripcion, n.estado,
+              n.creado_en, u.nombre AS propietario, u.email AS propietario_email
+       FROM negocios n
+       JOIN usuarios u ON u.id = n.propietario_id
+       WHERE n.estado = $1
+       ORDER BY n.creado_en ASC`,
+      [estado]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("[getAdminNegocios]", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+// PATCH /api/panel/admin/negocios/:id/estado
+async function actualizarEstadoNegocio(req, res) {
+  const { id }     = req.params;
+  const { estado } = req.body;
+
+  const estadosValidos = ["aprobado", "rechazado"];
+  if (!estadosValidos.includes(estado))
+    return res.status(400).json({ error: "Estado debe ser 'aprobado' o 'rechazado'" });
+
+  try {
+    const result = await pool.query(
+      `UPDATE negocios
+       SET estado = $1, activo = $2
+       WHERE id = $3
+       RETURNING id, nombre, estado`,
+      [estado, estado === "aprobado", id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Negocio no encontrado" });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("[actualizarEstadoNegocio]", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+module.exports = { getEstadisticas, getAdminNegocios, actualizarEstadoNegocio };

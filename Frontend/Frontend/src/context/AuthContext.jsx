@@ -8,47 +8,47 @@ export function AuthProvider({ children }) {
   const [user,      setUser]      = useState(null);
   const [favoritos, setFavoritos] = useState([]);
   const [cargando,  setCargando]  = useState(true);
-  const [toast,     setToast]     = useState(null);
+  const [toast,     setToast]     = useState(null); // { mensaje, tipo: "exito"|"info"|"error" }
   const toastTimer = useRef(null);
 
+  // Mostrar un toast durante ~3s
   const mostrarToast = useCallback((mensaje, tipo = "exito") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ mensaje, tipo });
     toastTimer.current = setTimeout(() => setToast(null), 3200);
   }, []);
 
-  // Al montar, verifica si hay sesión activa (cookie HttpOnly la envía el browser automáticamente)
+  // Al montar, verifica token guardado
   useEffect(() => {
-    fetch(`${API_URL}/auth/me`, { credentials: "include" })
+    const token = localStorage.getItem("token");
+    if (!token) { setCargando(false); return; }
+
+    fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(userData => {
         setUser(userData);
-        return fetch(`${API_URL}/favoritos/ids`, { credentials: "include" });
+        return fetch(`${API_URL}/favoritos/ids`, { headers: { Authorization: `Bearer ${token}` } });
       })
       .then(r => r.ok ? r.json() : [])
       .then(ids => setFavoritos(ids))
-      .catch(() => {/* no hay sesión activa — es normal */})
+      .catch(() => localStorage.removeItem("token"))
       .finally(() => setCargando(false));
   }, []);
 
-  // El token sigue llegando en el body para compatibilidad, pero NO se guarda en localStorage
+  // Guarda token + usuario y muestra toast de bienvenida
   const login = useCallback((token, userData) => {
-    // token ignorado intencionalmente — ya está en la cookie HttpOnly del browser
+    localStorage.setItem("token", token);
     setUser(userData);
     mostrarToast(`¡Bienvenido, ${userData.nombre?.split(" ")[0]}!`, "exito");
-    fetch(`${API_URL}/favoritos/ids`, { credentials: "include" })
+    fetch(`${API_URL}/favoritos/ids`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : [])
       .then(ids => setFavoritos(ids))
       .catch(() => setFavoritos([]));
   }, [mostrarToast]);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(() => {
     const nombre = user?.nombre?.split(" ")[0] || "";
-    // Llamar al endpoint que borra la cookie HttpOnly en el servidor
-    await fetch(`${API_URL}/auth/logout`, {
-      method:      "POST",
-      credentials: "include",
-    }).catch(() => {});
+    localStorage.removeItem("token");
     setUser(null);
     setFavoritos([]);
     mostrarToast(`Sesión cerrada${nombre ? `, hasta pronto ${nombre}` : ""}`, "info");
@@ -56,6 +56,7 @@ export function AuthProvider({ children }) {
 
   const toggleFavorito = useCallback(async (negocioId) => {
     if (!user) return false;
+    const token        = localStorage.getItem("token");
     const estaGuardado = favoritos.includes(negocioId);
     const metodo       = estaGuardado ? "DELETE" : "POST";
 
@@ -65,8 +66,7 @@ export function AuthProvider({ children }) {
 
     try {
       const res = await fetch(`${API_URL}/favoritos/${negocioId}`, {
-        method:      metodo,
-        credentials: "include",
+        method: metodo, headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error();
     } catch {
@@ -85,6 +85,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{ user, login, logout, favoritos, toggleFavorito, esFavorito, cargando, mostrarToast }}>
       {children}
+      {/* Toast global — renderizado aquí para que esté siempre disponible */}
       <Toast toast={toast} onCerrar={() => setToast(null)} />
     </AuthContext.Provider>
   );

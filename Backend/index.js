@@ -6,14 +6,15 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 if (!process.env.FRONTEND_URL) {
-  console.error(" FRONTEND_URL no definido. Abortando.");
+  console.error("FRONTEND_URL no definido. Abortando.");
   process.exit(1);
 }
 
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");
-const rateLimit  = require("express-rate-limit");
+const express      = require("express");
+const cors         = require("cors");
+const helmet       = require("helmet");
+const cookieParser = require("cookie-parser");
+const rateLimit    = require("express-rate-limit");
 
 const authRoutes      = require("./routes/auth");
 const negociosRoutes  = require("./routes/negocios");
@@ -23,33 +24,59 @@ const panelRoutes     = require("./routes/panel");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Seguridad: headers HTTP ────────────────────────────────────
-app.use(helmet());
+// ── Seguridad: headers HTTP con CSP explícita ──────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'"],
+      styleSrc:    ["'self'", "'unsafe-inline'"], // inline styles del frontend Vite
+      imgSrc:      [
+        "'self'",
+        "data:",
+        "blob:",
+        // Supabase storage donde se suben las imágenes de negocios
+        process.env.SUPABASE_URL || "",
+      ].filter(Boolean),
+      connectSrc:  ["'self'", process.env.FRONTEND_URL],
+      fontSrc:     ["'self'", "https://fonts.gstatic.com"],
+      objectSrc:   ["'none'"],
+      frameSrc:    ["'none'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
+    },
+  },
+  // HSTS solo en producción
+  strictTransportSecurity: process.env.NODE_ENV === "production"
+    ? { maxAge: 31536000, includeSubDomains: true }
+    : false,
+}));
 
 // ── CORS ───────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
+  origin:      process.env.FRONTEND_URL,
+  credentials: true, // necesario para que el browser envíe cookies
 }));
 
+// ── Parsers ────────────────────────────────────────────────────
 app.use(express.json());
+app.use(cookieParser()); // necesario para leer req.cookies.token
 
-// ── Rate limiting global (protección básica) ───────────────────
+// ── Rate limiting global ───────────────────────────────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 200,
+  windowMs: 15 * 60 * 1000,
+  max:      200,
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders:   false,
   message: { error: "Demasiadas solicitudes, intenta más tarde." },
 });
 app.use(globalLimiter);
 
 // ── Rate limiting estricto para auth ──────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10,
+  windowMs: 15 * 60 * 1000,
+  max:      10,
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders:   false,
   message: { error: "Demasiados intentos de autenticación, intenta en 15 minutos." },
 });
 
