@@ -7,11 +7,6 @@ function simboloMoneda(moneda) {
   return MONEDAS[moneda]?.simbolo || "$";
 }
 
-// Bandera por código de país
-function banderaPais(codigo) {
-  return PAISES.find(p => p.codigo === codigo)?.bandera || null;
-}
-
 function Estrellas({ calificacion }) {
   return (
     <span className="stars" style={{ display: "inline-flex", gap: 1 }}>
@@ -25,6 +20,33 @@ function Estrellas({ calificacion }) {
           style={{ opacity: i <= Math.round(calificacion) ? 1 : 0.25 }}
         />
       ))}
+    </span>
+  );
+}
+
+function PaisBadge({ codigo, ciudad }) {
+  const pais = PAISES.find(p => p.codigo === codigo);
+  if (!pais) return null;
+  return (
+    <span
+      title={ciudad ? `${ciudad}, ${pais.nombre}` : pais.nombre}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 11,
+        fontWeight: 500,
+        color: "#7A6A5E",
+        background: "#F2EDE8",
+        border: "1px solid #E0D8D2",
+        borderRadius: 20,
+        padding: "2px 8px 2px 5px",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ fontSize: 13 }}>{pais.bandera}</span>
+      {pais.nombre}
     </span>
   );
 }
@@ -139,17 +161,16 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
 
       {/* Contenido */}
       <div style={{ padding: "14px 16px" }}>
-        {/* Categoría y calificación */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+
+        {/* Categoría + país + calificación */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
             <span className="badge badge-cat">{negocio.categoria}</span>
             {negocio.pais && (
-              <span style={{ fontSize: 14 }} title={negocio.ciudad || negocio.pais}>
-                {banderaPais(negocio.pais)}
-              </span>
+              <PaisBadge codigo={negocio.pais} ciudad={negocio.ciudad} />
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
             <Estrellas calificacion={negocio.calificacion} />
             <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1208" }}>{negocio.calificacion}</span>
             <span style={{ fontSize: 12, color: "#A8988A" }}>({negocio.totalResenas})</span>
@@ -176,7 +197,7 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
               <span style={{ fontSize: 13, fontWeight: 500, color: "#1A1208" }}>{platoEstrella.nombre}</span>
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#E8460A" }}>
-              ${simboloMoneda(negocio.moneda)}{platoEstrella.precio?.toLocaleString("es-CO")}
+              {simboloMoneda(negocio.moneda)}{platoEstrella.precio?.toLocaleString("es-CO")}
             </span>
           </div>
         )}
