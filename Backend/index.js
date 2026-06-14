@@ -1,7 +1,3 @@
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_PORT:", process.env.DB_PORT);
-console.log("DEBUG_HOST:", process.env.DEBUG_HOST);
-
 require("dotenv").config();
 
 // ── Validación de variables de entorno críticas ────────────────
