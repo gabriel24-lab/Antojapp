@@ -24,6 +24,9 @@ const panelRoutes     = require("./routes/panel");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Trust proxy (necesario en Render, Railway, etc.) ──────────
+app.set("trust proxy", 1);
+
 // ── Seguridad: headers HTTP con CSP explícita ──────────────────
 app.use(helmet({
   contentSecurityPolicy: {
