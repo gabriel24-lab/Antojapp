@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useLocationData } from "../hooks/useLocationData";
 import AppIcon from "./AppIcon";
 
@@ -7,13 +7,14 @@ import AppIcon from "./AppIcon";
  * Va en la navbar. Flujo: País → Departamento/Estado → Ciudad.
  * Carga todos los países del mundo desde la API countriesnow.space.
  */
-export default function NavLocationPicker({
+const NavLocationPicker = forwardRef(function NavLocationPicker({
   paisSeleccionado,       // iso2 | null
   paisNombre,             // nombre legible del país seleccionado
   departamentoSeleccionado,
   ciudadSeleccionada,
   onCambiar,              // ({ iso2, nombre, departamento, ciudad }) => void
-}) {
+  renderTrigger = true,   // si es false, no se renderiza el botón visual (solo el dropdown, controlado por ref)
+}, refExterno) {
   const [abierto, setAbierto]     = useState(false);
   const [paso, setPaso]           = useState("pais"); // "pais" | "departamento" | "ciudad"
   const [paisTemp, setPaisTemp]   = useState(null);   // { iso2, nombre }
@@ -56,6 +57,11 @@ export default function NavLocationPicker({
       return !v;
     });
   };
+
+  // Permite que un botón externo (ej. en móvil) abra este selector
+  useImperativeHandle(refExterno, () => ({
+    abrir: () => { setAbierto(true); resetTemp(); },
+  }));
 
   // ── Cargar estados al elegir país ──
   const elegirPais = async (pais) => {
@@ -135,6 +141,7 @@ export default function NavLocationPicker({
   return (
     <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
       {/* ── Botón trigger ── */}
+      {renderTrigger && (
       <button
         id="nav-location-picker-btn"
         onClick={abrir}
@@ -173,24 +180,34 @@ export default function NavLocationPicker({
           style={{ opacity: 0.4, flexShrink: 0, marginLeft: 2, transition: "transform 0.2s", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
+      )}
 
       {/* ── Dropdown ── */}
       {abierto && (
         <>
           {/* Overlay */}
           <div
-            style={{ position: "fixed", inset: 0, zIndex: 149 }}
+            style={{ position: "fixed", inset: 0, zIndex: renderTrigger ? 149 : 599 }}
             onClick={() => { setAbierto(false); resetTemp(); }}
           />
 
-          <div style={{
-            position: "absolute", left: 0, top: "calc(100% + 8px)",
-            background: "var(--surface)", borderRadius: 14,
-            border: "1px solid var(--border)",
-            boxShadow: "0 12px 40px rgba(0,0,0,.18)",
-            width: 300, overflow: "hidden", zIndex: 200,
-            animation: "locSlide 0.18s ease",
-          }}>
+          <div style={
+            renderTrigger ? {
+              position: "absolute", left: 0, top: "calc(100% + 8px)",
+              background: "var(--surface)", borderRadius: 14,
+              border: "1px solid var(--border)",
+              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+              width: 300, overflow: "hidden", zIndex: 200,
+              animation: "locSlide 0.18s ease",
+            } : {
+              position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+              background: "var(--surface)", borderRadius: 14,
+              border: "1px solid var(--border)",
+              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+              width: "calc(100vw - 32px)", maxWidth: 340, overflow: "hidden", zIndex: 600,
+              animation: "locSlide 0.18s ease",
+            }
+          }>
 
             {/* ── Header ── */}
             <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid #F0EBE5", background: "#FDFAF8" }}>
@@ -381,7 +398,9 @@ export default function NavLocationPicker({
       )}
     </div>
   );
-}
+});
+
+export default NavLocationPicker;
 
 // ── Sub-componentes ──
 

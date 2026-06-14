@@ -26,6 +26,7 @@ export default function Navbar({
   const [confirmarLogout, setConfirmarLogout] = useState(false);
   const [busquedaMovil,   setBusquedaMovil]   = useState(false);
   const prevScrollY = useRef(0);
+  const locationPickerMovilRef = useRef(null);
   const esPropietario = user?.rol === "negocio";
   const limiteAlcanzado = totalNegociosPropietario >= (limiteNegocios ?? 4);
 
@@ -107,8 +108,8 @@ export default function Navbar({
           {/* ── Botón de ubicación visible en móvil ── */}
           <button
             className="nav-location-mobile-btn"
-            onClick={() => setMenuMovil(true)}
-            aria-label="Cambiar ubicación"
+            onClick={() => locationPickerMovilRef.current?.abrir()}
+            aria-label="Cambiar ubicación: presiona para elegir país, departamento y ciudad"
             style={{
               display: "none",
               alignItems: "center", justifyContent: "center",
@@ -124,9 +125,20 @@ export default function Navbar({
           >
             <AppIcon name="mapPin" size={13} color="var(--brand)" />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(255,255,255,.8)" }}>
-              {ciudadSeleccionada || paisNombre || "Zona"}
+              {ciudadSeleccionada || paisNombre || "Ubicación"}
             </span>
           </button>
+
+          {/* Picker sin botón visible: lo abre el botón de arriba en móvil */}
+          <NavLocationPicker
+            ref={locationPickerMovilRef}
+            renderTrigger={false}
+            paisSeleccionado={paisSeleccionado}
+            paisNombre={paisNombre}
+            departamentoSeleccionado={departamentoSeleccionado}
+            ciudadSeleccionada={ciudadSeleccionada}
+            onCambiar={onCambiarUbicacion}
+          />
 
           {/* ── Selector de ubicación — oculto en móvil (va en menú) ── */}
           <div className="nav-location-desktop">

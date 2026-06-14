@@ -6,7 +6,9 @@ const pool   = require("../db/pool");
 const COOKIE_OPTS = {
   httpOnly: true,
   secure:   process.env.NODE_ENV === "production", // solo HTTPS en prod
-  sameSite: "strict",
+  // "none" es obligatorio para cookies cross-site (frontend en pages.dev, backend en onrender.com).
+  // Requiere secure: true (HTTPS), por eso solo se usa "none" en producción.
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge:   7 * 24 * 60 * 60 * 1000, // 7 días en ms
   path:     "/",
 };

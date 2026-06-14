@@ -68,12 +68,11 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
     setEnviando(true);
     setErrorResena("");
     try {
-      const token = localStorage.getItem("token");
       const res   = await fetch(`${API_URL}/negocios/${negocio.id}/resenas`, {
         method:  "POST",
+        credentials: "include",
         headers: {
-          "Content-Type": "application/json",
-          Authorization:  `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           estrellas:  nuevaResena.estrellas,
