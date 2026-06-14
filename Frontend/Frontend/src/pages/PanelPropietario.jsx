@@ -3,7 +3,7 @@ import { apiFetch } from "../apiClient";
 import AppIcon from "../components/AppIcon";
 
 // ── Mini gráfico SVG de línea ──────────────────────────────────
-function LineChart({ datos, color = "var(--brand)", altura = 120 }) {
+function LineChart({ datos, color = "#E8460A", altura = 120 }) {
   const [tooltip, setTooltip] = useState(null); // { x, y, dia, visitas }
 
   const ancho = 560;
@@ -77,7 +77,7 @@ function LineChart({ datos, color = "var(--brand)", altura = 120 }) {
           left:          `clamp(50px, ${tooltip.x}%, calc(100% - 80px))`,
           top:           4,
           transform:     "translateX(-50%)",
-          background:    "var(--text-1)",
+          background:    "#1A1208",
           color:         "#fff",
           borderRadius:  8,
           padding:       "5px 10px",
@@ -116,7 +116,7 @@ function LineChart({ datos, color = "var(--brand)", altura = 120 }) {
           // Línea base plana cuando no hay visitas en los últimos 30 días
           <line
             x1={padX} y1={toY(0)} x2={ancho - padX} y2={toY(0)}
-            stroke="var(--border)" strokeWidth="2" strokeDasharray="6 4"
+            stroke="#E2DBD5" strokeWidth="2" strokeDasharray="6 4"
           />
         ) : (
           <>
@@ -154,7 +154,7 @@ function LineChart({ datos, color = "var(--brand)", altura = 120 }) {
       </svg>
 
       {todoCero && (
-        <div style={{ textAlign: "center", marginTop: 4, fontSize: 12, color: "var(--text-3)" }}>
+        <div style={{ textAlign: "center", marginTop: 4, fontSize: 12, color: "#A8988A" }}>
           Aún no hay visitas registradas en los últimos 30 días
         </div>
       )}
@@ -163,10 +163,10 @@ function LineChart({ datos, color = "var(--brand)", altura = 120 }) {
 }
 
 // ── Tarjeta de estadística ─────────────────────────────────────
-function StatCard({ icon, label, valor, sub, color = "var(--brand)", bg = "var(--brand-hover)" }) {
+function StatCard({ icon, label, valor, sub, color = "#E8460A", bg = "#FFF4F0" }) {
   return (
     <div style={{
-      background: "var(--surface)", borderRadius: 16, padding: "20px 22px",
+      background: "#fff", borderRadius: 16, padding: "20px 22px",
       border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.06)",
       display: "flex", alignItems: "center", gap: 16,
       transition: "transform .18s, box-shadow .18s",
@@ -180,11 +180,11 @@ function StatCard({ icon, label, valor, sub, color = "var(--brand)", bg = "var(-
         color, flexShrink: 0,
       }}><AppIcon name={icon} size={25} fill={icon === "heart" || icon === "star" ? "currentColor" : "none"} /></div>
       <div>
-        <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "var(--text-1)", lineHeight: 1 }}>
+        <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "#1A1208", lineHeight: 1 }}>
           {valor}
         </div>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)", marginTop: 4 }}>{label}</div>
-        {sub && <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>{sub}</div>}
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52", marginTop: 4 }}>{label}</div>
+        {sub && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>{sub}</div>}
       </div>
     </div>
   );
@@ -239,8 +239,8 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   // ── Estado: cargando ──
   if (cargando) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", flexDirection: "column", gap: 12 }}>
-      <div style={{ width: 40, height: 40, border: "3px solid #F0EBE5", borderTopColor: "var(--brand)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <div style={{ fontSize: 14, color: "var(--text-3)" }}>Cargando tu panel...</div>
+      <div style={{ width: 40, height: 40, border: "3px solid #F0EBE5", borderTopColor: "#E8460A", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ fontSize: 14, color: "#A8988A" }}>Cargando tu panel...</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -248,11 +248,11 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   // ── Estado: sin negocio ──
   if (error === "No tienes ningún negocio registrado") return (
     <div style={{ maxWidth: 540, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
-      <div style={{ marginBottom: 16, color: "var(--brand)" }}><AppIcon name="store" size={64} /></div>
-      <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, color: "var(--text-1)", marginBottom: 10 }}>
+      <div style={{ marginBottom: 16, color: "#E8460A" }}><AppIcon name="store" size={64} /></div>
+      <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, color: "#1A1208", marginBottom: 10 }}>
         Aún no tienes un negocio registrado
       </h2>
-      <p style={{ color: "var(--text-3)", fontSize: 14, lineHeight: 1.7, marginBottom: 28 }}>
+      <p style={{ color: "#A8988A", fontSize: 14, lineHeight: 1.7, marginBottom: 28 }}>
         Registra tu negocio de comida para empezar a recibir visitas, reseñas y aparecer en las búsquedas de Antojapp.
       </p>
       <button className="btn-primary" style={{ padding: "12px 28px", fontSize: 15 }} onClick={() => onAbrirFormulario(null)}>
@@ -264,8 +264,8 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   // ── Estado: error genérico ──
   if (error) return (
     <div style={{ maxWidth: 480, margin: "80px auto", padding: "0 20px", textAlign: "center" }}>
-      <div style={{ marginBottom: 12, color: "var(--red)" }}><AppIcon name="alert" size={48} /></div>
-      <p style={{ color: "var(--red)", fontSize: 14 }}>{error}</p>
+      <div style={{ marginBottom: 12, color: "#C0392B" }}><AppIcon name="alert" size={48} /></div>
+      <p style={{ color: "#C0392B", fontSize: 14 }}>{error}</p>
       <button className="btn-secondary" style={{ marginTop: 16 }} onClick={cargar}>Reintentar</button>
     </div>
   );
@@ -290,7 +290,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
   })();
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: "20px var(--content-px, 16px) 80px" }}>
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 20px 60px" }}>
 
       {/* ── Header ── */}
       <div style={{
@@ -305,15 +305,15 @@ export default function PanelPropietario({ onAbrirFormulario }) {
           </div>
           <h1 style={{
             fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 700,
-            color: "var(--surface)", lineHeight: 1.2,
+            color: "#fff", lineHeight: 1.2,
           }}>
             {negocio.nombre}
           </h1>
           <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
             <span style={{
               fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20,
-              background: resenas.promedio >= 4 ? "var(--green)" : resenas.promedio >= 3 ? "#E8A020" : "var(--red)",
-              color: "var(--surface)",
+              background: resenas.promedio >= 4 ? "#1A8C5B" : resenas.promedio >= 3 ? "#E8A020" : "#C0392B",
+              color: "#fff",
             }}>
               <AppIcon name="star" size={13} fill="currentColor" /> {resenas.promedio.toFixed(1)} calificación
             </span>
@@ -337,7 +337,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
         <StatCard
           icon="eye" label="Visitas totales" valor={visitas.total.toLocaleString("es-CO")}
           sub="Desde que te registraste"
-          color="var(--brand)" bg="var(--brand-hover)"
+          color="#E8460A" bg="#FFF4F0"
         />
         <StatCard
           icon="barChart" label="Visitas esta semana" valor={visitas.semana.toLocaleString("es-CO")}
@@ -347,7 +347,7 @@ export default function PanelPropietario({ onAbrirFormulario }) {
         <StatCard
           icon="heart" label="Favoritos" valor={favoritos.toLocaleString("es-CO")}
           sub="Usuarios que te guardaron"
-          color="var(--brand)" bg="var(--brand-light)"
+          color="#E8460A" bg="#FFF0EB"
         />
         <StatCard
           icon="star" label="Calificación" valor={`${resenas.promedio.toFixed(1)} / 5`}
@@ -358,31 +358,31 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
       {/* ── Gráfica de visitas ── */}
       <div style={{
-        background: "var(--surface)", borderRadius: 18, padding: "24px 28px", marginBottom: 24,
+        background: "#fff", borderRadius: 18, padding: "24px 28px", marginBottom: 24,
         border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "var(--text-1)" }}>
+            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208" }}>
               Visitas por día
             </h2>
-            <div style={{ fontSize: 13, color: "var(--text-3)", marginTop: 3 }}>Últimos 30 días</div>
+            <div style={{ fontSize: 13, color: "#A8988A", marginTop: 3 }}>Últimos 30 días</div>
           </div>
           <div style={{
-            fontSize: 13, fontWeight: 700, color: "var(--brand)",
-            background: "var(--brand-hover)", padding: "4px 12px", borderRadius: 20,
+            fontSize: 13, fontWeight: 700, color: "#E8460A",
+            background: "#FFF4F0", padding: "4px 12px", borderRadius: 20,
           }}>
             {visitas.porDia.reduce((acc, d) => acc + parseInt(d.visitas), 0)} visitas
           </div>
         </div>
 
-        <LineChart datos={visitas.porDia} color="var(--brand)" altura={110} />
+        <LineChart datos={visitas.porDia} color="#E8460A" altura={110} />
 
         {/* Labels eje X */}
         {visitas.porDia.length > 1 && (
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
             {etiquetasX.map((l, i) => (
-              <span key={i} style={{ fontSize: 11, color: "var(--text-3)" }}>{l}</span>
+              <span key={i} style={{ fontSize: 11, color: "#A8988A" }}>{l}</span>
             ))}
           </div>
         )}
@@ -393,15 +393,15 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
         {/* Últimas reseñas */}
         <div style={{
-          background: "var(--surface)", borderRadius: 18, padding: "24px 28px",
+          background: "#fff", borderRadius: 18, padding: "24px 28px",
           border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
         }}>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "var(--text-1)", marginBottom: 18 }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 700, color: "#1A1208", marginBottom: 18 }}>
             Últimas reseñas
           </h2>
 
           {resenas.ultimas.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-3)" }}>
+            <div style={{ textAlign: "center", padding: "32px 0", color: "#A8988A" }}>
               <div style={{ marginBottom: 8 }}><AppIcon name="message" size={32} /></div>
               <div style={{ fontSize: 14 }}>Aún no tienes reseñas.</div>
               <div style={{ fontSize: 13, marginTop: 4 }}>¡Comparte tu negocio para que te califiquen!</div>
@@ -410,30 +410,30 @@ export default function PanelPropietario({ onAbrirFormulario }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {resenas.ultimas.map((r, i) => (
                 <div key={i} style={{
-                  padding: "14px 16px", background: "var(--surface-2)",
+                  padding: "14px 16px", background: "#FAFAF9",
                   borderRadius: 12, border: "1px solid #F0EBE5",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
                         width: 32, height: 32, borderRadius: "50%",
-                        background: "var(--brand)", color: "var(--surface)",
+                        background: "#E8460A", color: "#fff",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 13, fontWeight: 700,
                       }}>
                         {r.usuario_nombre?.charAt(0).toUpperCase() || "?"}
                       </div>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{r.usuario_nombre}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1208" }}>{r.usuario_nombre}</div>
                         <Estrellas valor={r.estrellas} />
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--text-3)" }}>
+                    <div style={{ fontSize: 12, color: "#A8988A" }}>
                       {new Date(r.creado_en).toLocaleDateString("es-CO", { day: "numeric", month: "short" })}
                     </div>
                   </div>
                   {r.comentario && (
-                    <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5, margin: 0 }}>
+                    <p style={{ fontSize: 13, color: "#6B5E52", lineHeight: 1.5, margin: 0 }}>
                       "{r.comentario}"
                     </p>
                   )}
@@ -448,10 +448,10 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
           {/* Acciones rápidas */}
           <div style={{
-            background: "var(--surface)", borderRadius: 18, padding: "22px",
+            background: "#fff", borderRadius: 18, padding: "22px",
             border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
           }}>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text-1)", marginBottom: 14 }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 14 }}>
               Acciones rápidas
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -475,18 +475,18 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
           {/* Distribución de calificaciones */}
           <div style={{
-            background: "var(--surface)", borderRadius: 18, padding: "22px",
+            background: "#fff", borderRadius: 18, padding: "22px",
             border: "1px solid #F0EBE5", boxShadow: "0 2px 12px rgba(26,18,8,.05)",
           }}>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text-1)", marginBottom: 16 }}>
+            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 14, fontWeight: 700, color: "#1A1208", marginBottom: 16 }}>
               Calificación promedio
             </h3>
             <div style={{ textAlign: "center", marginBottom: 12 }}>
-              <div style={{ fontSize: 42, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "var(--text-1)", lineHeight: 1 }}>
+              <div style={{ fontSize: 42, fontWeight: 700, fontFamily: "'Manrope', sans-serif", color: "#1A1208", lineHeight: 1 }}>
                 {resenas.promedio.toFixed(1)}
               </div>
               <Estrellas valor={resenas.promedio} />
-              <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 6 }}>
+              <div style={{ fontSize: 12, color: "#A8988A", marginTop: 6 }}>
                 Basado en {resenas.total} reseña{resenas.total !== 1 ? "s" : ""}
               </div>
             </div>
@@ -499,16 +499,16 @@ export default function PanelPropietario({ onAbrirFormulario }) {
                   : 0;
                 return (
                   <div key={estrella} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 11, color: "var(--text-3)", width: 12, textAlign: "right" }}>{estrella}</span>
+                    <span style={{ fontSize: 11, color: "#A8988A", width: 12, textAlign: "right" }}>{estrella}</span>
                     <AppIcon name="star" size={11} color="#E8A020" fill="currentColor" />
                     <div style={{ flex: 1, height: 6, background: "#F0EBE5", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         height: "100%", width: `${pct}%`,
-                        background: estrella >= 4 ? "var(--green)" : estrella === 3 ? "#E8A020" : "var(--red)",
+                        background: estrella >= 4 ? "#1A8C5B" : estrella === 3 ? "#E8A020" : "#C0392B",
                         borderRadius: 3, transition: "width .5s ease",
                       }} />
                     </div>
-                    <span style={{ fontSize: 11, color: "var(--text-3)", width: 28 }}>{pct}%</span>
+                    <span style={{ fontSize: 11, color: "#A8988A", width: 28 }}>{pct}%</span>
                   </div>
                 );
               })}
@@ -517,13 +517,13 @@ export default function PanelPropietario({ onAbrirFormulario }) {
 
           {/* Tip */}
           <div style={{
-            background: "linear-gradient(135deg, var(--brand-hover), #FFF8EC)",
+            background: "linear-gradient(135deg, #FFF4F0, #FFF8EC)",
             borderRadius: 16, padding: "18px",
-            border: "1px solid var(--brand-border)",
+            border: "1px solid #FFD9C8",
           }}>
-            <div style={{ marginBottom: 6, color: "var(--brand)" }}><AppIcon name="lightbulb" size={19} /></div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", marginBottom: 4 }}>Tip para más visitas</div>
-            <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.6 }}>
+            <div style={{ marginBottom: 6, color: "#E8460A" }}><AppIcon name="lightbulb" size={19} /></div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1208", marginBottom: 4 }}>Tip para más visitas</div>
+            <div style={{ fontSize: 12, color: "#6B5E52", lineHeight: 1.6 }}>
               Los negocios con fotos de portada reciben <strong>3× más visitas</strong>. Agrega o actualiza tus imágenes desde <em>Editar información</em>.
             </div>
           </div>

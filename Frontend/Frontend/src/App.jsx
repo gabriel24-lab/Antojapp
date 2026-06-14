@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { UbicacionProvider } from "./context/UbicacionContext";
 import { apiFetch } from "./apiClient";
 import API_URL from "./api";
 import Navbar from "./components/Navbar";
@@ -26,6 +25,12 @@ function AppContent() {
   const [totalNegocios,  setTotalNegocios]  = useState(0);
   const [limiteNegocios, setLimiteNegocios] = useState(4);
 
+  // ── Estado de ubicación global (Navbar → HomePage) ──────────────────────
+  const [paisSeleccionado,         setPaisSeleccionado]         = useState(null);
+  const [paisNombre,               setPaisNombre]               = useState(null);
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState(null);
+  const [ciudadSeleccionada,       setCiudadSeleccionada]       = useState(null);
+
   // Cargar conteo de negocios cuando el propietario inicia sesión
   useEffect(() => {
     if (user?.rol !== "negocio") {
@@ -39,6 +44,13 @@ function AppContent() {
       }
     });
   }, [user]);
+
+  const handleCambiarUbicacion = ({ iso2, nombre, pais, departamento, ciudad }) => {
+    setPaisSeleccionado(iso2 || pais || null);
+    setPaisNombre(nombre || null);
+    setDepartamentoSeleccionado(departamento || null);
+    setCiudadSeleccionada(ciudad || null);
+  };
 
   const irInicio   = () => { setVista("home"); setNegocioActivo(null); setBusqueda(""); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
@@ -103,6 +115,13 @@ function AppContent() {
         onBusqueda={handleBusqueda}
         onIrInicio={irInicio}
         onIrNegocios={irNegocios}
+        // Ubicación
+        paisSeleccionado={paisSeleccionado}
+        paisNombre={paisNombre}
+        departamentoSeleccionado={departamentoSeleccionado}
+        ciudadSeleccionada={ciudadSeleccionada}
+        onCambiarUbicacion={handleCambiarUbicacion}
+        // Límite de negocios
         totalNegociosPropietario={totalNegocios}
         limiteNegocios={limiteNegocios}
       />
@@ -115,6 +134,11 @@ function AppContent() {
             busqueda={busqueda}
             onBusqueda={setBusqueda}
             modoNegocios={vista === "negocios"}
+            paisSeleccionado={paisSeleccionado}
+            paisNombre={paisNombre}
+            departamentoSeleccionado={departamentoSeleccionado}
+            ciudadSeleccionada={ciudadSeleccionada}
+            onCambiarUbicacion={handleCambiarUbicacion}
           />
         )}
 
@@ -154,11 +178,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <UbicacionProvider>
-        <AppContent />
-      </UbicacionProvider>
-    </AuthProvider>
-  );
+  return <AuthProvider><AppContent /></AuthProvider>;
 }

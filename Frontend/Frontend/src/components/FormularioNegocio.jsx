@@ -22,8 +22,8 @@ const HORARIO_VACIO = { lunes:"cerrado", martes:"cerrado", miercoles:"cerrado", 
 
 // ── Helpers UI ────────────────────────────────────────────────
 const Label = ({ children, required }) => (
-  <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)", display: "block", marginBottom: 6 }}>
-    {children}{required && <span style={{ color: "var(--brand)", marginLeft: 3 }}>*</span>}
+  <label style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52", display: "block", marginBottom: 6 }}>
+    {children}{required && <span style={{ color: "#E8460A", marginLeft: 3 }}>*</span>}
   </label>
 );
 
@@ -33,15 +33,15 @@ const Field = ({ children }) => (
 
 const SectionTitle = ({ icon, children, iconProps = {} }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, marginTop: 4 }}>
-    <AppIcon name={icon} size={18} color="var(--brand)" fill={icon === "star" ? "currentColor" : "none"} {...iconProps} />
-    <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 15, fontWeight: 700, color: "var(--text-1)" }}>{children}</h3>
+    <AppIcon name={icon} size={18} color="#E8460A" fill={icon === "star" ? "currentColor" : "none"} {...iconProps} />
+    <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 15, fontWeight: 700, color: "#1A1208" }}>{children}</h3>
   </div>
 );
 
 const Divider = () => <div style={{ height: 1, background: "#F0EBE5", margin: "20px 0" }} />;
 
 const ErrorMsg = ({ msg }) => msg
-  ? <div style={{ fontSize: 13, color: "var(--red)", background: "var(--red-bg)", padding: "8px 12px", borderRadius: 8, marginTop: 8 }}>{msg}</div>
+  ? <div style={{ fontSize: 13, color: "#C0392B", background: "#FDECEA", padding: "8px 12px", borderRadius: 8, marginTop: 8 }}>{msg}</div>
   : null;
 
 // ── Componente: Selector de horario por sede ──────────────────
@@ -58,7 +58,7 @@ function HorarioEditor({ horario, onChange }) {
 
         return (
           <div key={dia} style={{ display: "grid", gridTemplateColumns: "60px 1fr", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>{DIAS_LABEL[dia]}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>{DIAS_LABEL[dia]}</span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 type="button"
@@ -66,9 +66,9 @@ function HorarioEditor({ horario, onChange }) {
                 style={{
                   padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
                   border: "1.5px solid",
-                  borderColor: abierto ? "var(--green)" : "var(--border)",
-                  background: abierto ? "var(--green-bg)" : "var(--bg)",
-                  color: abierto ? "var(--green)" : "var(--text-3)",
+                  borderColor: abierto ? "#1A8C5B" : "#E2DBD5",
+                  background: abierto ? "#E8F6EE" : "#F7F4F1",
+                  color: abierto ? "#1A8C5B" : "#A8988A",
                   cursor: "pointer", whiteSpace: "nowrap",
                 }}
               >
@@ -81,7 +81,7 @@ function HorarioEditor({ horario, onChange }) {
                     style={{ padding: "6px 10px", fontSize: 13, flex: 1 }}
                     onChange={e => setHora(dia, `${e.target.value}-${cierre || "20:00"}`)}
                   />
-                  <span style={{ fontSize: 13, color: "var(--text-3)" }}>–</span>
+                  <span style={{ fontSize: 13, color: "#A8988A" }}>–</span>
                   <input
                     type="time" className="input" value={cierre || "20:00"}
                     style={{ padding: "6px 10px", fontSize: 13, flex: 1 }}
@@ -103,20 +103,20 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
   const set = (k, v) => onChange({ ...sede, [k]: v });
 
   return (
-    <div style={{ border: "1.5px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+    <div style={{ border: "1.5px solid #E2DBD5", borderRadius: 12, overflow: "hidden" }}>
       {/* Header */}
       <div
         onClick={() => setExpandida(!expandida)}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "12px 16px", cursor: "pointer",
-          background: expandida ? "var(--brand-hover)" : "var(--surface-2)",
+          background: expandida ? "#FFF4F0" : "#FAFAF9",
           borderBottom: expandida ? "1px solid #F0EBE5" : "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <AppIcon name="mapPin" size={16} color="var(--brand)" />
-          <span style={{ fontWeight: 600, fontSize: 14, color: "var(--text-1)" }}>
+          <AppIcon name="mapPin" size={16} color="#E8460A" />
+          <span style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>
             {sede.nombre || `Sede ${index + 1}`}
           </span>
         </div>
@@ -124,17 +124,17 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
           {!esUnica && (
             <button
               type="button" onClick={e => { e.stopPropagation(); onEliminar(); }}
-              style={{ fontSize: 13, color: "var(--red)", padding: "2px 8px", borderRadius: 6, border: "1px solid var(--red-bg)", background: "var(--red-bg)", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+              style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
             ><AppIcon name="x" size={13} /> Eliminar</button>
           )}
-          <AppIcon name={expandida ? "chevronUp" : "chevronDown"} size={14} color="var(--text-3)" />
+          <AppIcon name={expandida ? "chevronUp" : "chevronDown"} size={14} color="#A8988A" />
         </div>
       </div>
 
       {/* Cuerpo */}
       {expandida && (
         <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field>
               <Label required>Nombre de la sede</Label>
               <input className="input" value={sede.nombre || ""} onChange={e => set("nombre", e.target.value)} placeholder="Ej: Sede Centro" />
@@ -160,8 +160,8 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
                         type="button"
                         onClick={() => set("telefonos", (sede.telefonos || [""]).filter((_, idx) => idx !== ti))}
                         style={{
-                          padding: "0 12px", borderRadius: 8, border: "1px solid var(--border)",
-                          background: "var(--brand-hover)", color: "var(--brand)", cursor: "pointer", fontSize: 18, lineHeight: 1,
+                          padding: "0 12px", borderRadius: 8, border: "1px solid #E2DBD5",
+                          background: "#FFF4F0", color: "#E8460A", cursor: "pointer", fontSize: 18, lineHeight: 1,
                         }}
                       >×</button>
                     )}
@@ -172,7 +172,7 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
                     type="button"
                     onClick={() => set("telefonos", [...(sede.telefonos || [""]), ""])}
                     style={{
-                      fontSize: 13, color: "var(--brand)", background: "none", border: "1px dashed var(--brand)",
+                      fontSize: 13, color: "#E8460A", background: "none", border: "1px dashed #E8460A",
                       borderRadius: 8, padding: "6px 12px", cursor: "pointer", width: "fit-content",
                     }}
                   >+ Agregar teléfono</button>
@@ -252,25 +252,25 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
     : `Plato ${index + 1}`;
 
   return (
-    <div style={{ border: "1.5px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
+    <div style={{ border: "1.5px solid #E2DBD5", borderRadius: 12, overflow: "hidden" }}>
       {/* Header */}
       <div
         onClick={() => setExpandido(!expandido)}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "12px 16px", cursor: "pointer",
-          background: expandido ? "var(--brand-hover)" : "var(--surface-2)",
+          background: expandido ? "#FFF4F0" : "#FAFAF9",
           borderBottom: expandido ? "1px solid #F0EBE5" : "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {previewFoto
             ? <img src={previewFoto} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-            : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F0EBE5", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-3)" }}><AppIcon name="utensils" size={18} /></div>
+            : <div style={{ width: 36, height: 36, borderRadius: 8, background: "#F0EBE5", display: "flex", alignItems: "center", justifyContent: "center", color: "#A8988A" }}><AppIcon name="utensils" size={18} /></div>
           }
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "var(--text-1)" }}>{plato.nombre || `Plato ${index + 1}`}</div>
-            <div style={{ fontSize: 12, color: "var(--text-3)" }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: "#1A1208" }}>{plato.nombre || `Plato ${index + 1}`}</div>
+            <div style={{ fontSize: 12, color: "#A8988A" }}>
               {previewLabel}{!esMenu && plato.precio ? ` · $${parseInt(plato.precio).toLocaleString("es-CO")}` : ""}
             </div>
           </div>
@@ -278,9 +278,9 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button
             type="button" onClick={e => { e.stopPropagation(); onEliminar(); }}
-            style={{ fontSize: 13, color: "var(--red)", padding: "2px 8px", borderRadius: 6, border: "1px solid var(--red-bg)", background: "var(--red-bg)", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+            style={{ fontSize: 13, color: "#C0392B", padding: "2px 8px", borderRadius: 6, border: "1px solid #FDECEA", background: "#FDECEA", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
           ><AppIcon name="x" size={13} /></button>
-          <AppIcon name={expandido ? "chevronUp" : "chevronDown"} size={14} color="var(--text-3)" />
+          <AppIcon name={expandido ? "chevronUp" : "chevronDown"} size={14} color="#A8988A" />
         </div>
       </div>
 
@@ -301,7 +301,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
             <datalist id="tipo-sugerencias">
               {TIPO_SUGERENCIAS.map(s => <option key={s} value={s} />)}
             </datalist>
-            <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: "#A8988A", marginTop: 4 }}>
               Escribe libremente o elige una sugerencia. Pon <strong>Menú</strong> para subir fotos de carta.
             </div>
           </Field>
@@ -319,7 +319,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
 
           {/* Precio y descripción — solo si NO es menú */}
           {!esMenu && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <Field>
                 <Label required>Precio ($)</Label>
                 <input className="input" type="number" min="0" value={plato.precio || ""} onChange={e => set("precio", e.target.value)} placeholder="15000" />
@@ -344,27 +344,27 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
             /* Menú: 2 fotos (cara A y cara B) */
             <Field>
               <Label>Fotos del menú</Label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {[
                   { key: "foto",       ref: fileRef,  handler: (e) => handleFoto(e, "a"), label: "Cara A / Frente",  preview: plato.foto,       subiendo: subiendo  },
                   { key: "foto_menu_b",ref: fileRefB, handler: (e) => handleFoto(e, "b"), label: "Cara B / Reverso", preview: plato.foto_menu_b, subiendo: subiendoB },
                 ].map(({ ref, handler, label, preview, subiendo: sub }) => (
                   <div key={label}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)", marginBottom: 5 }}>{label}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#6B5E52", marginBottom: 5 }}>{label}</div>
                     <div
                       onClick={() => ref.current?.click()}
                       style={{
-                        border: "2px dashed var(--border)", borderRadius: 10, padding: 12,
-                        cursor: "pointer", textAlign: "center", background: preview ? "none" : "var(--surface-2)",
+                        border: "2px dashed #E2DBD5", borderRadius: 10, padding: 12,
+                        cursor: "pointer", textAlign: "center", background: preview ? "none" : "#FAFAF9",
                         display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minHeight: 100,
                         justifyContent: "center",
                       }}
                     >
                       {preview
                         ? <img src={preview} alt="" style={{ width: "100%", maxHeight: 120, borderRadius: 8, objectFit: "cover" }} />
-                        : <span style={{ color: "var(--text-3)" }}><AppIcon name="camera" size={28} /></span>
+                        : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
                       }
-                      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2)" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#6B5E52" }}>
                         {sub ? "Subiendo..." : preview ? "Cambiar" : "Subir foto"}
                       </div>
                     </div>
@@ -372,7 +372,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                   </div>
                 ))}
               </div>
-              {!negocioId && <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
             </Field>
           ) : (
             /* Plato normal: 1 foto */
@@ -381,23 +381,23 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
               <div
                 onClick={() => fileRef.current?.click()}
                 style={{
-                  border: "2px dashed var(--border)", borderRadius: 10, padding: 16,
+                  border: "2px dashed #E2DBD5", borderRadius: 10, padding: 16,
                   cursor: "pointer", textAlign: "center",
-                  background: plato.foto ? "none" : "var(--surface-2)",
+                  background: plato.foto ? "none" : "#FAFAF9",
                   display: "flex", alignItems: "center", gap: 12,
                 }}
               >
                 {plato.foto
                   ? <img src={plato.foto} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover" }} />
-                  : <span style={{ color: "var(--text-3)" }}><AppIcon name="camera" size={28} /></span>
+                  : <span style={{ color: "#A8988A" }}><AppIcon name="camera" size={28} /></span>
                 }
                 <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>{subiendo ? "Subiendo..." : plato.foto ? "Cambiar foto" : "Subir foto"}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>JPG, PNG · Máx 5 MB</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>{subiendo ? "Subiendo..." : plato.foto ? "Cambiar foto" : "Subir foto"}</div>
+                  <div style={{ fontSize: 12, color: "#A8988A", marginTop: 2 }}>JPG, PNG · Máx 5 MB</div>
                 </div>
               </div>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e, "a")} />
-              {!negocioId && <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
+              {!negocioId && <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}><AppIcon name="alert" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />Guarda el negocio primero para subir fotos</div>}
             </Field>
           )}
 
@@ -408,19 +408,19 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
               onClick={() => set("disponible", !plato.disponible)}
               style={{
                 width: 42, height: 24, borderRadius: 12,
-                background: plato.disponible !== false ? "var(--green)" : "var(--border)",
+                background: plato.disponible !== false ? "#1A8C5B" : "#E2DBD5",
                 border: "none", cursor: "pointer", position: "relative",
                 transition: "background .18s",
               }}
             >
               <div style={{
-                width: 18, height: 18, borderRadius: "50%", background: "var(--surface)",
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
                 position: "absolute", top: 3,
                 left: plato.disponible !== false ? 21 : 3,
                 transition: "left .18s",
               }} />
             </button>
-            <span style={{ fontSize: 13, color: "var(--text-2)", fontWeight: 500 }}>
+            <span style={{ fontSize: 13, color: "#6B5E52", fontWeight: 500 }}>
               {plato.disponible !== false ? "Disponible hoy" : "No disponible"}
             </span>
           </div>
@@ -440,9 +440,9 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                         style={{
                           padding: "5px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600,
                           border: "1.5px solid", cursor: "pointer",
-                          borderColor: desc ? "var(--brand)" : "var(--border)",
-                          background: desc ? "var(--brand-hover)" : "var(--bg)",
-                          color: desc ? "var(--brand)" : "var(--text-3)",
+                          borderColor: desc ? "#E8460A" : "#E2DBD5",
+                          background: desc ? "#FFF4F0" : "#F7F4F1",
+                          color: desc ? "#E8460A" : "#A8988A",
                           display: "flex", alignItems: "center", gap: 4,
                         }}
                       >
@@ -450,7 +450,7 @@ function PlatoCard({ plato, index, onChange, onEliminar, negocioId }) {
                       </button>
                       {desc && (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, color: "var(--text-2)" }}>Precio especial $</span>
+                          <span style={{ fontSize: 12, color: "#6B5E52" }}>Precio especial $</span>
                           <input
                             className="input" type="number" min="0"
                             style={{ padding: "5px 10px", fontSize: 13, maxWidth: 120 }}
@@ -648,15 +648,15 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
       }}
     >
       <div style={{
-        background: "var(--surface)", borderRadius: 20, width: "100%", maxWidth: 640,
+        background: "#fff", borderRadius: 20, width: "100%", maxWidth: 640,
         boxShadow: "0 24px 60px rgba(0,0,0,.2)",
         animation: "slideUp .22s ease", marginBottom: 20,
       }}>
         {/* Header */}
-        <div style={{ background: "var(--text-1)", padding: "22px 28px 18px", borderRadius: "20px 20px 0 0" }}>
+        <div style={{ background: "#1A1208", padding: "22px 28px 18px", borderRadius: "20px 20px 0 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div>
-              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 17, color: "var(--surface)", display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
                 <AppIcon name={esEdicion ? "edit" : "store"} size={18} />
                 {esEdicion ? "Editar negocio" : "Registrar negocio"}
               </div>
@@ -669,7 +669,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {/* Stepper */}
           <div style={{ display: "flex", gap: 6 }}>
             {pasos.map((p, i) => (
-              <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < paso ? "var(--brand)" : "rgba(255,255,255,.15)", transition: "background .3s" }} />
+              <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < paso ? "#E8460A" : "rgba(255,255,255,.15)", transition: "background .3s" }} />
             ))}
           </div>
         </div>
@@ -710,11 +710,11 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
               <Field>
                 <Label>Etiquetas</Label>
                 <input className="input" value={info.etiquetas} onChange={e => setInfoField("etiquetas", e.target.value)} placeholder="costilla, asado, parrilla  (separadas por comas)" />
-                <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>Separa las etiquetas con comas. Ayudan a que te encuentren en la búsqueda.</div>
+                <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4 }}>Separa las etiquetas con comas. Ayudan a que te encuentren en la búsqueda.</div>
               </Field>
               <Divider />
               <SectionTitle icon="smartphone">Redes y contacto</SectionTitle>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <Field>
                   <Label>WhatsApp</Label>
                   <input className="input" value={info.whatsapp} onChange={e => setInfoField("whatsapp", e.target.value)} placeholder="3001234567" />
@@ -747,13 +747,13 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 type="button"
                 onClick={() => setSedes(prev => [...prev, { nombre: "", direccion: "", telefonos: [""], referencia: "", maps_url: "", horario: { ...HORARIO_VACIO } }])}
                 style={{
-                  border: "2px dashed var(--border)", borderRadius: 12, padding: "12px",
-                  fontSize: 14, fontWeight: 600, color: "var(--text-3)",
-                  background: "var(--surface-2)", cursor: "pointer",
+                  border: "2px dashed #E2DBD5", borderRadius: 12, padding: "12px",
+                  fontSize: 14, fontWeight: 600, color: "#A8988A",
+                  background: "#FAFAF9", cursor: "pointer",
                   transition: "border-color .18s, color .18s",
                 }}
-                onMouseEnter={e => { e.target.style.borderColor = "var(--brand)"; e.target.style.color = "var(--brand)"; }}
-                onMouseLeave={e => { e.target.style.borderColor = "var(--border)"; e.target.style.color = "var(--text-3)"; }}
+                onMouseEnter={e => { e.target.style.borderColor = "#E8460A"; e.target.style.color = "#E8460A"; }}
+                onMouseLeave={e => { e.target.style.borderColor = "#E2DBD5"; e.target.style.color = "#A8988A"; }}
               >
                 + Agregar otra sede
               </button>
@@ -764,11 +764,11 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {paso === 3 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <SectionTitle icon="utensils">Menú y platos</SectionTitle>
-              <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 4 }}>
+              <div style={{ fontSize: 13, color: "#A8988A", marginBottom: 4 }}>
                 Agrega tus platos principales. Puedes añadir descuentos por días de la semana.
               </div>
               {platos.length === 0 && (
-                <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-3)", fontSize: 14 }}>
+                <div style={{ textAlign: "center", padding: "32px 0", color: "#A8988A", fontSize: 14 }}>
                   <div style={{ fontSize: 36, marginBottom: 8, color: "#C8BDB5" }}><AppIcon name="utensils" size={36} /></div>
                   <div>Aún no has agregado platos.</div>
                   <div style={{ fontSize: 13, marginTop: 4 }}>Puedes saltarte este paso y agregarlos después.</div>
@@ -786,13 +786,13 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 type="button"
                 onClick={() => setPlatos(prev => [...prev, { nombre: "", tipo: "menu", precio: "", descripcion: "", disponible: true, descuentos: [] }])}
                 style={{
-                  border: "2px dashed var(--border)", borderRadius: 12, padding: "12px",
-                  fontSize: 14, fontWeight: 600, color: "var(--text-3)",
-                  background: "var(--surface-2)", cursor: "pointer",
+                  border: "2px dashed #E2DBD5", borderRadius: 12, padding: "12px",
+                  fontSize: 14, fontWeight: 600, color: "#A8988A",
+                  background: "#FAFAF9", cursor: "pointer",
                   transition: "border-color .18s, color .18s",
                 }}
-                onMouseEnter={e => { e.target.style.borderColor = "var(--brand)"; e.target.style.color = "var(--brand)"; }}
-                onMouseLeave={e => { e.target.style.borderColor = "var(--border)"; e.target.style.color = "var(--text-3)"; }}
+                onMouseEnter={e => { e.target.style.borderColor = "#E8460A"; e.target.style.color = "#E8460A"; }}
+                onMouseLeave={e => { e.target.style.borderColor = "#E2DBD5"; e.target.style.color = "#A8988A"; }}
               >
                 + Agregar plato
               </button>
@@ -810,16 +810,16 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 <div
                   onClick={() => portadaRef.current?.click()}
                   style={{
-                    border: "2px dashed var(--border)", borderRadius: 14, overflow: "hidden",
+                    border: "2px dashed #E2DBD5", borderRadius: 14, overflow: "hidden",
                     cursor: "pointer", height: 180, position: "relative",
-                    background: portadaPreview ? "none" : "var(--surface-2)",
+                    background: portadaPreview ? "none" : "#FAFAF9",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
                   {portadaPreview
                     ? <img src={portadaPreview} alt="Portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : (
-                      <div style={{ textAlign: "center", color: "var(--text-3)" }}>
+                      <div style={{ textAlign: "center", color: "#A8988A" }}>
                         <div style={{ marginBottom: 8 }}><AppIcon name="image" size={36} /></div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>Subir foto de portada</div>
                         <div style={{ fontSize: 12, marginTop: 4 }}>Recomendado: 1200×600px · JPG o PNG · Máx 5 MB</div>
@@ -835,7 +835,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                       onMouseEnter={e => e.currentTarget.style.opacity = 1}
                       onMouseLeave={e => e.currentTarget.style.opacity = 0}
                     >
-                      <span style={{ color: "var(--surface)", fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><AppIcon name="camera" size={16} /> Cambiar portada</span>
+                      <span style={{ color: "#fff", fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><AppIcon name="camera" size={16} /> Cambiar portada</span>
                     </div>
                   )}
                 </div>
@@ -851,20 +851,20 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                     onClick={() => iconoRef.current?.click()}
                     style={{
                       width: 90, height: 90, borderRadius: 16,
-                      border: "2px dashed var(--border)", overflow: "hidden",
-                      cursor: "pointer", background: "var(--surface-2)",
+                      border: "2px dashed #E2DBD5", overflow: "hidden",
+                      cursor: "pointer", background: "#FAFAF9",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       flexShrink: 0,
                     }}
                   >
                     {iconoPreview
                       ? <img src={iconoPreview} alt="Ícono" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ color: "var(--text-3)" }}><AppIcon name="store" size={28} /></span>
+                      : <span style={{ color: "#A8988A" }}><AppIcon name="store" size={28} /></span>
                     }
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-2)" }}>Logo o ícono del negocio</div>
-                    <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#6B5E52" }}>Logo o ícono del negocio</div>
+                    <div style={{ fontSize: 12, color: "#A8988A", marginTop: 4, lineHeight: 1.5 }}>
                       Se muestra en la tarjeta del negocio.<br />
                       Recomendado: imagen cuadrada, mínimo 200×200px.
                     </div>
@@ -879,12 +879,12 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
               </Field>
 
               {/* Éxito */}
-              <div style={{ background: "var(--green-bg)", border: "1px solid var(--green)", borderRadius: 12, padding: 16, textAlign: "center" }}>
-                <div style={{ marginBottom: 6, color: "var(--green)", display: "flex", justifyContent: "center" }}><AppIcon name="sparkles" size={28} /></div>
-                <div style={{ fontWeight: 700, color: "var(--green)", fontFamily: "'Manrope', sans-serif", fontSize: 15 }}>
+              <div style={{ background: "#E8F6EE", border: "1px solid #1A8C5B", borderRadius: 12, padding: 16, textAlign: "center" }}>
+                <div style={{ marginBottom: 6, color: "#1A8C5B", display: "flex", justifyContent: "center" }}><AppIcon name="sparkles" size={28} /></div>
+                <div style={{ fontWeight: 700, color: "#1A8C5B", fontFamily: "'Manrope', sans-serif", fontSize: 15 }}>
                   ¡Tu negocio está casi listo!
                 </div>
-                <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 6 }}>
+                <div style={{ fontSize: 13, color: "#6B5E52", marginTop: 6 }}>
                   Las imágenes son opcionales. Puedes agregarlas o cambiarlas más adelante desde tu panel.
                 </div>
               </div>

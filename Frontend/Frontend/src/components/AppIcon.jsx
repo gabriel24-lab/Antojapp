@@ -39,11 +39,6 @@ import {
   Utensils,
   Wallet,
   X,
-  Menu,
-  Home,
-  LayoutGrid,
-  LogOut,
-  PlusCircle,
 } from "lucide-react";
 
 const ICONS = {
@@ -87,11 +82,6 @@ const ICONS = {
   utensils: Utensils,
   wallet: Wallet,
   x: X,
-  menu: Menu,
-  home: Home,
-  grid: LayoutGrid,
-  logOut: LogOut,
-  plusCircle: PlusCircle,
 };
 
 export default function AppIcon({
