@@ -104,6 +104,30 @@ export default function Navbar({
             <AppIcon name={menuMovil ? "x" : "menu"} size={20} />
           </button>
 
+          {/* ── Botón de ubicación visible en móvil ── */}
+          <button
+            className="nav-location-mobile-btn"
+            onClick={() => setMenuMovil(true)}
+            aria-label="Cambiar ubicación"
+            style={{
+              display: "none",
+              alignItems: "center", justifyContent: "center",
+              gap: 4,
+              height: 34, borderRadius: 8,
+              background: "rgba(255,255,255,.08)",
+              border: "1px solid rgba(255,255,255,.12)",
+              color: "var(--surface)", flexShrink: 0,
+              padding: "0 8px",
+              fontSize: 11, fontWeight: 600,
+              maxWidth: 110, overflow: "hidden",
+            }}
+          >
+            <AppIcon name="mapPin" size={13} color="var(--brand)" />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "rgba(255,255,255,.8)" }}>
+              {ciudadSeleccionada || paisNombre || "Zona"}
+            </span>
+          </button>
+
           {/* ── Selector de ubicación — oculto en móvil (va en menú) ── */}
           <div className="nav-location-desktop">
             <NavLocationPicker
@@ -521,6 +545,7 @@ export default function Navbar({
         @media (max-width: 768px) {
           .hamburger-btn { display: flex !important; }
           .nav-location-desktop { display: none !important; }
+          .nav-location-mobile-btn { display: flex !important; }
           .nav-divider-desktop { display: none !important; }
           .nav-links-desktop { display: none !important; }
           .nav-search { display: none !important; }
@@ -531,6 +556,7 @@ export default function Navbar({
         }
         @media (min-width: 769px) {
           .hamburger-btn { display: none !important; }
+          .nav-location-mobile-btn { display: none !important; }
           .nav-search-btn-mobile { display: none !important; }
           .nav-avatar-mobile { display: none !important; }
           .nav-login-mobile { display: none !important; }

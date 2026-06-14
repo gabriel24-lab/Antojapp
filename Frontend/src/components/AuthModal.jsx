@@ -40,7 +40,7 @@ export default function AuthModal({ onCerrar }) {
         size:             "large",
         shape:            "rectangular",
         text:             vista === "registro" ? "signup_with" : "signin_with",
-        width:            364,
+        width:            Math.min(364, window.innerWidth - 96),
         locale:           "es",
       });
     };
@@ -198,13 +198,15 @@ export default function AuthModal({ onCerrar }) {
         position: "fixed", inset: 0, zIndex: 500,
         background: "rgba(26,18,8,.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 20,
+        padding: "12px 16px",
+        overflowY: "auto",
       }}
     >
       <div style={{
         background: "var(--surface)", borderRadius: 20, width: "100%", maxWidth: 420,
         boxShadow: "0 24px 60px rgba(0,0,0,.18)",
         overflow: "hidden", animation: "slideUp .22s ease",
+        margin: "auto",
       }}>
         {/* Header */}
         <div style={{
