@@ -317,20 +317,37 @@ export default function Navbar({
 
           {/* ── Avatar compacto en móvil (solo cuando hay sesión) ── */}
           {user && (
-            <button
-              className="nav-avatar-mobile"
-              onClick={() => setMenuMovil(v => !v)}
-              style={{
-                display: "none",
-                width: 34, height: 34, borderRadius: "50%",
-                background: esPropietario ? "var(--green)" : "var(--brand)",
-                alignItems: "center", justifyContent: "center",
-                fontSize: 13, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
-                border: "none",
-              }}
-            >
-              {user.nombre?.charAt(0).toUpperCase()}
-            </button>
+            <div className="nav-avatar-mobile-group" style={{ display: "none", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <button
+                onClick={() => setMenuMovil(v => !v)}
+                aria-label="Abrir menú de cuenta"
+                style={{
+                  display: "flex",
+                  width: 34, height: 34, borderRadius: "50%",
+                  background: esPropietario ? "var(--green)" : "var(--brand)",
+                  alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
+                  border: "none", cursor: "pointer",
+                }}
+              >
+                {user.nombre?.charAt(0).toUpperCase()}
+              </button>
+              <button
+                onClick={() => setConfirmarLogout(true)}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                style={{
+                  display: "flex",
+                  width: 34, height: 34, borderRadius: 8,
+                  background: "rgba(255,255,255,.08)",
+                  border: "1px solid rgba(255,255,255,.12)",
+                  alignItems: "center", justifyContent: "center",
+                  color: "var(--surface)", flexShrink: 0, cursor: "pointer",
+                }}
+              >
+                <AppIcon name="logOut" size={16} />
+              </button>
+            </div>
           )}
 
           {/* ── Botón "Ingresar" en móvil sin sesión ── */}
@@ -444,38 +461,33 @@ export default function Navbar({
                   <MobileNavBtn icon="plusCircle" disabled={limiteAlcanzado} onClick={handleAgregarNegocio}>Agregar negocio</MobileNavBtn>
                 </>
               )}
+              {!user && (
+                <MobileNavBtn icon="logOut" onClick={() => { onAbrirAuth(); setMenuMovil(false); }}>Iniciar sesión</MobileNavBtn>
+              )}
             </div>
 
             {/* Usuario */}
-            <div style={{ padding: "10px 8px", marginTop: "auto" }}>
-              {user ? (
-                <>
-                  <div style={{ padding: "12px 10px", marginBottom: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: "50%",
-                        background: esPropietario ? "var(--green)" : "var(--brand)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
-                      }}>
-                        {user.nombre?.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{user.nombre}</div>
-                        <div style={{ fontSize: 12, color: "var(--text-3)" }}>{user.email}</div>
-                      </div>
+            {user && (
+              <div style={{ padding: "10px 8px" }}>
+                <div style={{ padding: "12px 10px", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: "50%",
+                      background: esPropietario ? "var(--green)" : "var(--brand)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 16, fontWeight: 700, color: "var(--surface)", flexShrink: 0,
+                    }}>
+                      {user.nombre?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)" }}>{user.nombre}</div>
+                      <div style={{ fontSize: 12, color: "var(--text-3)" }}>{user.email}</div>
                     </div>
                   </div>
-                  <MobileNavBtn icon="logOut" danger onClick={() => { setMenuMovil(false); setConfirmarLogout(true); }}>Cerrar sesión</MobileNavBtn>
-                </>
-              ) : (
-                <div style={{ padding: "10px 8px" }}>
-                  <button className="btn-primary" style={{ width: "100%" }} onClick={() => { onAbrirAuth(); setMenuMovil(false); }}>
-                    Iniciar sesión
-                  </button>
                 </div>
-              )}
-            </div>
+                <MobileNavBtn icon="logOut" danger onClick={() => { setMenuMovil(false); setConfirmarLogout(true); }}>Cerrar sesión</MobileNavBtn>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -563,14 +575,14 @@ export default function Navbar({
           .nav-search { display: none !important; }
           .nav-search-btn-mobile { display: flex !important; }
           .nav-actions-desktop { display: none !important; }
-          .nav-avatar-mobile { display: flex !important; }
+          .nav-avatar-mobile-group { display: flex !important; }
           .nav-login-mobile { display: flex !important; }
         }
         @media (min-width: 769px) {
           .hamburger-btn { display: none !important; }
           .nav-location-mobile-btn { display: none !important; }
           .nav-search-btn-mobile { display: none !important; }
-          .nav-avatar-mobile { display: none !important; }
+          .nav-avatar-mobile-group { display: none !important; }
           .nav-login-mobile { display: none !important; }
           .mobile-search-bar { display: none !important; }
         }
