@@ -42,7 +42,7 @@ export default function Footer({ onIrInicio, onIrNegocios, onVerFavoritos }) {
           onClick={onIrInicio}
           style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
         >
-          <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 26, height: 26, borderRadius: 6, objectFit: "cover" }} />
+          <img src="/icon-56.png" alt="Antojapp" style={{ width: 26, height: 26, borderRadius: 6, objectFit: "cover" }} />
           <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 15, color: "var(--surface)" }}>
             Antoj<span style={{ color: "var(--brand)" }}>app</span>
           </span>

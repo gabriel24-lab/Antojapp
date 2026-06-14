@@ -147,7 +147,7 @@ export default function Navbar({
             style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
           >
             <img
-              src="/Antojapp icon.png" alt="Antojapp"
+              src="/icon-56.png" alt="Antojapp"
               style={{
                 width: compacto ? 26 : 32, height: compacto ? 26 : 32,
                 borderRadius: 7, objectFit: "cover",
@@ -397,7 +397,7 @@ export default function Navbar({
             }}>
               <button onClick={onIrInicio} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer" }}
                 onClick={() => { onIrInicio(); setMenuMovil(false); }}>
-                <img src="/Antojapp icon.png" alt="Antojapp" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover" }} />
+                <img src="/icon-56.png" alt="Antojapp" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover" }} />
                 <span style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--surface)" }}>
                   Antoj<span style={{ color: "var(--brand)" }}>app</span>
                 </span>

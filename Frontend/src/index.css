@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
-
-/* ── Tokens ── */
+/* Fuentes movidas a index.html con preconnect para evitar bloqueo de renderizado *//* ── Tokens ── */
 :root {
   --brand:       #E8460A;
   --brand-light: #FFF0EB;
