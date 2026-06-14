@@ -51,7 +51,7 @@ function PaisBadge({ codigo, ciudad }) {
   );
 }
 
-export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
+export default function BusinessCard({ negocio, onClick, onAbrirAuth, prioritaria = false }) {
   const { user, toggleFavorito, esFavorito } = useAuth();
   const favorito = esFavorito(negocio.id);
 
@@ -83,7 +83,8 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth }) {
           src={negocio.portada}
           alt={negocio.nombre}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          loading="lazy"
+          loading={prioritaria ? "eager" : "lazy"}
+          fetchPriority={prioritaria ? "high" : "auto"}
         />
         {/* Overlay degradado */}
         <div style={{

@@ -252,8 +252,8 @@ export default function HomePage({
           {/* Grid */}
           {!cargando && negociosFiltrados.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-              {negociosFiltrados.map(negocio => (
-                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} />
+              {negociosFiltrados.map((negocio, index) => (
+                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} prioritaria={index === 0} />
               ))}
             </div>
           )}
