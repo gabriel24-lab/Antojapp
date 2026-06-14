@@ -23,6 +23,7 @@ const panelRoutes     = require("./routes/panel");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);
 
 // ── Trust proxy (necesario en Render, Railway, etc.) ──────────
 app.set("trust proxy", 1);
@@ -110,5 +111,5 @@ app.use((err, req, res, next) => {
 
 // ── Arrancar servidor ─────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

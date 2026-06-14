@@ -8,7 +8,7 @@ const pool = new Pool({
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: { rejectUnauthorized: false },
-  family:   4, // forzar IPv4, evita el error ENETUNREACH con IPv6 en Render
+  family:   4,
 });
 
 pool.connect()
