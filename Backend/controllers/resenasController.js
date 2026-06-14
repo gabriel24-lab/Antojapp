@@ -4,7 +4,7 @@ const pool = require("../db/pool");
 async function crearResena(req, res) {
   const { id: negocioId } = req.params;
   const { estrellas, comentario } = req.body;
-  const { id: usuarioId, nombre } = req.usuario;
+  const { id: usuarioId } = req.usuario;
 
   if (!estrellas || estrellas < 1 || estrellas > 5)
     return res.status(400).json({ error: "Las estrellas deben estar entre 1 y 5" });
@@ -18,11 +18,21 @@ async function crearResena(req, res) {
     if (negocio.rows.length === 0)
       return res.status(404).json({ error: "Negocio no encontrado" });
 
+    // SEGURIDAD/CONSISTENCIA: leer el nombre actual desde BD en vez de
+    // confiar en req.usuario.nombre (claim del JWT, que puede tener hasta
+    // 7 días de antigüedad). Evita reseñas con nombres "congelados" tras
+    // un cambio de perfil o moderación de nombre por un admin.
+    const usuario = await pool.query("SELECT nombre FROM usuarios WHERE id = $1", [usuarioId]);
+    if (usuario.rows.length === 0)
+      return res.status(401).json({ error: "Usuario no encontrado" });
+
+    const nombreActual = usuario.rows[0].nombre;
+
     const result = await pool.query(
       `INSERT INTO resenas (negocio_id, usuario_id, usuario_nombre, estrellas, comentario)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [negocioId, usuarioId, nombre, estrellas, comentario || ""]
+       RETURNING id, negocio_id, usuario_nombre, estrellas, comentario, creado_en`,
+      [negocioId, usuarioId, nombreActual, estrellas, comentario || ""]
     );
 
     await pool.query(
@@ -49,8 +59,11 @@ async function getResenas(req, res) {
   const { id: negocioId } = req.params;
 
   try {
+    // SEGURIDAD: no incluir usuario_id en respuesta pública (evita
+    // enumeración de IDs de usuario vía reseñas).
     const result = await pool.query(
-      "SELECT * FROM resenas WHERE negocio_id = $1 ORDER BY creado_en DESC",
+      `SELECT id, negocio_id, usuario_nombre, estrellas, comentario, creado_en
+       FROM resenas WHERE negocio_id = $1 ORDER BY creado_en DESC`,
       [negocioId]
     );
     res.json(result.rows);

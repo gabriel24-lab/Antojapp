@@ -14,7 +14,7 @@ const COOKIE_OPTS = {
 
 function generarToken(usuario) {
   return jwt.sign(
-    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, tv: usuario.token_version },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -56,7 +56,7 @@ async function googleLogin(req, res) {
 
     // ── ¿Ya existe el usuario? ──
     const result = await pool.query(
-      "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
+      "SELECT id, nombre, email, rol, token_version FROM usuarios WHERE email = $1",
       [email.toLowerCase()]
     );
 
@@ -68,7 +68,6 @@ async function googleLogin(req, res) {
       const token = generarToken(usuario);
       res.cookie("token", token, COOKIE_OPTS);
       return res.json({
-        token,
         esNuevo: false,
         usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
       });
@@ -90,7 +89,7 @@ async function googleLogin(req, res) {
     const insert = await pool.query(
       `INSERT INTO usuarios (nombre, email, es_google, rol)
        VALUES ($1, $2, TRUE, $3)
-       RETURNING id, nombre, email, rol`,
+       RETURNING id, nombre, email, rol, token_version`,
       [nombre || email.split("@")[0], email.toLowerCase(), rol]
     );
     const usuario = insert.rows[0];
@@ -98,7 +97,6 @@ async function googleLogin(req, res) {
     const token = generarToken(usuario);
     res.cookie("token", token, COOKIE_OPTS);
     return res.json({
-      token,
       esNuevo: true,
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     });

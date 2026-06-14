@@ -7,7 +7,10 @@ async function getFavoritos(req, res) {
   try {
     const result = await pool.query(
       `SELECT
-         n.*,
+         n.id, n.nombre, n.categoria, n.descripcion, n.portada, n.icono,
+         n.fotos, n.calificacion, n.total_resenas, n.etiquetas,
+         n.maps_url, n.whatsapp, n.instagram, n.activo,
+         n.pais, n.ciudad, n.moneda, n.creado_en,
          COALESCE(
            json_agg(
              json_build_object(

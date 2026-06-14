@@ -23,9 +23,18 @@ const panelRoutes     = require("./routes/panel");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-app.set("trust proxy", 1);
 
-// ── Trust proxy (necesario en Render, Railway, etc.) ──────────
+// ── Trust proxy ──────────────────────────────────────────────
+// "1" = confiar en exactamente 1 proxy delante de la app (el load
+// balancer de Render/Railway/etc.). Express usará el último valor de
+// X-Forwarded-For añadido por ESE proxy como IP real del cliente,
+// ignorando cualquier valor que el cliente intente inyectar en el header.
+//
+// ⚠️ Si cambias de proveedor o agregas un CDN/proxy adicional delante
+// (ej. Cloudflare + Render = 2 hops), este valor DEBE actualizarse al
+// número exacto de saltos, o el rate limiting por IP podría aplicarse
+// a la IP del proxy en vez de la del cliente (bypass) o rechazar
+// erróneamente a usuarios legítimos detrás de NAT.
 app.set("trust proxy", 1);
 
 // ── Seguridad: headers HTTP con CSP explícita ──────────────────
@@ -75,7 +84,7 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// ── Rate limiting estricto para auth ──────────────────────────
+// ── Rate limiting estricto para auth (por IP) ──────────────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max:      10,

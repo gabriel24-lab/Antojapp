@@ -22,8 +22,12 @@ const crearNegocioSchema = z.object({
   sedes:       z.array(sedeSchema).max(20).optional().default([]),
 });
 
-const actualizarNegocioSchema = crearNegocioSchema.partial().extend({
-  activo: z.boolean().optional(),
-});
+// NOTA DE SEGURIDAD: "activo" y "estado" NO son editables por el propietario.
+// Solo el panel de administración (esAdmin -> actualizarEstadoNegocio) puede
+// cambiar estos campos, ya que controlan la visibilidad pública del negocio
+// y forman parte del flujo de moderación. Si en el futuro se necesita exponer
+// alguno de estos campos al propietario, debe hacerse en un endpoint
+// independiente protegido por esAdmin, nunca aquí.
+const actualizarNegocioSchema = crearNegocioSchema.partial();
 
 module.exports = { crearNegocioSchema, actualizarNegocioSchema };

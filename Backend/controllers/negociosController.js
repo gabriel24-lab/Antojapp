@@ -12,7 +12,10 @@ async function getNegocios(req, res) {
   try {
     let query = `
       SELECT
-        n.*,
+        n.id, n.nombre, n.categoria, n.descripcion, n.portada, n.icono,
+        n.fotos, n.calificacion, n.total_resenas, n.etiquetas,
+        n.maps_url, n.whatsapp, n.instagram, n.activo,
+        n.pais, n.ciudad, n.moneda, n.creado_en,
         COALESCE(
           json_agg(
             json_build_object(
@@ -29,7 +32,7 @@ async function getNegocios(req, res) {
         ) AS sedes
       FROM negocios n
       LEFT JOIN sedes s ON s.negocio_id = n.id
-      WHERE n.activo = TRUE
+      WHERE n.activo = TRUE AND n.estado = 'aprobado'
     `;
 
     const condiciones = [];
@@ -94,7 +97,12 @@ async function getNegocioById(req, res) {
 
   try {
     const negocio = await pool.query(
-      "SELECT * FROM negocios WHERE id = $1 AND activo = TRUE",
+      `SELECT id, nombre, categoria, descripcion, portada, icono,
+              fotos, calificacion, total_resenas, etiquetas,
+              maps_url, whatsapp, instagram, activo,
+              pais, ciudad, moneda, creado_en
+       FROM negocios
+       WHERE id = $1 AND activo = TRUE AND estado = 'aprobado'`,
       [id]
     );
     if (negocio.rows.length === 0)
@@ -105,8 +113,11 @@ async function getNegocioById(req, res) {
       [id]
     );
 
+    // SEGURIDAD: no incluir usuario_id — evita enumeración de IDs de usuario
+    // a través de las reseñas públicas.
     const resenas = await pool.query(
-      "SELECT * FROM resenas WHERE negocio_id = $1 ORDER BY creado_en DESC",
+      `SELECT id, negocio_id, usuario_nombre, estrellas, comentario, creado_en
+       FROM resenas WHERE negocio_id = $1 ORDER BY creado_en DESC`,
       [id]
     );
 
@@ -225,11 +236,14 @@ async function crearNegocio(req, res) {
 }
 
 // PUT /api/negocios/:id  — editar negocio (solo propietario)
+// SEGURIDAD: "activo" y "estado" se excluyen deliberadamente. Estos campos
+// controlan la visibilidad pública y solo deben cambiar vía el panel de
+// administración (actualizarEstadoNegocio, protegido por esAdmin).
 async function actualizarNegocio(req, res) {
   const { id } = req.params;
   const {
     nombre, categoria, descripcion, etiquetas,
-    maps_url, whatsapp, instagram, activo,
+    maps_url, whatsapp, instagram,
   } = req.body;
 
   try {
@@ -242,11 +256,10 @@ async function actualizarNegocio(req, res) {
          etiquetas   = COALESCE($4, etiquetas),
          maps_url    = COALESCE($5, maps_url),
          whatsapp    = COALESCE($6, whatsapp),
-         instagram   = COALESCE($7, instagram),
-         activo      = COALESCE($8, activo)
-       WHERE id = $9
+         instagram   = COALESCE($7, instagram)
+       WHERE id = $8
        RETURNING *`,
-      [nombre, categoria, descripcion, etiquetas, maps_url, whatsapp, instagram, activo, id]
+      [nombre, categoria, descripcion, etiquetas, maps_url, whatsapp, instagram, id]
     );
 
     res.json(result.rows[0]);
@@ -333,6 +346,9 @@ async function subirFoto(req, res) {
 }
 
 // DELETE /api/negocios/:id/fotos  — eliminar una foto del array
+// SEGURIDAD: se verifica que `url` exista en el array `fotos` del negocio
+// :id ANTES de borrar del Storage. Sin esto, un propietario autenticado
+// podría borrar archivos del bucket de OTRO negocio enviando su URL.
 async function eliminarFoto(req, res) {
   const { id }  = req.params;
   const { url } = req.body;
@@ -341,6 +357,16 @@ async function eliminarFoto(req, res) {
     return res.status(400).json({ error: "URL de la foto es obligatoria" });
 
   try {
+    // 1. Verificar pertenencia ANTES de tocar Storage
+    const negocio = await pool.query(
+      "SELECT 1 FROM negocios WHERE id = $1 AND $2 = ANY(fotos)",
+      [id, url]
+    );
+
+    if (negocio.rows.length === 0)
+      return res.status(404).json({ error: "La foto no pertenece a este negocio" });
+
+    // 2. Solo ahora se borra del Storage, ya confirmada la pertenencia
     const path = url.split("/negocios/")[1];
     await supabase.storage.from("negocios").remove([path]);
     await pool.query(

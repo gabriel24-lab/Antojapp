@@ -31,9 +31,9 @@ export function AuthProvider({ children }) {
       .finally(() => setCargando(false));
   }, []);
 
-  // El token sigue llegando en el body para compatibilidad, pero NO se guarda en localStorage
+  // El backend ya no envía el JWT en el body de la respuesta (solo cookie HttpOnly)
   const login = useCallback((token, userData) => {
-    // token ignorado intencionalmente — ya está en la cookie HttpOnly del browser
+    // Parámetro "token" se mantiene por compatibilidad de firma, pero ya no se usa
     setUser(userData);
     mostrarToast(`¡Bienvenido, ${userData.nombre?.split(" ")[0]}!`, "exito");
     fetch(`${API_URL}/favoritos/ids`, { credentials: "include" })

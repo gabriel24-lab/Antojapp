@@ -5,11 +5,15 @@ const validarBody             = require("../middleware/validarBody");
 const { registroSchema, loginSchema } = require("../schemas/auth");
 const { registro, login, me, logout } = require("../controllers/authController");
 const { googleLogin }                 = require("../controllers/googleAuthController");
+const { loginPorCuentaLimiter }       = require("../middleware/rateLimiters");
 
 router.post("/registro",    validarBody(registroSchema), registro);
-router.post("/login",       validarBody(loginSchema),    login);
+// loginPorCuentaLimiter va ANTES de validarBody: si el email es inválido,
+// Zod lo rechazará después, pero igual queremos contar el intento por IP
+// (fallback del keyGenerator) para no perder visibilidad de abuso.
+router.post("/login",       loginPorCuentaLimiter, validarBody(loginSchema), login);
 router.get( "/me",          auth, me);
-router.post("/logout",      logout);        // limpia cookie HttpOnly
+router.post("/logout",      auth, logout); // limpia cookie HttpOnly y revoca sesiones (token_version++)
 router.post("/google",      googleLogin);
 
 module.exports = router;

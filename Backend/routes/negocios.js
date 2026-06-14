@@ -21,6 +21,12 @@ const { crearResena, getResenas }                            = require("../contr
 const { crearSede, actualizarSede, eliminarSede }            = require("../controllers/sedesController");
 const { getPlatos, crearPlato, actualizarPlato, eliminarPlato, subirFotoPlato } = require("../controllers/platosController");
 
+const {
+  uploadLimiter,
+  resenaLimiter,
+  escrituraNegocioLimiter,
+} = require("../middleware/rateLimiters");
+
 // ── Multer: límite 2 MB, nombre de archivo completamente nuevo (UUID) ──
 // El nombre original del atacante se descarta por completo aquí;
 // negociosController.js usa req.file.safeExt para construir el path final.
@@ -67,26 +73,28 @@ router.get("/:id",          getNegocioById);
 router.get("/:id/platos",   getPlatos);
 router.get("/:id/resenas",  getResenas);
 
-router.post("/",            auth, esNegocio,                validarBody(crearNegocioSchema),      crearNegocio);
-router.put( "/:id",         auth, esNegocio, esPropietario, validarBody(actualizarNegocioSchema), actualizarNegocio);
+router.post("/",            auth, esNegocio, escrituraNegocioLimiter,                validarBody(crearNegocioSchema),      crearNegocio);
+router.put( "/:id",         auth, esNegocio, esPropietario, escrituraNegocioLimiter, validarBody(actualizarNegocioSchema), actualizarNegocio);
 
-// Imágenes — validarImagen se aplica DESPUÉS de multer
-router.post("/:id/imagen",  auth, esNegocio, esPropietario, ...withSafeFilename("imagen"), validarImagen, subirImagen);
-router.post("/:id/fotos",   auth, esNegocio, esPropietario, ...withSafeFilename("foto"),   validarImagen, subirFoto);
+// Imágenes — validarImagen se aplica DESPUÉS de multer.
+// uploadLimiter va ANTES de multer para rechazar temprano sin gastar I/O
+// parseando el archivo si el usuario ya superó su cuota horaria.
+router.post("/:id/imagen",  auth, esNegocio, esPropietario, uploadLimiter, ...withSafeFilename("imagen"), validarImagen, subirImagen);
+router.post("/:id/fotos",   auth, esNegocio, esPropietario, uploadLimiter, ...withSafeFilename("foto"),   validarImagen, subirFoto);
 router.delete("/:id/fotos", auth, esNegocio, esPropietario, eliminarFoto);
 
 // Sedes
-router.post(  "/:id/sedes",         auth, esNegocio, esPropietario, crearSede);
-router.put(   "/:id/sedes/:sedeId", auth, esNegocio, esPropietario, actualizarSede);
+router.post(  "/:id/sedes",         auth, esNegocio, esPropietario, escrituraNegocioLimiter, crearSede);
+router.put(   "/:id/sedes/:sedeId", auth, esNegocio, esPropietario, escrituraNegocioLimiter, actualizarSede);
 router.delete("/:id/sedes/:sedeId", auth, esNegocio, esPropietario, eliminarSede);
 
 // Platos
-router.post(  "/:id/platos",                auth, esNegocio, esPropietario, crearPlato);
-router.put(   "/:id/platos/:platoId",       auth, esNegocio, esPropietario, actualizarPlato);
+router.post(  "/:id/platos",                auth, esNegocio, esPropietario, escrituraNegocioLimiter, crearPlato);
+router.put(   "/:id/platos/:platoId",       auth, esNegocio, esPropietario, escrituraNegocioLimiter, actualizarPlato);
 router.delete("/:id/platos/:platoId",       auth, esNegocio, esPropietario, eliminarPlato);
-router.post(  "/:id/platos/:platoId/foto",  auth, esNegocio, esPropietario, ...withSafeFilename("foto"), validarImagen, subirFotoPlato);
+router.post(  "/:id/platos/:platoId/foto",  auth, esNegocio, esPropietario, uploadLimiter, ...withSafeFilename("foto"), validarImagen, subirFotoPlato);
 
 // Reseñas
-router.post("/:id/resenas", auth, crearResena);
+router.post("/:id/resenas", auth, resenaLimiter, crearResena);
 
 module.exports = router;

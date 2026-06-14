@@ -15,7 +15,7 @@ const COOKIE_OPTS = {
 
 function generarToken(usuario) {
   return jwt.sign(
-    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+    { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, tv: usuario.token_version },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -62,18 +62,22 @@ async function registro(req, res) {
     const hash = await argon2.hash(password);
 
     const result = await pool.query(
-      "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
+      "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol, token_version",
       [nombre.trim(), email.toLowerCase(), hash, rolNormalizado]
     );
 
     const usuario = result.rows[0];
     const token   = generarToken(usuario);
 
-    // Emitir JWT en cookie HttpOnly — no exponer en body para producción
+    // Emitir JWT en cookie HttpOnly — único canal del token.
+    // SEGURIDAD: ya no se devuelve "token" en el body. Si en el JSON de
+    // respuesta hubiera el JWT, cualquier XSS podría leerlo via fetch/XHR
+    // sin necesidad de robar la cookie HttpOnly.
     res.cookie("token", token, COOKIE_OPTS);
 
-    // Mantener el token en body también para compatibilidad con clientes API
-    res.status(201).json({ token, usuario });
+    res.status(201).json({
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+    });
   } catch (err) {
     console.error("[registro]", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
@@ -117,11 +121,10 @@ async function login(req, res) {
 
     const token = generarToken(usuarioNormalizado);
 
-    // Emitir JWT en cookie HttpOnly
+    // Emitir JWT en cookie HttpOnly — único canal del token (ver nota en registro)
     res.cookie("token", token, COOKIE_OPTS);
 
     res.json({
-      token,
       usuario: {
         id:     usuarioNormalizado.id,
         nombre: usuarioNormalizado.nombre,
@@ -156,8 +159,19 @@ async function me(req, res) {
   }
 }
 
-// POST /api/auth/logout — limpia la cookie
+// POST /api/auth/logout — limpia la cookie Y revoca todos los tokens emitidos
+// (incrementa token_version). Requiere estar autenticado.
 async function logout(req, res) {
+  try {
+    await pool.query(
+      "UPDATE usuarios SET token_version = token_version + 1 WHERE id = $1",
+      [req.usuario.id]
+    );
+  } catch (err) {
+    console.error("[logout]", err.message);
+    // Continuar limpiando la cookie aunque falle el incremento en BD
+  }
+
   res.clearCookie("token", { ...COOKIE_OPTS, maxAge: 0 });
   res.json({ mensaje: "Sesión cerrada" });
 }

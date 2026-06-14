@@ -1,6 +1,7 @@
-const jwt = require("jsonwebtoken");
+const jwt  = require("jsonwebtoken");
+const pool = require("../db/pool");
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   // 1. Intentar leer el token desde la cookie HttpOnly (flujo principal)
   let token = req.cookies?.token;
 
@@ -18,7 +19,23 @@ function authMiddleware(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.usuario = payload; // { id, nombre, email, rol }
+
+    // ── Verificación de revocación (token_version) ──────────────
+    // Si el token fue emitido antes de un logout global / cambio de
+    // password / baneo, su "tv" no coincidirá con el valor actual en BD
+    // y se rechaza aunque la firma y expiración sean válidas.
+    const result = await pool.query(
+      "SELECT token_version FROM usuarios WHERE id = $1",
+      [payload.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: "Token inválido o expirado" });
+
+    if (result.rows[0].token_version !== payload.tv)
+      return res.status(401).json({ error: "Sesión revocada, inicia sesión de nuevo" });
+
+    req.usuario = payload; // { id, nombre, email, rol, tv }
     next();
   } catch (err) {
     return res.status(401).json({ error: "Token inválido o expirado" });

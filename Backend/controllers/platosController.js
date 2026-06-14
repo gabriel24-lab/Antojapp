@@ -154,6 +154,10 @@ async function eliminarPlato(req, res) {
 
 // POST /api/negocios/:id/platos/:platoId/foto  — subir foto del plato
 // Query param ?lado=b para guardar en foto_menu_b (segunda cara del menú)
+// SEGURIDAD: se verifica que platoId pertenezca a negocioId ANTES de subir
+// el archivo a Storage. Esto evita que un propietario autenticado (validado
+// solo como dueño de :id por esPropietario) pueda escribir archivos en rutas
+// de Storage de OTRO negocio usando un platoId ajeno.
 async function subirFotoPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
   const lado = req.query.lado === "b" ? "b" : "a";
@@ -162,6 +166,16 @@ async function subirFotoPlato(req, res) {
     return res.status(400).json({ error: "No se recibió ningún archivo" });
 
   try {
+    // 1. Verificar pertenencia ANTES de tocar Storage
+    const plato = await pool.query(
+      "SELECT id FROM platos WHERE id = $1 AND negocio_id = $2",
+      [platoId, negocioId]
+    );
+
+    if (plato.rows.length === 0)
+      return res.status(404).json({ error: "Plato no encontrado" });
+
+    // 2. Solo ahora se sube a Storage, ya confirmada la pertenencia
     const suffix   = lado === "b" ? "-menu-b" : "";
     const filename = `${negocioId}/${platoId}${suffix}-${req.file.safeName}`;
 
