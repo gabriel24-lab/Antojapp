@@ -9,17 +9,18 @@ const IORedis = require("ioredis");
 let analyticsQueue = null;
 
 const dsnRedis = process.env.REDIS_URL;
-// Solo levantar la cola si existe Redis, para evitar spam de ECONNREFUSED en producción
-if (dsnRedis || process.env.NODE_ENV !== "production") {
-  const connection = dsnRedis 
-    ? new IORedis(dsnRedis, { maxRetriesPerRequest: null })
-    : new IORedis({ host: "127.0.0.1", port: process.env.REDIS_PORT || 6379, maxRetriesPerRequest: null });
+// Solo levantar la cola si hay una URL de Redis configurada.
+// En desarrollo local sin Redis, la cola queda desactivada (analyticsQueue = null).
+if (dsnRedis) {
+  const connection = new IORedis(dsnRedis, { maxRetriesPerRequest: null });
 
   connection.on("error", (err) => {
     if (err.code !== "ECONNREFUSED") console.error("[Redis Error Queue]", err.message);
   });
 
   analyticsQueue = new Queue('analyticsQueue', { connection });
+} else {
+  console.warn("[Queue] REDIS_URL no definido. Cola de analytics desactivada.");
 }
 
 const LIMITE_NEGOCIOS = 4;

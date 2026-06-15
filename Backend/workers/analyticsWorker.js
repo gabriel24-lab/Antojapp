@@ -4,14 +4,11 @@ const IORedis = require("ioredis");
 
 const dsnRedis = process.env.REDIS_URL;
 
-if (!dsnRedis && process.env.NODE_ENV === "production") {
-  console.warn("[Worker] REDIS_URL no definido. Worker de BullMQ desactivado en producción para evitar errores de conexión.");
+if (!dsnRedis) {
+  console.warn("[Worker] REDIS_URL no definido. Worker de BullMQ desactivado para evitar errores de conexión.");
   module.exports = null;
-  // Retornamos sin inicializar para evitar el spam de ioredis reconnects
 } else {
-  const connection = dsnRedis 
-    ? new IORedis(dsnRedis, { maxRetriesPerRequest: null })
-    : new IORedis({ host: "127.0.0.1", port: process.env.REDIS_PORT || 6379, maxRetriesPerRequest: null });
+  const connection = new IORedis(dsnRedis, { maxRetriesPerRequest: null });
 
   connection.on("error", (err) => {
     if (err.code !== "ECONNREFUSED") console.error("[Redis Error Worker]", err.message);
