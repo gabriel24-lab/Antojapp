@@ -194,7 +194,7 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
     }}>
 
       {/* ── PANEL IMAGEN (deslizante) ─────────────────────────────────── */}
-      <div style={{
+      <div className="auth-img-panel" style={{
         position: "absolute", top: 0, bottom: 0,
         width: "50%",
         left: imgADerecha ? "50%" : "0%",
@@ -270,7 +270,7 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
         alignItems: "stretch",
         transition: "justify-content 0s 0.24s", // sincroniza con la imagen
       }}>
-        <div style={{
+        <div className="auth-form-half" style={{
           width: "50%",
           background: "var(--surface)",
           display: "flex", flexDirection: "column",

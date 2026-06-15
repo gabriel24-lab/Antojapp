@@ -6,7 +6,7 @@ import NavLocationPicker from "./NavLocationPicker";
 
 export default function Navbar({
   onAbrirAuth, onVerFavoritos, onAbrirPanel,
-  onAbrirFormulario, vistaActual,
+  onAbrirPerfil, onAbrirFormulario, vistaActual,
   busqueda, onBusqueda, onIrInicio, onIrNegocios,
   totalNegociosPropietario,
   limiteNegocios,
@@ -105,6 +105,30 @@ export default function Navbar({
             <AppIcon name={menuMovil ? "x" : "menu"} size={20} />
           </button>
 
+          {/* ── Logo ── */}
+          <button
+            onClick={onIrInicio}
+            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+          >
+            <img
+              src="/icon-56.png" alt="Antojapp"
+              style={{
+                width: compacto ? 26 : 32, height: compacto ? 26 : 32,
+                borderRadius: 7, objectFit: "cover",
+                transition: "width 0.3s, height 0.3s",
+              }}
+            />
+            <span style={{
+              fontFamily: "'Manrope', sans-serif", fontWeight: 700,
+              fontSize: compacto ? 16 : 18, color: "var(--surface)", letterSpacing: "-0.5px",
+              transition: "font-size 0.3s",
+            }} className="logo-text">
+              Antoj<span style={{ color: "var(--brand)" }}>app</span>
+            </span>
+          </button>
+
+          <div style={{ width: 1, height: 22, background: "rgba(255,255,255,.12)", flexShrink: 0, margin: "0 4px" }} className="nav-divider-desktop" />
+
           {/* ── Botón de ubicación visible en móvil ── */}
           <button
             className="nav-location-mobile-btn"
@@ -150,30 +174,6 @@ export default function Navbar({
               onCambiar={onCambiarUbicacion}
             />
           </div>
-
-          <div style={{ width: 1, height: 22, background: "rgba(255,255,255,.12)", flexShrink: 0 }} className="nav-divider-desktop" />
-
-          {/* ── Logo ── */}
-          <button
-            onClick={onIrInicio}
-            style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
-          >
-            <img
-              src="/icon-56.png" alt="Antojapp"
-              style={{
-                width: compacto ? 26 : 32, height: compacto ? 26 : 32,
-                borderRadius: 7, objectFit: "cover",
-                transition: "width 0.3s, height 0.3s",
-              }}
-            />
-            <span style={{
-              fontFamily: "'Manrope', sans-serif", fontWeight: 700,
-              fontSize: compacto ? 16 : 18, color: "var(--surface)", letterSpacing: "-0.5px",
-              transition: "font-size 0.3s",
-            }}>
-              Antoj<span style={{ color: "var(--brand)" }}>app</span>
-            </span>
-          </button>
 
           {/* ── Links de navegación — solo desktop ── */}
           <nav className="nav-links-desktop" style={{ display: "flex", gap: 2, flexShrink: 0 }}>
@@ -300,6 +300,7 @@ export default function Navbar({
                         esPropietario={esPropietario}
                         limiteAlcanzado={limiteAlcanzado}
                         onPanel={() => { onAbrirPanel(); setMenuAbierto(false); }}
+                        onPerfil={() => { onAbrirPerfil(); setMenuAbierto(false); }}
                         onAgregar={handleAgregarNegocio}
                         onFavoritos={() => { onVerFavoritos(true); setMenuAbierto(false); }}
                         onLogout={() => { setMenuAbierto(false); setConfirmarLogout(true); }}
@@ -452,6 +453,9 @@ export default function Navbar({
             <div style={{ padding: "10px 8px", borderBottom: "1px solid #F0EBE5" }}>
               <MobileNavBtn icon="home" activo={vistaActual === "home"} onClick={() => { onIrInicio(); setMenuMovil(false); }}>Inicio</MobileNavBtn>
               <MobileNavBtn icon="grid" activo={vistaActual === "negocios"} onClick={() => { onIrNegocios(); setMenuMovil(false); }}>Negocios</MobileNavBtn>
+              {user && (
+                <MobileNavBtn icon="user" activo={vistaActual === "perfil"} onClick={() => { onAbrirPerfil(); setMenuMovil(false); }}>Mi perfil</MobileNavBtn>
+              )}
               {user && !esPropietario && (
                 <MobileNavBtn icon="heart" activo={vistaActual === "favoritos"} onClick={() => { onVerFavoritos(true); setMenuMovil(false); }}>Mis guardados</MobileNavBtn>
               )}
@@ -591,7 +595,7 @@ export default function Navbar({
   );
 }
 
-function UserMenuContent({ user, esPropietario, limiteAlcanzado, onPanel, onAgregar, onFavoritos, onLogout }) {
+function UserMenuContent({ user, esPropietario, limiteAlcanzado, onPanel, onPerfil, onAgregar, onFavoritos, onLogout }) {
   return (
     <>
       <div style={{ padding: "13px 16px", borderBottom: "1px solid #F0EBE5" }}>
@@ -610,6 +614,7 @@ function UserMenuContent({ user, esPropietario, limiteAlcanzado, onPanel, onAgre
         </div>
       </div>
 
+      <MenuBtn onClick={onPerfil} icon="user">Mi perfil</MenuBtn>
       {esPropietario && (
         <>
           <MenuBtn onClick={onPanel} icon="barChart">Mi panel</MenuBtn>

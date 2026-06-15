@@ -178,6 +178,22 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth, prioritari
           </div>
         </div>
 
+        {/* Propietario */}
+        {negocio.propietario_nombre && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", background: "var(--border)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {negocio.propietario_foto ? (
+                <img src={negocio.propietario_foto} alt={negocio.propietario_nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <AppIcon name="user" size={12} color="var(--text-3)" />
+              )}
+            </div>
+            <span style={{ fontSize: 12, color: "var(--text-2)", fontWeight: 500 }}>
+              Por: {negocio.propietario_nombre}
+            </span>
+          </div>
+        )}
+
         {/* Descripción */}
         <p style={{
           fontSize: 13, color: "var(--text-2)", lineHeight: 1.55,

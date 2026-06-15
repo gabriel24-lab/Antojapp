@@ -151,6 +151,27 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           </div>
         </div>
 
+        {/* Propietario responsable */}
+        {negocio.propietario_nombre && (
+          <div className="card" style={{ padding: "16px 20px", gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border)" }}>
+              {negocio.propietario_foto ? (
+                <img src={negocio.propietario_foto} alt={negocio.propietario_nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <AppIcon name="user" size={24} color="var(--text-3)" />
+              )}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 2 }}>
+                Propietario responsable
+              </div>
+              <div style={{ fontSize: 16, color: "var(--text-1)", fontWeight: 700, fontFamily: "'Manrope', sans-serif" }}>
+                {negocio.propietario_nombre}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Platos clave */}
         {[
           { label: "Plato estrella", icon: "star", plato: negocio.plato_estrella_nombre  ? { nombre: negocio.plato_estrella_nombre,  precio: negocio.plato_estrella_precio  } : negocio.platoEstrella,  bg: "var(--brand-light)", color: "var(--brand)" },

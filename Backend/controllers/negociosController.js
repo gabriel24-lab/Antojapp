@@ -16,6 +16,7 @@ async function getNegocios(req, res) {
         n.fotos, n.calificacion, n.total_resenas, n.etiquetas,
         n.maps_url, n.whatsapp, n.instagram, n.activo,
         n.pais, n.ciudad, n.moneda, n.creado_en,
+        u.nombre AS propietario_nombre, u.foto_perfil AS propietario_foto,
         COALESCE(
           json_agg(
             json_build_object(
@@ -32,6 +33,7 @@ async function getNegocios(req, res) {
         ) AS sedes
       FROM negocios n
       LEFT JOIN sedes s ON s.negocio_id = n.id
+      LEFT JOIN usuarios u ON n.propietario_id = u.id
       WHERE n.activo = TRUE AND n.estado = 'aprobado'
     `;
 
@@ -75,7 +77,7 @@ async function getNegocios(req, res) {
     if (condiciones.length > 0)
       query += " AND " + condiciones.join(" AND ");
 
-    query += " GROUP BY n.id ORDER BY n.calificacion DESC";
+    query += " GROUP BY n.id, u.nombre, u.foto_perfil ORDER BY n.calificacion DESC";
 
     const result = await pool.query(query, valores);
     let negocios = result.rows.map(formatearNegocio);
@@ -97,12 +99,14 @@ async function getNegocioById(req, res) {
 
   try {
     const negocio = await pool.query(
-      `SELECT id, nombre, categoria, descripcion, portada, icono,
-              fotos, calificacion, total_resenas, etiquetas,
-              maps_url, whatsapp, instagram, activo,
-              pais, ciudad, moneda, creado_en
-       FROM negocios
-       WHERE id = $1 AND activo = TRUE AND estado = 'aprobado'`,
+      `SELECT n.id, n.nombre, n.categoria, n.descripcion, n.portada, n.icono,
+              n.fotos, n.calificacion, n.total_resenas, n.etiquetas,
+              n.maps_url, n.whatsapp, n.instagram, n.activo,
+              n.pais, n.ciudad, n.moneda, n.creado_en,
+              u.nombre AS propietario_nombre, u.foto_perfil AS propietario_foto
+       FROM negocios n
+       LEFT JOIN usuarios u ON n.propietario_id = u.id
+       WHERE n.id = $1 AND n.activo = TRUE AND n.estado = 'aprobado'`,
       [id]
     );
     if (negocio.rows.length === 0)

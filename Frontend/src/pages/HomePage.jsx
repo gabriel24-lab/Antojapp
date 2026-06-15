@@ -24,6 +24,7 @@ export default function HomePage({
   const [cargando,     setCargando]     = useState(true);
   const [error,        setError]        = useState("");
   const [usandoMock,   setUsandoMock]   = useState(false);
+  const [pagina,       setPagina]       = useState(1);
 
   const [modalUbicacion, setModalUbicacion] = useState(false);
 
@@ -54,7 +55,7 @@ export default function HomePage({
 
   // Cargar negocios con debounce
   const cargarNegocios = useCallback(() => {
-    setCargando(true); setError("");
+    setCargando(true); setError(""); setPagina(1);
     const p = new URLSearchParams();
     if (busqueda?.trim())           p.set("busqueda",     busqueda.trim());
     if (categoria !== "Todas")      p.set("categoria",    categoria);
@@ -78,6 +79,10 @@ export default function HomePage({
         }
         if (categoria !== "Todas") mock = mock.filter(n => n.categoria === categoria);
         if (soloAbiertos)          mock = mock.filter(n => n.abierto);
+        
+        // Ordenar siempre por la mejor calificación
+        mock.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
+        
         setNegocios(mock);
         setUsandoMock(true);
         setCargando(false);
@@ -94,6 +99,11 @@ export default function HomePage({
   // En modo mock no hay datos de pais/departamento/ciudad reales, así que se
   // muestra todo y se indica al usuario que son datos de ejemplo.
   const negociosFiltrados = usandoMock ? negocios : negocios;
+
+  const ITEMS_POR_PAGINA = 9;
+  const totalPaginas = Math.ceil(negociosFiltrados.length / ITEMS_POR_PAGINA);
+  const startIndex = (pagina - 1) * ITEMS_POR_PAGINA;
+  const negociosPaginados = negociosFiltrados.slice(startIndex, startIndex + ITEMS_POR_PAGINA);
 
   // El modal ahora maneja GPS + departamento + ciudad internamente
   const handleConfirmarUbicacion = ({ iso2, nombre, departamento, ciudad }) => {
@@ -250,11 +260,74 @@ export default function HomePage({
           )}
 
           {/* Grid */}
-          {!cargando && negociosFiltrados.length > 0 && (
+          {!cargando && negociosPaginados.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-              {negociosFiltrados.map((negocio, index) => (
-                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} prioritaria={index === 0} />
+              {negociosPaginados.map((negocio, index) => (
+                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} prioritaria={pagina === 1 && index === 0} />
               ))}
+            </div>
+          )}
+
+          {/* Paginación */}
+          {!cargando && totalPaginas > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
+              <button
+                disabled={pagina === 1}
+                onClick={() => { setPagina(p => p - 1); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 38, height: 38, borderRadius: 10,
+                  background: pagina === 1 ? "var(--bg)" : "var(--surface)",
+                  border: "1.5px solid", borderColor: pagina === 1 ? "var(--border)" : "var(--brand)",
+                  color: pagina === 1 ? "var(--text-3)" : "var(--brand)",
+                  cursor: pagina === 1 ? "not-allowed" : "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                <AppIcon name="chevronLeft" size={20} />
+              </button>
+              
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(num => {
+                // Lógica para no mostrar más de 5 números (con elipses) si son muchas páginas
+                if (totalPaginas > 5 && Math.abs(pagina - num) > 1 && num !== 1 && num !== totalPaginas) {
+                  if (num === 2 || num === totalPaginas - 1) return <span key={num} style={{ color: "var(--text-3)", margin: "0 4px" }}>...</span>;
+                  return null;
+                }
+                return (
+                  <button
+                    key={num}
+                    onClick={() => { setPagina(num); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 38, height: 38, borderRadius: 10,
+                      background: pagina === num ? "var(--brand)" : "var(--surface)",
+                      border: "1.5px solid", borderColor: pagina === num ? "var(--brand)" : "var(--border)",
+                      color: pagina === num ? "#fff" : "var(--text-2)",
+                      fontWeight: pagina === num ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {num}
+                  </button>
+                );
+              })}
+
+              <button
+                disabled={pagina === totalPaginas}
+                onClick={() => { setPagina(p => p + 1); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 38, height: 38, borderRadius: 10,
+                  background: pagina === totalPaginas ? "var(--bg)" : "var(--surface)",
+                  border: "1.5px solid", borderColor: pagina === totalPaginas ? "var(--border)" : "var(--brand)",
+                  color: pagina === totalPaginas ? "var(--text-3)" : "var(--brand)",
+                  cursor: pagina === totalPaginas ? "not-allowed" : "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                <AppIcon name="chevronRight" size={20} />
+              </button>
             </div>
           )}
 

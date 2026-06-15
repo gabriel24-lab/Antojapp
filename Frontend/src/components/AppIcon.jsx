@@ -44,6 +44,7 @@ import {
   LayoutGrid,
   LogOut,
   PlusCircle,
+  User,
 } from "lucide-react";
 
 const ICONS = {
@@ -92,6 +93,7 @@ const ICONS = {
   grid: LayoutGrid,
   logOut: LogOut,
   plusCircle: PlusCircle,
+  user: User,
 };
 
 export default function AppIcon({

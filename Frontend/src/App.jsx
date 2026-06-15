@@ -11,6 +11,10 @@ import FavoritosPage from "./pages/FavoritosPage";
 import BusinessDetail from "./components/BusinessDetail";
 import PanelPropietario from "./pages/PanelPropietario";
 import AuthPage from "./pages/AuthPage";
+import PerfilPage from "./pages/PerfilPage";
+import AyudaPage from "./pages/AyudaPage";
+import TerminosPage from "./pages/TerminosPage";
+import PrivacidadPage from "./pages/PrivacidadPage";
 import "./index.css";
 
 function AppContent() {
@@ -111,6 +115,7 @@ function AppContent() {
         onAbrirAuth={irAuth}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
         onAbrirPanel={() => setVista("panel")}
+        onAbrirPerfil={() => setVista("perfil")}
         onAbrirFormulario={() => abrirFormulario(null)}
         vistaActual={vista}
         busqueda={busqueda}
@@ -151,12 +156,35 @@ function AppContent() {
         {vista === "panel" && (
           <PanelPropietario onAbrirFormulario={abrirFormulario} />
         )}
+
+        {vista === "perfil" && (
+          <PerfilPage
+            onVerDetalle={verDetalle}
+            onAbrirPanel={() => setVista("panel")}
+            onIrInicio={irInicio}
+          />
+        )}
+
+        {vista === "ayuda" && (
+          <AyudaPage onIrInicio={irInicio} />
+        )}
+
+        {vista === "terminos" && (
+          <TerminosPage onIrInicio={irInicio} />
+        )}
+
+        {vista === "privacidad" && (
+          <PrivacidadPage onIrInicio={irInicio} />
+        )}
       </main>
 
       <Footer
         onIrInicio={irInicio}
         onIrNegocios={irNegocios}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
+        onIrAyuda={() => { setVista("ayuda"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onIrTerminos={() => { setVista("terminos"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onIrPrivacidad={() => { setVista("privacidad"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
       />
 
       {formularioOpen && (
