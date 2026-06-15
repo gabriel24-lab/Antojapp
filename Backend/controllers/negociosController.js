@@ -4,10 +4,16 @@ const { captureError } = require("../lib/sentry");
 
 // Para Tip 8: BullMQ
 const { Queue } = require("bullmq");
-const connection = {
-  host: "127.0.0.1", // Usamos localhost, se asume Redis local o configurado via env
-  port: process.env.REDIS_PORT || 6379,
-};
+const IORedis = require("ioredis");
+
+const connection = process.env.REDIS_URL 
+  ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
+  : new IORedis({ host: "127.0.0.1", port: process.env.REDIS_PORT || 6379, maxRetriesPerRequest: null });
+
+connection.on("error", (err) => {
+  // Ignorar errores repetitivos de conexión si no hay Redis configurado en prod
+  if (err.code !== "ECONNREFUSED") console.error("[Redis Error]", err.message);
+});
 
 const analyticsQueue = new Queue('analyticsQueue', { connection });
 
