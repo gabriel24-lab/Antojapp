@@ -12,6 +12,7 @@ import BusinessDetail from "./components/BusinessDetail";
 import PanelPropietario from "./pages/PanelPropietario";
 import AuthPage from "./pages/AuthPage";
 import PerfilPage from "./pages/PerfilPage";
+import EditarPerfilPage from "./pages/EditarPerfilPage";
 import AyudaPage from "./pages/AyudaPage";
 import TerminosPage from "./pages/TerminosPage";
 import PrivacidadPage from "./pages/PrivacidadPage";
@@ -162,6 +163,19 @@ function AppContent() {
             onVerDetalle={verDetalle}
             onAbrirPanel={() => setVista("panel")}
             onIrInicio={irInicio}
+            onEditarPerfil={() => {
+              setVista("editar-perfil");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
+
+        {vista === "editar-perfil" && (
+          <EditarPerfilPage
+            onVolver={() => {
+              setVista("perfil");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           />
         )}
 

@@ -2,14 +2,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import BusinessCard from "../components/BusinessCard";
 import AppIcon from "../components/AppIcon";
-import EditarPerfilModal from "../components/EditarPerfilModal";
 import API_URL from "../api";
 
-export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
+export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio, onEditarPerfil }) {
   const { user, logout } = useAuth();
   const [negociosGuardados, setNegociosGuardados] = useState([]);
   const [cargando, setCargando] = useState(false);
-  const [mostrarEditar, setMostrarEditar] = useState(false);
   const esPropietario = user?.rol === "negocio";
 
   useEffect(() => {
@@ -119,7 +117,7 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
           )}
           <button 
             className="btn-secondary" 
-            onClick={() => setMostrarEditar(true)}
+            onClick={onEditarPerfil}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px" }}
           >
             <AppIcon name="edit" size={16} /> Editar perfil
@@ -189,8 +187,6 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
           50%       { opacity: 0.5; }
         }
       `}</style>
-
-      {mostrarEditar && <EditarPerfilModal onCerrar={() => setMostrarEditar(false)} />}
     </main>
   );
 }
