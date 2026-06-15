@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./lib/sentry").initSentry();
 
 // ── Validación de variables de entorno críticas ────────────────
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -15,7 +16,7 @@ const cors         = require("cors");
 const helmet       = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit    = require("express-rate-limit");
-const { initSentry, sentryErrorHandler } = require("./lib/sentry");
+const { setupSentryErrorHandler } = require("./lib/sentry");
 
 const authRoutes      = require("./routes/auth");
 const negociosRoutes  = require("./routes/negocios");
@@ -24,11 +25,6 @@ const panelRoutes     = require("./routes/panel");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-
-// ── Sentry: monitoreo de errores ──────────────────────────────
-// initSentry DEBE llamarse antes de cualquier otro middleware para
-// que pueda instrumentar las rutas y capturar el contexto completo.
-initSentry(app);
 
 // ── Trust proxy ──────────────────────────────────────────────
 // "1" = confiar en exactamente 1 proxy delante de la app (el load
@@ -118,10 +114,7 @@ app.use((req, res) => {
 });
 
 // ── Sentry: captura de errores (debe ir ANTES del handler global) ─
-// Este middleware intercepta el error, lo envía a Sentry con todo
-// el contexto del request, y luego llama a next(err) para que
-// el handler de abajo responda al cliente.
-app.use(sentryErrorHandler());
+setupSentryErrorHandler(app);
 
 // ── Error handler global ──────────────────────────────────────
 app.use((err, req, res, next) => {
