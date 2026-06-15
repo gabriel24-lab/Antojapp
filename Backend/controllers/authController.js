@@ -219,12 +219,18 @@ async function cambiarPassword(req, res) {
 
     const usuario = result.rows[0];
 
-    if (usuario.es_google)
-      return res.status(400).json({ error: "Esta cuenta usa Google para iniciar sesión y no tiene contraseña" });
-
-    const coincide = await argon2.verify(usuario.password, passwordActual);
-    if (!coincide)
-      return res.status(401).json({ error: "La contraseña actual es incorrecta" });
+    if (usuario.password) {
+      if (!passwordActual) {
+        return res.status(400).json({ error: "La contraseña actual es obligatoria" });
+      }
+      const coincide = await argon2.verify(usuario.password, passwordActual);
+      if (!coincide)
+        return res.status(401).json({ error: "La contraseña actual es incorrecta" });
+    } else if (usuario.es_google) {
+      // Usuario de Google configurando su contraseña por primera vez, no requiere passwordActual
+    } else {
+      return res.status(400).json({ error: "Estado de cuenta inválido para esta operación" });
+    }
 
     const hashNuevo = await argon2.hash(passwordNueva);
 
@@ -253,7 +259,7 @@ async function subirFotoPerfil(req, res) {
     const filename = `${req.usuario.id}/${req.file.safeName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from("usuarios")
+      .from("fotosperfil")
       .upload(filename, req.file.buffer, {
         contentType: req.file.mimetype,
         upsert:      true,
@@ -262,7 +268,7 @@ async function subirFotoPerfil(req, res) {
     if (uploadError) throw uploadError;
 
     const { data: { publicUrl } } = supabase.storage
-      .from("usuarios")
+      .from("fotosperfil")
       .getPublicUrl(filename);
 
     const result = await pool.query(

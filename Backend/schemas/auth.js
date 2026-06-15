@@ -25,7 +25,7 @@ const actualizarPerfilSchema = z.object({
 // sesión robada (ej. token filtrado, dispositivo desbloqueado) pueda
 // cambiar la contraseña y expulsar al dueño legítimo de la cuenta.
 const passwordSchema = z.object({
-  passwordActual: z.string().min(1).max(128),
+  passwordActual: z.string().min(1).max(128).optional(),
   passwordNueva:  z.string().min(8).max(128),
 }).refine(
   (data) => /[A-Z]/.test(data.passwordNueva) && /[0-9]/.test(data.passwordNueva),

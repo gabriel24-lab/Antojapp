@@ -11,7 +11,7 @@ const { createClient } = require("@supabase/supabase-js");
 //
 // Si necesitas un bucket nuevo, agrégalo aquí deliberadamente —
 // esto fuerza una revisión consciente en lugar de un acceso implícito.
-const BUCKETS_PERMITIDOS = ["negocios", "platos", "usuarios"];
+const BUCKETS_PERMITIDOS = ["negocios", "platos", "usuarios", "fotosperfil"];
 
 const supabaseClient = createClient(
   process.env.SUPABASE_URL,
