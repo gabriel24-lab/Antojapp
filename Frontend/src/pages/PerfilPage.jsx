@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import BusinessCard from "../components/BusinessCard";
 import AppIcon from "../components/AppIcon";
+import EditarPerfilModal from "../components/EditarPerfilModal";
 import API_URL from "../api";
 
 export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
   const { user, logout } = useAuth();
   const [negociosGuardados, setNegociosGuardados] = useState([]);
   const [cargando, setCargando] = useState(false);
+  const [mostrarEditar, setMostrarEditar] = useState(false);
   const esPropietario = user?.rol === "negocio";
 
   useEffect(() => {
@@ -68,14 +70,14 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
 
         <div style={{
           width: 90, height: 90, borderRadius: "50%",
-          background: esPropietario ? "var(--green)" : "var(--brand)",
+          background: user.foto_perfil ? `url(${user.foto_perfil}) center/cover` : (esPropietario ? "var(--green)" : "var(--brand)"),
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 36, fontWeight: 800, color: "var(--surface)",
           boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
           marginBottom: 16,
           zIndex: 1
         }}>
-          {user.nombre?.charAt(0).toUpperCase()}
+          {!user.foto_perfil && user.nombre?.charAt(0).toUpperCase()}
         </div>
         
         <h1 style={{ 
@@ -117,10 +119,10 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
           )}
           <button 
             className="btn-secondary" 
-            onClick={() => alert("Función para editar perfil próximamente")}
+            onClick={() => setMostrarEditar(true)}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px" }}
           >
-            <AppIcon name="pencil" size={16} /> Editar perfil
+            <AppIcon name="edit" size={16} /> Editar perfil
           </button>
         </div>
       </div>
@@ -187,6 +189,8 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio }) {
           50%       { opacity: 0.5; }
         }
       `}</style>
+
+      {mostrarEditar && <EditarPerfilModal onCerrar={() => setMostrarEditar(false)} />}
     </main>
   );
 }

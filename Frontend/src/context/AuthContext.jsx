@@ -82,8 +82,13 @@ export function AuthProvider({ children }) {
     [favoritos]
   );
 
+  // Actualiza los datos del usuario en memoria (tras editar perfil, foto, etc.)
+  const actualizarUsuario = useCallback((datos) => {
+    setUser(prev => prev ? { ...prev, ...datos } : prev);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, favoritos, toggleFavorito, esFavorito, cargando, mostrarToast }}>
+    <AuthContext.Provider value={{ user, login, logout, favoritos, toggleFavorito, esFavorito, cargando, mostrarToast, actualizarUsuario }}>
       {children}
       <Toast toast={toast} onCerrar={() => setToast(null)} />
     </AuthContext.Provider>
