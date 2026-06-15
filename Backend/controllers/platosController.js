@@ -1,31 +1,38 @@
-const pool     = require("../db/pool");
+const prisma   = require("../db/pool");
 const supabase = require("../db/supabase");
-
-// ── Platos ────────────────────────────────────────────────────
+const { captureError } = require("../lib/sentry");
 
 // GET /api/negocios/:id/platos  (público)
 async function getPlatos(req, res) {
   const { id: negocioId } = req.params;
 
   try {
-    const result = await pool.query(
-      `SELECT p.*,
-        COALESCE(
-          json_agg(
-            json_build_object('dia', pd.dia, 'precio_descuento', pd.precio_desc)
-          ) FILTER (WHERE pd.id IS NOT NULL),
-          '[]'
-        ) AS descuentos
-       FROM platos p
-       LEFT JOIN plato_descuentos pd ON pd.plato_id = p.id
-       WHERE p.negocio_id = $1
-       GROUP BY p.id
-       ORDER BY p.tipo, p.nombre`,
-      [negocioId]
-    );
-    res.json(result.rows);
+    const platos = await prisma.platos.findMany({
+      where: { negocio_id: parseInt(negocioId) },
+      include: {
+        plato_descuentos: {
+          select: { dia: true, precio_descuento: true, precio_desc: true }
+        }
+      },
+      orderBy: [
+        { tipo: 'asc' },
+        { nombre: 'asc' }
+      ]
+    });
+
+    const result = platos.map(p => {
+      const descuentos = p.plato_descuentos.map(d => ({
+        dia: d.dia,
+        precio_descuento: d.precio_desc !== null ? d.precio_desc : d.precio_descuento,
+        precio_desc: d.precio_desc
+      }));
+      delete p.plato_descuentos;
+      return { ...p, descuentos };
+    });
+
+    res.json(result);
   } catch (err) {
-    console.error("[getPlatos]", err.message);
+    captureError(err, "[getPlatos]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -40,7 +47,6 @@ async function crearPlato(req, res) {
   if (!nombre || !tipo)
     return res.status(400).json({ error: "nombre y tipo son obligatorios" });
 
-  // Los menús no requieren precio
   if (!esMenu && precio === undefined)
     return res.status(400).json({ error: "El precio es obligatorio para platos que no son menú" });
 
@@ -50,29 +56,28 @@ async function crearPlato(req, res) {
   try {
     const precioFinal = esMenu ? null : parseInt(precio);
 
-    const result = await pool.query(
-      `INSERT INTO platos (negocio_id, nombre, descripcion, tipo, precio, foto_menu_b, disponible)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
-       RETURNING *`,
-      [negocioId, nombre.trim(), descripcion || "", tipo, precioFinal, foto_menu_b || null, disponible]
-    );
-
-    const plato = result.rows[0];
-
-    // Insertar descuentos por día si vienen
-    if (descuentos.length > 0) {
-      const descPromises = descuentos.map(d =>
-        pool.query(
-          "INSERT INTO plato_descuentos (plato_id, dia, precio_desc) VALUES ($1,$2,$3)",
-          [plato.id, d.dia, d.precio_desc]
-        )
-      );
-      await Promise.all(descPromises);
-    }
+    const plato = await prisma.platos.create({
+      data: {
+        negocio_id: parseInt(negocioId),
+        nombre: nombre.trim(),
+        descripcion: descripcion || "",
+        tipo,
+        precio: precioFinal,
+        foto_menu_b: foto_menu_b || null,
+        disponible,
+        plato_descuentos: {
+          create: descuentos.map(d => ({
+            dia: d.dia,
+            precio_descuento: d.precio_desc || 0,
+            precio_desc: d.precio_desc
+          }))
+        }
+      }
+    });
 
     res.status(201).json(plato);
   } catch (err) {
-    console.error("[crearPlato]", err.message);
+    captureError(err, "[crearPlato]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -83,40 +88,57 @@ async function actualizarPlato(req, res) {
   const { nombre, descripcion, tipo, precio, disponible, descuentos, foto_menu_b } = req.body;
 
   try {
-    const result = await pool.query(
-      `UPDATE platos
-       SET
-         nombre      = COALESCE($1, nombre),
-         descripcion = COALESCE($2, descripcion),
-         tipo        = COALESCE($3, tipo),
-         precio      = COALESCE($4, precio),
-         disponible  = COALESCE($5, disponible),
-         foto_menu_b = COALESCE($6, foto_menu_b)
-       WHERE id = $7 AND negocio_id = $8
-       RETURNING *`,
-      [nombre, descripcion, tipo, precio !== undefined ? precio : null, disponible, foto_menu_b, platoId, negocioId]
-    );
+    const transacciones = [];
 
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Plato no encontrado" });
-
-    // Actualizar descuentos: eliminar los viejos e insertar los nuevos
     if (descuentos !== undefined) {
-      await pool.query("DELETE FROM plato_descuentos WHERE plato_id = $1", [platoId]);
-      if (descuentos.length > 0) {
-        const descPromises = descuentos.map(d =>
-          pool.query(
-            "INSERT INTO plato_descuentos (plato_id, dia, precio_desc) VALUES ($1,$2,$3)",
-            [platoId, d.dia, d.precio_desc]
-          )
-        );
-        await Promise.all(descPromises);
-      }
+      transacciones.push(
+        prisma.plato_descuentos.deleteMany({
+          where: { plato_id: parseInt(platoId) }
+        })
+      );
     }
 
-    res.json(result.rows[0]);
+    const dataUpdate = {};
+    if (nombre !== undefined) dataUpdate.nombre = nombre;
+    if (descripcion !== undefined) dataUpdate.descripcion = descripcion;
+    if (tipo !== undefined) dataUpdate.tipo = tipo;
+    if (precio !== undefined) dataUpdate.precio = precio;
+    if (disponible !== undefined) dataUpdate.disponible = disponible;
+    if (foto_menu_b !== undefined) dataUpdate.foto_menu_b = foto_menu_b;
+
+    if (descuentos !== undefined && descuentos.length > 0) {
+      dataUpdate.plato_descuentos = {
+        create: descuentos.map(d => ({
+          dia: d.dia,
+          precio_descuento: d.precio_desc || 0,
+          precio_desc: d.precio_desc
+        }))
+      };
+    }
+
+    // Only add update transaction if there is something to update
+    if (Object.keys(dataUpdate).length > 0) {
+      transacciones.push(
+        prisma.platos.update({
+          where: { id: parseInt(platoId) },
+          data: dataUpdate
+        })
+      );
+    }
+
+    if (transacciones.length === 0) {
+        return res.json({});
+    }
+
+    const results = await prisma.$transaction(transacciones);
+    const platoActualizado = results[results.length - 1];
+
+    res.json(platoActualizado);
   } catch (err) {
-    console.error("[actualizarPlato]", err.message);
+    captureError(err, "[actualizarPlato]");
+    if (err.code === 'P2025') {
+        return res.status(404).json({ error: "Plato no encontrado" });
+    }
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -126,38 +148,31 @@ async function eliminarPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
 
   try {
-    // Eliminar foto de Storage si existe
-    const plato = await pool.query(
-      "SELECT foto FROM platos WHERE id = $1 AND negocio_id = $2",
-      [platoId, negocioId]
-    );
+    const plato = await prisma.platos.findUnique({
+      where: { id: parseInt(platoId) },
+      select: { foto: true, negocio_id: true }
+    });
 
-    if (plato.rows.length === 0)
+    if (!plato || plato.negocio_id !== parseInt(negocioId))
       return res.status(404).json({ error: "Plato no encontrado" });
 
-    if (plato.rows[0].foto) {
-      const path = plato.rows[0].foto.split("/platos/")[1];
+    if (plato.foto) {
+      const path = plato.foto.split("/platos/")[1];
       if (path) await supabase.storage.from("platos").remove([path]);
     }
 
-    await pool.query(
-      "DELETE FROM platos WHERE id = $1 AND negocio_id = $2",
-      [platoId, negocioId]
-    );
+    await prisma.platos.delete({
+      where: { id: parseInt(platoId) }
+    });
 
     res.json({ mensaje: "Plato eliminado" });
   } catch (err) {
-    console.error("[eliminarPlato]", err.message);
+    captureError(err, "[eliminarPlato]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
-// POST /api/negocios/:id/platos/:platoId/foto  — subir foto del plato
-// Query param ?lado=b para guardar en foto_menu_b (segunda cara del menú)
-// SEGURIDAD: se verifica que platoId pertenezca a negocioId ANTES de subir
-// el archivo a Storage. Esto evita que un propietario autenticado (validado
-// solo como dueño de :id por esPropietario) pueda escribir archivos en rutas
-// de Storage de OTRO negocio usando un platoId ajeno.
+// POST /api/negocios/:id/platos/:platoId/foto
 async function subirFotoPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
   const lado = req.query.lado === "b" ? "b" : "a";
@@ -166,16 +181,14 @@ async function subirFotoPlato(req, res) {
     return res.status(400).json({ error: "No se recibió ningún archivo" });
 
   try {
-    // 1. Verificar pertenencia ANTES de tocar Storage
-    const plato = await pool.query(
-      "SELECT id FROM platos WHERE id = $1 AND negocio_id = $2",
-      [platoId, negocioId]
-    );
+    const plato = await prisma.platos.findUnique({
+      where: { id: parseInt(platoId) },
+      select: { id: true, negocio_id: true }
+    });
 
-    if (plato.rows.length === 0)
+    if (!plato || plato.negocio_id !== parseInt(negocioId))
       return res.status(404).json({ error: "Plato no encontrado" });
 
-    // 2. Solo ahora se sube a Storage, ya confirmada la pertenencia
     const suffix   = lado === "b" ? "-menu-b" : "";
     const filename = `${negocioId}/${platoId}${suffix}-${req.file.safeName}`;
 
@@ -192,15 +205,16 @@ async function subirFotoPlato(req, res) {
       .from("platos")
       .getPublicUrl(filename);
 
-    const columna = lado === "b" ? "foto_menu_b" : "foto";
-    await pool.query(
-      `UPDATE platos SET ${columna} = $1 WHERE id = $2 AND negocio_id = $3`,
-      [publicUrl, platoId, negocioId]
-    );
+    const dataUpdate = lado === "b" ? { foto_menu_b: publicUrl } : { foto: publicUrl };
+
+    await prisma.platos.update({
+      where: { id: parseInt(platoId) },
+      data: dataUpdate
+    });
 
     res.json({ url: publicUrl });
   } catch (err) {
-    console.error("[subirFotoPlato]", err.message);
+    captureError(err, "[subirFotoPlato]");
     res.status(500).json({ error: "Error al subir la foto del plato" });
   }
 }

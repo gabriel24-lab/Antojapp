@@ -1,6 +1,7 @@
 const { OAuth2Client } = require("google-auth-library");
 const jwt              = require("jsonwebtoken");
-const pool             = require("../db/pool");
+const prisma           = require("../db/pool");
+const { captureError } = require("../lib/sentry");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -21,11 +22,6 @@ function generarToken(usuario) {
 }
 
 // POST /api/auth/google
-// Body: { credential, rol? }
-//   - Si el usuario ya existe → inicia sesión normalmente (rol ignorado)
-//   - Si es nuevo y viene `rol` → crea la cuenta con ese rol
-//   - Si es nuevo y NO viene `rol` → responde { esNuevo: true } sin crear cuenta
-//     para que el frontend muestre el selector de rol
 async function googleLogin(req, res) {
   const { credential, rol } = req.body;
 
@@ -55,29 +51,29 @@ async function googleLogin(req, res) {
       return res.status(400).json({ error: "El correo de Google no está verificado" });
 
     // ── ¿Ya existe el usuario? ──
-    const result = await pool.query(
-      "SELECT id, nombre, email, rol, token_version, foto_perfil FROM usuarios WHERE email = $1",
-      [email.toLowerCase()]
-    );
+    const usuarioExistente = await prisma.usuarios.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, nombre: true, email: true, rol: true, token_version: true, foto_perfil: true }
+    });
 
-    if (result.rows.length > 0) {
+    if (usuarioExistente) {
       // Usuario existente → login normal
-      const usuario = result.rows[0];
+      const fotoPerfil = usuarioExistente.foto_perfil || picture || null;
 
-      // Solo usar la foto de Google si el usuario no ha subido la suya propia
-      // (no sobrescribir una foto personalizada con la de Google en cada login).
-      const fotoPerfil = usuario.foto_perfil || picture || null;
+      const usuarioActualizado = await prisma.usuarios.update({
+        where: { id: usuarioExistente.id },
+        data: {
+          es_google: true,
+          foto_perfil: fotoPerfil
+        },
+        select: { id: true, nombre: true, email: true, rol: true, token_version: true, foto_perfil: true }
+      });
 
-      await pool.query(
-        "UPDATE usuarios SET es_google = TRUE, foto_perfil = COALESCE(foto_perfil, $2) WHERE id = $1",
-        [usuario.id, picture || null]
-      );
-
-      const token = generarToken(usuario);
+      const token = generarToken(usuarioActualizado);
       res.cookie("token", token, COOKIE_OPTS);
       return res.json({
         esNuevo: false,
-        usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, foto_perfil: fotoPerfil },
+        usuario: { id: usuarioActualizado.id, nombre: usuarioActualizado.nombre, email: usuarioActualizado.email, rol: usuarioActualizado.rol, foto_perfil: usuarioActualizado.foto_perfil },
       });
     }
 
@@ -94,23 +90,26 @@ async function googleLogin(req, res) {
     }
 
     // Ya viene rol → crear la cuenta
-    const insert = await pool.query(
-      `INSERT INTO usuarios (nombre, email, es_google, rol, foto_perfil)
-       VALUES ($1, $2, TRUE, $3, $4)
-       RETURNING id, nombre, email, rol, token_version, foto_perfil`,
-      [nombre || email.split("@")[0], email.toLowerCase(), rol, picture || null]
-    );
-    const usuario = insert.rows[0];
+    const usuarioNuevo = await prisma.usuarios.create({
+      data: {
+        nombre: nombre || email.split("@")[0],
+        email: email.toLowerCase(),
+        es_google: true,
+        rol: rol,
+        foto_perfil: picture || null
+      },
+      select: { id: true, nombre: true, email: true, rol: true, token_version: true, foto_perfil: true }
+    });
 
-    const token = generarToken(usuario);
+    const token = generarToken(usuarioNuevo);
     res.cookie("token", token, COOKIE_OPTS);
     return res.json({
       esNuevo: true,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, foto_perfil: usuario.foto_perfil },
+      usuario: { id: usuarioNuevo.id, nombre: usuarioNuevo.nombre, email: usuarioNuevo.email, rol: usuarioNuevo.rol, foto_perfil: usuarioNuevo.foto_perfil },
     });
 
   } catch (err) {
-    console.error("[googleLogin]", err.message);
+    captureError(err, "[googleLogin]");
 
     if (err.message?.includes("Token used too late") || err.message?.includes("Invalid token"))
       return res.status(401).json({ error: "Token de Google inválido o expirado" });

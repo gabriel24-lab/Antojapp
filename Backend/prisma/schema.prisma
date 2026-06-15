@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model usuarios {
+  id            Int         @id @default(autoincrement())
+  nombre        String      @db.VarChar(100)
+  email         String      @unique @db.VarChar(150)
+  password      String?     @db.VarChar(255)
+  es_google     Boolean     @default(false)
+  rol           String      @default("usuario") @db.VarChar(20)
+  token_version Int         @default(1)
+  foto_perfil   String?     @db.VarChar(500)
+  creado_en     DateTime?   @default(now()) @db.Timestamp(6)
+  negocios      negocios[]  @relation("NegocioPropietario")
+  resenas       resenas[]
+  favoritos     favoritos[]
+}
+
+model negocios {
+  id             Int         @id @default(autoincrement())
+  propietario_id Int?
+  nombre         String      @db.VarChar(150)
+  categoria      String      @db.VarChar(100)
+  descripcion    String?     @default("")
+  portada        String?
+  icono          String?
+  fotos          String[]    @default([])
+  calificacion   Decimal?    @default(0) @db.Decimal(3, 1)
+  total_resenas  Int?        @default(0)
+  etiquetas      String[]    @default([])
+  maps_url       String?
+  whatsapp       String?
+  instagram      String?
+  activo         Boolean?    @default(true)
+  pais           String?     @db.VarChar(100)
+  departamento   String?     @db.VarChar(100)
+  ciudad         String?     @db.VarChar(100)
+  moneda         String?     @db.VarChar(10)
+  estado         String?     @default("pendiente") @db.VarChar(50)
+  creado_en      DateTime?   @default(now()) @db.Timestamp(6)
+  
+  propietario    usuarios?   @relation("NegocioPropietario", fields: [propietario_id], references: [id], onDelete: SetNull)
+  sedes          sedes[]
+  platos         platos[]
+  resenas        resenas[]
+  favoritos      favoritos[]
+  visitas        visitas[]
+
+  @@unique([nombre, categoria])
+}
+
+model sedes {
+  id         Int       @id @default(autoincrement())
+  negocio_id Int
+  nombre     String    @db.VarChar(150)
+  direccion  String?   @db.VarChar(255)
+  telefonos  String[]  @default([])
+  telefono   String?   @db.VarChar(20) // Deprecated based on queries
+  lat        Decimal?  @db.Decimal(9, 6)
+  lng        Decimal?  @db.Decimal(9, 6)
+  horario    Json?
+  maps_url   String?
+  referencia String?
+  negocio    negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+}
+
+model platos {
+  id               Int                @id @default(autoincrement())
+  negocio_id       Int
+  nombre           String             @db.VarChar(150)
+  descripcion      String?            @default("")
+  tipo             String             @db.VarChar(20)
+  precio           Int?
+  foto             String?
+  foto_menu_b      String?
+  disponible       Boolean?           @default(true)
+  creado_en        DateTime?          @default(now()) @db.Timestamp(6)
+  negocio          negocios           @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+  plato_descuentos plato_descuentos[]
+}
+
+model plato_descuentos {
+  id               Int    @id @default(autoincrement())
+  plato_id         Int
+  dia              String @db.VarChar(12)
+  precio_descuento Int
+  precio_desc      Int?   // Included as an alias for compatibility with views
+  plato            platos @relation(fields: [plato_id], references: [id], onDelete: Cascade)
+
+  @@unique([plato_id, dia])
+}
+
+model resenas {
+  id             Int       @id @default(autoincrement())
+  negocio_id     Int
+  usuario_id     Int?
+  usuario_nombre String?   @db.VarChar(100)
+  estrellas      Int       @db.SmallInt
+  comentario     String?   @default("")
+  creado_en      DateTime? @default(now()) @db.Timestamp(6)
+  negocio        negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+  usuario        usuarios? @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+}
+
+model favoritos {
+  usuario_id  Int
+  negocio_id  Int
+  guardado_en DateTime? @default(now()) @db.Timestamp(6)
+  negocio     negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+  usuario     usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@id([usuario_id, negocio_id])
+}
+
+model visitas {
+  id          Int       @id @default(autoincrement())
+  negocio_id  Int
+  visitado_en DateTime? @default(now()) @db.Timestamp(6)
+  negocio     negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+}

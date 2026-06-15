@@ -1,4 +1,5 @@
-const pool = require("../db/pool");
+const prisma = require("../db/pool");
+const { captureError } = require("../lib/sentry");
 
 // GET /api/panel/estadisticas  — dashboard del propietario autenticado
 async function getEstadisticas(req, res) {
@@ -6,120 +7,112 @@ async function getEstadisticas(req, res) {
 
   try {
     // 1. Obtener negocio del propietario
-    const negocioResult = await pool.query(
-      "SELECT id, nombre FROM negocios WHERE propietario_id = $1",
-      [propietarioId]
-    );
+    const negocio = await prisma.negocios.findFirst({
+      where: { propietario_id: propietarioId },
+      select: { id: true, nombre: true }
+    });
 
-    if (negocioResult.rows.length === 0)
+    if (!negocio)
       return res.status(404).json({ error: "No tienes ningún negocio registrado" });
 
-    const negocioId = negocioResult.rows[0].id;
+    const negocioId = negocio.id;
 
-    // 2. Ejecutar todas las consultas en paralelo
+    // 2. Ejecutar consultas en paralelo
+    const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const hace30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
     const [
       visitasTotal,
       visitasSemana,
-      visitasPorDia,
+      visitas30Dias,
       totalFavoritos,
       totalResenas,
-      promedioEstrellas,
+      agregacionResenas,
       ultimasResenas,
     ] = await Promise.all([
-
       // Total de visitas históricas
-      pool.query(
-        "SELECT COUNT(*) AS total FROM visitas WHERE negocio_id = $1",
-        [negocioId]
-      ),
+      prisma.visitas.count({ where: { negocio_id: negocioId } }),
 
       // Visitas en los últimos 7 días
-      pool.query(
-        `SELECT COUNT(*) AS total
-         FROM visitas
-         WHERE negocio_id = $1
-           AND visitado_en >= NOW() - INTERVAL '7 days'`,
-        [negocioId]
-      ),
+      prisma.visitas.count({
+        where: {
+          negocio_id: negocioId,
+          visitado_en: { gte: hace7Dias }
+        }
+      }),
 
-      // Visitas agrupadas por día (últimos 30 días) — rellena días sin visitas con 0
-      pool.query(
-        `SELECT
-           gs.dia::date                          AS dia,
-           COALESCE(v.visitas, 0)::int           AS visitas
-         FROM generate_series(
-           (NOW() - INTERVAL '29 days')::date,
-           NOW()::date,
-           '1 day'::interval
-         ) AS gs(dia)
-         LEFT JOIN (
-           SELECT DATE(visitado_en) AS dia, COUNT(*) AS visitas
-           FROM visitas
-           WHERE negocio_id = $1
-             AND visitado_en >= NOW() - INTERVAL '30 days'
-           GROUP BY DATE(visitado_en)
-         ) v ON v.dia = gs.dia
-         ORDER BY gs.dia ASC`,
-        [negocioId]
-      ),
+      // Visitas en los últimos 30 días para agrupar
+      prisma.visitas.findMany({
+        where: {
+          negocio_id: negocioId,
+          visitado_en: { gte: hace30Dias }
+        },
+        select: { visitado_en: true }
+      }),
 
       // Total de veces guardado como favorito
-      pool.query(
-        "SELECT COUNT(*) AS total FROM favoritos WHERE negocio_id = $1",
-        [negocioId]
-      ),
+      prisma.favoritos.count({ where: { negocio_id: negocioId } }),
 
       // Total de reseñas
-      pool.query(
-        "SELECT COUNT(*) AS total FROM resenas WHERE negocio_id = $1",
-        [negocioId]
-      ),
+      prisma.resenas.count({ where: { negocio_id: negocioId } }),
 
       // Promedio de estrellas
-      pool.query(
-        "SELECT ROUND(AVG(estrellas)::numeric, 1) AS promedio FROM resenas WHERE negocio_id = $1",
-        [negocioId]
-      ),
+      prisma.resenas.aggregate({
+        where: { negocio_id: negocioId },
+        _avg: { estrellas: true }
+      }),
 
       // Últimas 5 reseñas
-      pool.query(
-        `SELECT usuario_nombre, estrellas, comentario, creado_en
-         FROM resenas
-         WHERE negocio_id = $1
-         ORDER BY creado_en DESC
-         LIMIT 5`,
-        [negocioId]
-      ),
+      prisma.resenas.findMany({
+        where: { negocio_id: negocioId },
+        orderBy: { creado_en: 'desc' },
+        take: 5,
+        select: { usuario_nombre: true, estrellas: true, comentario: true, creado_en: true }
+      }),
     ]);
 
+    // Procesar visitas por día
+    const visitasMap = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      visitasMap[d.toISOString().slice(0, 10)] = 0;
+    }
+
+    visitas30Dias.forEach(v => {
+      if (v.visitado_en) {
+        const diaStr = v.visitado_en.toISOString().slice(0, 10);
+        if (visitasMap[diaStr] !== undefined) {
+          visitasMap[diaStr]++;
+        }
+      }
+    });
+
+    const porDia = Object.keys(visitasMap).sort().map(dia => ({
+      dia,
+      visitas: visitasMap[dia]
+    }));
+
+    const promedioRedondeado = Math.round((agregacionResenas._avg.estrellas || 0) * 10) / 10;
+
     res.json({
-      negocio: negocioResult.rows[0],
+      negocio,
       visitas: {
-        total:  parseInt(visitasTotal.rows[0].total),
-        semana: parseInt(visitasSemana.rows[0].total),
-        // Serializar dia como string ISO "YYYY-MM-DD" para evitar que el driver
-        // de pg lo envíe como objeto Date, lo que rompe la gráfica en el frontend
-        porDia: visitasPorDia.rows.map(r => ({
-          dia:     r.dia instanceof Date
-            ? r.dia.toISOString().slice(0, 10)
-            : String(r.dia).slice(0, 10),
-          visitas: parseInt(r.visitas) || 0,
-        })),
+        total:  visitasTotal,
+        semana: visitasSemana,
+        porDia: porDia,
       },
-      favoritos: parseInt(totalFavoritos.rows[0].total),
+      favoritos: totalFavoritos,
       resenas: {
-        total:   parseInt(totalResenas.rows[0].total),
-        promedio: parseFloat(promedioEstrellas.rows[0].promedio) || 0,
-        ultimas:  ultimasResenas.rows,
+        total:   totalResenas,
+        promedio: promedioRedondeado,
+        ultimas:  ultimasResenas,
       },
     });
   } catch (err) {
-    console.error("[getEstadisticas]", err.message);
+    captureError(err, "[getEstadisticas]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
-
-
 
 // ── Panel de administración: verificación de negocios ─────────
 // Requiere rol 'admin' (verificado en middleware esAdmin).
@@ -133,18 +126,32 @@ async function getAdminNegocios(req, res) {
     return res.status(400).json({ error: "Estado inválido" });
 
   try {
-    const result = await pool.query(
-      `SELECT n.id, n.nombre, n.categoria, n.descripcion, n.estado,
-              n.creado_en, u.nombre AS propietario, u.email AS propietario_email
-       FROM negocios n
-       JOIN usuarios u ON u.id = n.propietario_id
-       WHERE n.estado = $1
-       ORDER BY n.creado_en ASC`,
-      [estado]
-    );
-    res.json(result.rows);
+    const negocios = await prisma.negocios.findMany({
+      where: { estado },
+      select: {
+        id: true,
+        nombre: true,
+        categoria: true,
+        descripcion: true,
+        estado: true,
+        creado_en: true,
+        propietario: {
+          select: { nombre: true, email: true }
+        }
+      },
+      orderBy: { creado_en: 'asc' }
+    });
+
+    // Mapear para mantener compatibilidad con el frontend
+    const result = negocios.map(n => ({
+      ...n,
+      propietario: n.propietario ? n.propietario.nombre : null,
+      propietario_email: n.propietario ? n.propietario.email : null
+    }));
+
+    res.json(result);
   } catch (err) {
-    console.error("[getAdminNegocios]", err.message);
+    captureError(err, "[getAdminNegocios]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -159,20 +166,21 @@ async function actualizarEstadoNegocio(req, res) {
     return res.status(400).json({ error: "Estado debe ser 'aprobado' o 'rechazado'" });
 
   try {
-    const result = await pool.query(
-      `UPDATE negocios
-       SET estado = $1, activo = $2
-       WHERE id = $3
-       RETURNING id, nombre, estado`,
-      [estado, estado === "aprobado", id]
-    );
+    const negocio = await prisma.negocios.update({
+      where: { id: parseInt(id) },
+      data: {
+        estado,
+        activo: estado === "aprobado"
+      },
+      select: { id: true, nombre: true, estado: true }
+    });
 
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Negocio no encontrado" });
-
-    res.json(result.rows[0]);
+    res.json(negocio);
   } catch (err) {
-    console.error("[actualizarEstadoNegocio]", err.message);
+    if (err.code === 'P2025') {
+        return res.status(404).json({ error: "Negocio no encontrado" });
+    }
+    captureError(err, "[actualizarEstadoNegocio]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

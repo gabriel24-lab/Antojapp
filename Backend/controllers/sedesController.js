@@ -1,4 +1,5 @@
-const pool = require("../db/pool");
+const prisma = require("../db/pool");
+const { captureError } = require("../lib/sentry");
 
 // ── Sedes ─────────────────────────────────────────────────────
 
@@ -16,15 +17,22 @@ async function crearSede(req, res) {
     : telefonos ? [telefonos] : [];
 
   try {
-    const result = await pool.query(
-      `INSERT INTO sedes (negocio_id, nombre, direccion, telefonos, lat, lng, horario, maps_url, referencia)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       RETURNING *`,
-      [negocioId, nombre, direccion, telArray, lat, lng, horario, maps_url, referencia]
-    );
-    res.status(201).json(result.rows[0]);
+    const sede = await prisma.sedes.create({
+      data: {
+        negocio_id: parseInt(negocioId),
+        nombre,
+        direccion,
+        telefonos: telArray,
+        lat: lat ? parseFloat(lat) : null,
+        lng: lng ? parseFloat(lng) : null,
+        horario,
+        maps_url,
+        referencia
+      }
+    });
+    res.status(201).json(sede);
   } catch (err) {
-    console.error("[crearSede]", err.message);
+    captureError(err, "[crearSede]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -38,29 +46,30 @@ async function actualizarSede(req, res) {
     ? (Array.isArray(telefonos) ? telefonos.filter(Boolean) : [telefonos].filter(Boolean))
     : undefined;
 
+  const dataUpdate = {};
+  if (nombre !== undefined) dataUpdate.nombre = nombre;
+  if (direccion !== undefined) dataUpdate.direccion = direccion;
+  if (telArray !== undefined) dataUpdate.telefonos = telArray;
+  if (lat !== undefined) dataUpdate.lat = lat ? parseFloat(lat) : null;
+  if (lng !== undefined) dataUpdate.lng = lng ? parseFloat(lng) : null;
+  if (horario !== undefined) dataUpdate.horario = horario;
+  if (maps_url !== undefined) dataUpdate.maps_url = maps_url;
+  if (referencia !== undefined) dataUpdate.referencia = referencia;
+
   try {
-    const result = await pool.query(
-      `UPDATE sedes
-       SET
-         nombre     = COALESCE($1, nombre),
-         direccion  = COALESCE($2, direccion),
-         telefonos  = COALESCE($3, telefonos),
-         lat        = COALESCE($4, lat),
-         lng        = COALESCE($5, lng),
-         horario    = COALESCE($6, horario),
-         maps_url   = COALESCE($7, maps_url),
-         referencia = COALESCE($8, referencia)
-       WHERE id = $9 AND negocio_id = $10
-       RETURNING *`,
-      [nombre, direccion, telArray, lat, lng, horario, maps_url, referencia, sedeId, negocioId]
-    );
+    const sede = await prisma.sedes.findUnique({ where: { id: parseInt(sedeId) } });
+    if (!sede || sede.negocio_id !== parseInt(negocioId)) {
+        return res.status(404).json({ error: "Sede no encontrada" });
+    }
 
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Sede no encontrada" });
+    const sedeActualizada = await prisma.sedes.update({
+      where: { id: parseInt(sedeId) },
+      data: dataUpdate
+    });
 
-    res.json(result.rows[0]);
+    res.json(sedeActualizada);
   } catch (err) {
-    console.error("[actualizarSede]", err.message);
+    captureError(err, "[actualizarSede]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -70,17 +79,18 @@ async function eliminarSede(req, res) {
   const { id: negocioId, sedeId } = req.params;
 
   try {
-    const result = await pool.query(
-      "DELETE FROM sedes WHERE id = $1 AND negocio_id = $2 RETURNING id",
-      [sedeId, negocioId]
-    );
+    const sede = await prisma.sedes.findUnique({ where: { id: parseInt(sedeId) } });
+    if (!sede || sede.negocio_id !== parseInt(negocioId)) {
+        return res.status(404).json({ error: "Sede no encontrada" });
+    }
 
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Sede no encontrada" });
+    await prisma.sedes.delete({
+      where: { id: parseInt(sedeId) }
+    });
 
     res.json({ mensaje: "Sede eliminada" });
   } catch (err) {
-    console.error("[eliminarSede]", err.message);
+    captureError(err, "[eliminarSede]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

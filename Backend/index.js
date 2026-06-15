@@ -15,6 +15,7 @@ const cors         = require("cors");
 const helmet       = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit    = require("express-rate-limit");
+const { initSentry, sentryErrorHandler } = require("./lib/sentry");
 
 const authRoutes      = require("./routes/auth");
 const negociosRoutes  = require("./routes/negocios");
@@ -23,6 +24,11 @@ const panelRoutes     = require("./routes/panel");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+
+// ── Sentry: monitoreo de errores ──────────────────────────────
+// initSentry DEBE llamarse antes de cualquier otro middleware para
+// que pueda instrumentar las rutas y capturar el contexto completo.
+initSentry(app);
 
 // ── Trust proxy ──────────────────────────────────────────────
 // "1" = confiar en exactamente 1 proxy delante de la app (el load
@@ -111,6 +117,12 @@ app.use((req, res) => {
   res.status(404).json({ error: `Ruta ${req.method} ${req.path} no encontrada` });
 });
 
+// ── Sentry: captura de errores (debe ir ANTES del handler global) ─
+// Este middleware intercepta el error, lo envía a Sentry con todo
+// el contexto del request, y luego llama a next(err) para que
+// el handler de abajo responda al cliente.
+app.use(sentryErrorHandler());
+
 // ── Error handler global ──────────────────────────────────────
 app.use((err, req, res, next) => {
   const esProduccion = process.env.NODE_ENV === "production";
@@ -120,7 +132,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── Arrancar servidor ─────────────────────────────────────────
+// ── Arrancar servidor y worker ─────────────────────────────────
+require("./workers/analyticsWorker");
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

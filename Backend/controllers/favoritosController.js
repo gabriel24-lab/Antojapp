@@ -1,37 +1,27 @@
-const pool = require("../db/pool");
+const prisma = require("../db/pool");
+const { captureError } = require("../lib/sentry");
 
 // GET /api/favoritos  — favoritos del usuario autenticado
 async function getFavoritos(req, res) {
   const { id: usuarioId } = req.usuario;
 
   try {
-    const result = await pool.query(
-      `SELECT
-         n.id, n.nombre, n.categoria, n.descripcion, n.portada, n.icono,
-         n.fotos, n.calificacion, n.total_resenas, n.etiquetas,
-         n.maps_url, n.whatsapp, n.instagram, n.activo,
-         n.pais, n.ciudad, n.moneda, n.creado_en,
-         COALESCE(
-           json_agg(
-             json_build_object(
-               'id', s.id, 'nombre', s.nombre, 'direccion', s.direccion,
-               'telefono', s.telefono, 'lat', s.lat, 'lng', s.lng, 'horario', s.horario
-             )
-           ) FILTER (WHERE s.id IS NOT NULL),
-           '[]'
-         ) AS sedes
-       FROM favoritos f
-       JOIN negocios n ON n.id = f.negocio_id
-       LEFT JOIN sedes s ON s.negocio_id = n.id
-       WHERE f.usuario_id = $1
-       GROUP BY n.id
-       ORDER BY f.guardado_en DESC`,
-      [usuarioId]
-    );
+    const favoritos = await prisma.favoritos.findMany({
+      where: { usuario_id: usuarioId },
+      include: {
+        negocio: {
+          include: {
+            sedes: true
+          }
+        }
+      },
+      orderBy: { guardado_en: 'desc' }
+    });
 
-    res.json(result.rows);
+    const negocios = favoritos.map(f => f.negocio);
+    res.json(negocios);
   } catch (err) {
-    console.error("[getFavoritos]", err.message);
+    captureError(err, "[getFavoritos]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -42,15 +32,19 @@ async function agregarFavorito(req, res) {
   const { negocioId }       = req.params;
 
   try {
-    await pool.query(
-      `INSERT INTO favoritos (usuario_id, negocio_id)
-       VALUES ($1, $2)
-       ON CONFLICT DO NOTHING`,
-      [usuarioId, negocioId]
-    );
+    await prisma.favoritos.create({
+      data: {
+        usuario_id: usuarioId,
+        negocio_id: parseInt(negocioId, 10)
+      }
+    });
     res.status(201).json({ mensaje: "Favorito agregado" });
   } catch (err) {
-    console.error("[agregarFavorito]", err.message);
+    if (err.code === 'P2002') {
+      // Ya existía, se ignora como en el ON CONFLICT DO NOTHING
+      return res.status(201).json({ mensaje: "Favorito agregado" });
+    }
+    captureError(err, "[agregarFavorito]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -61,13 +55,21 @@ async function quitarFavorito(req, res) {
   const { negocioId }     = req.params;
 
   try {
-    await pool.query(
-      "DELETE FROM favoritos WHERE usuario_id = $1 AND negocio_id = $2",
-      [usuarioId, negocioId]
-    );
+    await prisma.favoritos.delete({
+      where: {
+        usuario_id_negocio_id: {
+          usuario_id: usuarioId,
+          negocio_id: parseInt(negocioId, 10)
+        }
+      }
+    });
     res.json({ mensaje: "Favorito eliminado" });
   } catch (err) {
-    console.error("[quitarFavorito]", err.message);
+    if (err.code === 'P2025') {
+      // No existía, se ignora para ser idempotente
+      return res.json({ mensaje: "Favorito eliminado" });
+    }
+    captureError(err, "[quitarFavorito]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -77,13 +79,13 @@ async function getFavoritosIds(req, res) {
   const { id: usuarioId } = req.usuario;
 
   try {
-    const result = await pool.query(
-      "SELECT negocio_id FROM favoritos WHERE usuario_id = $1",
-      [usuarioId]
-    );
-    res.json(result.rows.map(r => r.negocio_id));
+    const favoritos = await prisma.favoritos.findMany({
+      where: { usuario_id: usuarioId },
+      select: { negocio_id: true }
+    });
+    res.json(favoritos.map(f => f.negocio_id));
   } catch (err) {
-    console.error("[getFavoritosIds]", err.message);
+    captureError(err, "[getFavoritosIds]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

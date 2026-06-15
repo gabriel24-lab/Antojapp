@@ -1,7 +1,8 @@
 const argon2   = require("argon2");
 const jwt      = require("jsonwebtoken");
-const pool     = require("../db/pool");
+const prisma   = require("../db/pool");
 const supabase = require("../db/supabase");
+const { captureError } = require("../lib/sentry");
 
 // Configuración de la cookie HttpOnly
 const COOKIE_OPTS = {
@@ -56,31 +57,35 @@ async function registro(req, res) {
   const rolNormalizado = (rol === "negocio" || rol === "propietario") ? "negocio" : "usuario";
 
   try {
-    const existe = await pool.query("SELECT id FROM usuarios WHERE email = $1", [email.toLowerCase()]);
-    if (existe.rows.length > 0)
+    const existe = await prisma.usuarios.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true }
+    });
+    if (existe)
       return res.status(409).json({ error: "Este correo ya está registrado" });
 
     const hash = await argon2.hash(password);
 
-    const result = await pool.query(
-      "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol, token_version",
-      [nombre.trim(), email.toLowerCase(), hash, rolNormalizado]
-    );
+    const usuario = await prisma.usuarios.create({
+      data: {
+        nombre: nombre.trim(),
+        email: email.toLowerCase(),
+        password: hash,
+        rol: rolNormalizado
+      },
+      select: { id: true, nombre: true, email: true, rol: true, token_version: true }
+    });
 
-    const usuario = result.rows[0];
-    const token   = generarToken(usuario);
+    const token = generarToken(usuario);
 
-    // Emitir JWT en cookie HttpOnly — único canal del token.
-    // SEGURIDAD: ya no se devuelve "token" en el body. Si en el JSON de
-    // respuesta hubiera el JWT, cualquier XSS podría leerlo via fetch/XHR
-    // sin necesidad de robar la cookie HttpOnly.
+    // Emitir JWT en cookie HttpOnly
     res.cookie("token", token, COOKIE_OPTS);
 
     res.status(201).json({
       usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
     });
   } catch (err) {
-    console.error("[registro]", err.message);
+    captureError(err, "[registro]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -96,18 +101,15 @@ async function login(req, res) {
     return res.status(400).json({ error: "Credenciales inválidas" });
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM usuarios WHERE email = $1",
-      [email.toLowerCase()]
-    );
+    const usuario = await prisma.usuarios.findUnique({
+      where: { email: email.toLowerCase() }
+    });
 
     // Respuesta genérica para no revelar si el email existe
-    if (result.rows.length === 0) {
+    if (!usuario) {
       await argon2.hash("dummy_para_tiempo_constante"); // evitar timing attack
       return res.status(401).json({ error: "Correo o contraseña incorrectos" });
     }
-
-    const usuario = result.rows[0];
 
     if (usuario.es_google)
       return res.status(400).json({ error: "Esta cuenta usa Google para iniciar sesión" });
@@ -122,7 +124,7 @@ async function login(req, res) {
 
     const token = generarToken(usuarioNormalizado);
 
-    // Emitir JWT en cookie HttpOnly — único canal del token (ver nota en registro)
+    // Emitir JWT en cookie HttpOnly
     res.cookie("token", token, COOKIE_OPTS);
 
     res.json({
@@ -134,7 +136,7 @@ async function login(req, res) {
       }
     });
   } catch (err) {
-    console.error("[login]", err.message);
+    captureError(err, "[login]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -142,82 +144,73 @@ async function login(req, res) {
 // GET /api/auth/me  (requiere token)
 async function me(req, res) {
   try {
-    const result = await pool.query(
-      "SELECT id, nombre, email, rol, es_google, foto_perfil, creado_en FROM usuarios WHERE id = $1",
-      [req.usuario.id]
-    );
+    const usuario = await prisma.usuarios.findUnique({
+      where: { id: req.usuario.id },
+      select: { id: true, nombre: true, email: true, rol: true, es_google: true, foto_perfil: true, creado_en: true }
+    });
 
-    if (result.rows.length === 0)
+    if (!usuario)
       return res.status(404).json({ error: "Usuario no encontrado" });
 
-    const usuario = result.rows[0];
     const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
 
     res.json({ ...usuario, rol: rolNormalizado });
   } catch (err) {
-    console.error("[me]", err.message);
+    captureError(err, "[me]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
-// POST /api/auth/logout — limpia la cookie Y revoca todos los tokens emitidos
-// (incrementa token_version). Requiere estar autenticado.
+// POST /api/auth/logout
 async function logout(req, res) {
   try {
-    await pool.query(
-      "UPDATE usuarios SET token_version = token_version + 1 WHERE id = $1",
-      [req.usuario.id]
-    );
+    await prisma.usuarios.update({
+      where: { id: req.usuario.id },
+      data: { token_version: { increment: 1 } }
+    });
   } catch (err) {
-    console.error("[logout]", err.message);
-    // Continuar limpiando la cookie aunque falle el incremento en BD
+    captureError(err, "[logout]");
   }
 
   res.clearCookie("token", { ...COOKIE_OPTS, maxAge: 0 });
   res.json({ mensaje: "Sesión cerrada" });
 }
 
-// PUT /api/auth/perfil — actualizar nombre (requiere auth)
+// PUT /api/auth/perfil
 async function actualizarPerfil(req, res) {
   const { nombre } = req.body;
 
   try {
-    const result = await pool.query(
-      `UPDATE usuarios SET nombre = $1 WHERE id = $2
-       RETURNING id, nombre, email, rol, es_google, foto_perfil, creado_en`,
-      [nombre, req.usuario.id]
-    );
+    const usuario = await prisma.usuarios.update({
+      where: { id: req.usuario.id },
+      data: { nombre },
+      select: { id: true, nombre: true, email: true, rol: true, es_google: true, foto_perfil: true, creado_en: true }
+    });
 
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "Usuario no encontrado" });
-
-    const usuario = result.rows[0];
     const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
 
-    // NOTA: req.usuario.nombre (claim del JWT) queda desactualizado hasta el
-    // próximo login/refresh, pero crearResena ya NO confía en ese claim
-    // (lee de BD), así que no hay inconsistencia en reseñas nuevas.
     res.json({ ...usuario, rol: rolNormalizado });
   } catch (err) {
-    console.error("[actualizarPerfil]", err.message);
+    captureError(err, "[actualizarPerfil]");
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
-// PUT /api/auth/password — cambiar contraseña (requiere auth, no aplica a cuentas Google)
+// PUT /api/auth/password
 async function cambiarPassword(req, res) {
   const { passwordActual, passwordNueva } = req.body;
 
   try {
-    const result = await pool.query(
-      "SELECT password, es_google, token_version FROM usuarios WHERE id = $1",
-      [req.usuario.id]
-    );
+    const usuario = await prisma.usuarios.findUnique({
+      where: { id: req.usuario.id },
+      select: { password: true, es_google: true, token_version: true }
+    });
 
-    if (result.rows.length === 0)
+    if (!usuario)
       return res.status(404).json({ error: "Usuario no encontrado" });
-
-    const usuario = result.rows[0];
 
     if (usuario.password) {
       if (!passwordActual) {
@@ -227,30 +220,30 @@ async function cambiarPassword(req, res) {
       if (!coincide)
         return res.status(401).json({ error: "La contraseña actual es incorrecta" });
     } else if (usuario.es_google) {
-      // Usuario de Google configurando su contraseña por primera vez, no requiere passwordActual
+      // Usuario de Google configurando su contraseña por primera vez
     } else {
       return res.status(400).json({ error: "Estado de cuenta inválido para esta operación" });
     }
 
     const hashNuevo = await argon2.hash(passwordNueva);
 
-    // SEGURIDAD: incrementar token_version invalida todas las sesiones
-    // existentes (incluyendo la de un posible atacante con token robado).
-    // El usuario actual debe volver a iniciar sesión.
-    await pool.query(
-      "UPDATE usuarios SET password = $1, token_version = token_version + 1 WHERE id = $2",
-      [hashNuevo, req.usuario.id]
-    );
+    await prisma.usuarios.update({
+      where: { id: req.usuario.id },
+      data: { 
+        password: hashNuevo,
+        token_version: { increment: 1 }
+      }
+    });
 
     res.clearCookie("token", { ...COOKIE_OPTS, maxAge: 0 });
     res.json({ mensaje: "Contraseña actualizada. Por favor, inicia sesión de nuevo." });
   } catch (err) {
-    console.error("[cambiarPassword]", err.message);
+    captureError(err, "[cambiarPassword]");
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
-// POST /api/auth/foto — subir foto de perfil (requiere auth, multipart)
+// POST /api/auth/foto
 async function subirFotoPerfil(req, res) {
   if (!req.file)
     return res.status(400).json({ error: "No se recibió ningún archivo" });
@@ -271,18 +264,20 @@ async function subirFotoPerfil(req, res) {
       .from("fotosperfil")
       .getPublicUrl(filename);
 
-    const result = await pool.query(
-      `UPDATE usuarios SET foto_perfil = $1 WHERE id = $2
-       RETURNING id, nombre, email, rol, es_google, foto_perfil, creado_en`,
-      [publicUrl, req.usuario.id]
-    );
+    const usuario = await prisma.usuarios.update({
+      where: { id: req.usuario.id },
+      data: { foto_perfil: publicUrl },
+      select: { id: true, nombre: true, email: true, rol: true, es_google: true, foto_perfil: true, creado_en: true }
+    });
 
-    const usuario = result.rows[0];
     const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
 
     res.json({ ...usuario, rol: rolNormalizado });
   } catch (err) {
-    console.error("[subirFotoPerfil]", err.message);
+    captureError(err, "[subirFotoPerfil]");
+    if (err.code === 'P2025') {
+        return res.status(404).json({ error: "Usuario no encontrado" });
+    }
     res.status(500).json({ error: "Error al subir la foto de perfil" });
   }
 }
