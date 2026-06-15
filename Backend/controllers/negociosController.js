@@ -6,16 +6,21 @@ const { captureError } = require("../lib/sentry");
 const { Queue } = require("bullmq");
 const IORedis = require("ioredis");
 
-const connection = process.env.REDIS_URL 
-  ? new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
-  : new IORedis({ host: "127.0.0.1", port: process.env.REDIS_PORT || 6379, maxRetriesPerRequest: null });
+let analyticsQueue = null;
 
-connection.on("error", (err) => {
-  // Ignorar errores repetitivos de conexión si no hay Redis configurado en prod
-  if (err.code !== "ECONNREFUSED") console.error("[Redis Error]", err.message);
-});
+const dsnRedis = process.env.REDIS_URL;
+// Solo levantar la cola si existe Redis, para evitar spam de ECONNREFUSED en producción
+if (dsnRedis || process.env.NODE_ENV !== "production") {
+  const connection = dsnRedis 
+    ? new IORedis(dsnRedis, { maxRetriesPerRequest: null })
+    : new IORedis({ host: "127.0.0.1", port: process.env.REDIS_PORT || 6379, maxRetriesPerRequest: null });
 
-const analyticsQueue = new Queue('analyticsQueue', { connection });
+  connection.on("error", (err) => {
+    if (err.code !== "ECONNREFUSED") console.error("[Redis Error Queue]", err.message);
+  });
+
+  analyticsQueue = new Queue('analyticsQueue', { connection });
+}
 
 const LIMITE_NEGOCIOS = 4;
 
@@ -121,8 +126,10 @@ async function getNegocioById(req, res) {
     });
 
     // Registrar visita en background (Job Queue Tip 8)
-    analyticsQueue.add("registrarVisita", { negocioId: parseInt(id) })
-      .catch(e => captureError(e, "[BullMQ registrarVisita]"));
+    if (analyticsQueue) {
+      analyticsQueue.add("registrarVisita", { negocioId: parseInt(id) })
+        .catch(e => captureError(e, "[BullMQ registrarVisita]"));
+    }
 
     const result = formatearNegocio(negocio);
     const { platos, ...resto } = result;
