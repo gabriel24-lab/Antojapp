@@ -82,7 +82,7 @@ export default function PerfilPage({ onVerDetalle, onAbrirPanel, onIrInicio, onE
           fontFamily: "'Manrope', sans-serif", 
           fontWeight: 800, 
           fontSize: 28, 
-          color: "var(--surface)", 
+          color: "var(--text-1)", 
           marginBottom: 4,
           zIndex: 1
         }}>

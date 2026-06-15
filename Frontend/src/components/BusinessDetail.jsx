@@ -142,7 +142,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
       <div className="detail-2col" style={{ marginBottom: 20 }}>
         {/* Descripción */}
-        <div className="card" style={{ padding: "18px 20px", gridColumn: "1 / -1" }}>
+        <div className="card p-card" style={{ gridColumn: "1 / -1" }}>
           <p style={{ fontSize: 15, color: "var(--text-2)", lineHeight: 1.7 }}>{negocio.descripcion}</p>
           <div style={{ marginTop: 14, display: "flex", gap: 6, flexWrap: "wrap" }}>
             {negocio.etiquetas.map(tag => (
@@ -153,7 +153,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
         {/* Propietario responsable */}
         {negocio.propietario_nombre && (
-          <div className="card" style={{ padding: "16px 20px", gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="card p-card-sm" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--bg2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border)" }}>
               {negocio.propietario_foto ? (
                 <img src={negocio.propietario_foto} alt={negocio.propietario_nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -178,7 +178,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           { label: "Más económico",  icon: "wallet", plato: negocio.plato_economico_nombre ? { nombre: negocio.plato_economico_nombre, precio: negocio.plato_economico_precio } : negocio.platoEconomico, bg: "var(--green-bg)", color: "var(--green)" },
           { label: "Premium",        icon: "crown", plato: negocio.plato_premium_nombre   ? { nombre: negocio.plato_premium_nombre,   precio: negocio.plato_premium_precio   } : negocio.platoPremium,   bg: "#F3F0FF", color: "#6C5CE7" }, /* badge Premium — morado semántico, sin token global */
         ].map(({ label, icon, plato, bg, color }) => plato && (
-          <div key={label} className="card" style={{ padding: "14px 16px", background: bg, border: `1px solid ${color}22` }}>
+          <div key={label} className="card p-card-sm" style={{ background: bg, border: `1px solid ${color}22` }}>
             <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
               <AppIcon name={icon} size={14} fill={icon === "star" ? "currentColor" : "none"} /> {label}
             </div>
@@ -192,7 +192,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
       {/* Sedes */}
       <div className="card" style={{ marginBottom: 24, overflow: "hidden" }}>
-        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid var(--border)" }}>
+        <div className="p-card-sm" style={{ borderBottom: "1px solid var(--border)" }}>
           <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 12 }}>
             <AppIcon name="mapPin" size={18} color="var(--brand)" /> {negocio.sedes.length > 1 ? `${negocio.sedes.length} sedes` : "Ubicación"}
           </h2>
@@ -219,7 +219,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
 
         <div className="sede-grid">
           {/* Info sede */}
-          <div style={{ padding: "16px 20px" }}>
+          <div className="p-card">
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: "var(--text-3)", fontWeight: 500, marginBottom: 3 }}>DIRECCIÓN</div>
               <div style={{ fontSize: 14, color: "var(--text-1)" }}>{sede.direccion}</div>
@@ -301,14 +301,14 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       </div>
 
       {/* Reseñas */}
-      <div className="card" style={{ padding: "20px" }}>
+      <div className="card p-card">
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 16 }}>
           <AppIcon name="message" size={18} color="var(--brand)" /> Reseñas de la comunidad
         </h2>
 
         {/* Escribir reseña */}
-        <form onSubmit={enviarResena} style={{
-          background: "var(--bg)", borderRadius: 12, padding: "16px",
+        <form onSubmit={enviarResena} className="p-card-sm" style={{
+          background: "var(--bg)", borderRadius: 12,
           marginBottom: 20, border: "1px solid var(--border)"
         }}>
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text-2)", marginBottom: 8 }}>

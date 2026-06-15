@@ -1,3 +1,4 @@
+import React from "react";
 import { useAuth } from "../context/AuthContext";
 import AppIcon from "./AppIcon";
 import { PAISES, MONEDAS } from "../data/mockData";
@@ -51,7 +52,7 @@ function PaisBadge({ codigo, ciudad }) {
   );
 }
 
-export default function BusinessCard({ negocio, onClick, onAbrirAuth, prioritaria = false }) {
+const BusinessCard = React.memo(function BusinessCard({ negocio, onClick, onAbrirAuth, prioritaria = false }) {
   const { user, toggleFavorito, esFavorito } = useAuth();
   const favorito = esFavorito(negocio.id);
 
@@ -233,4 +234,6 @@ export default function BusinessCard({ negocio, onClick, onAbrirAuth, prioritari
       </div>
     </article>
   );
-}
+});
+
+export default BusinessCard;

@@ -73,6 +73,14 @@ input, textarea { font-family: inherit; }
   clip: rect(0,0,0,0); border: 0;
 }
 
+.p-card { padding: 20px; }
+.p-card-sm { padding: 16px; }
+
+@media (max-width: 480px) {
+  .p-card { padding: 16px; }
+  .p-card-sm { padding: 12px; }
+}
+
 /* ── Botones ── */
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -201,3 +209,11 @@ input, textarea { font-family: inherit; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Loader ── */
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--brand);
+  animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

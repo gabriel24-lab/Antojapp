@@ -1,22 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { UbicacionProvider } from "./context/UbicacionContext";
 import { apiFetch } from "./apiClient";
 import API_URL from "./api";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import FormularioNegocio from "./components/FormularioNegocio";
-import HomePage from "./pages/HomePage";
-import FavoritosPage from "./pages/FavoritosPage";
-import BusinessDetail from "./components/BusinessDetail";
-import PanelPropietario from "./pages/PanelPropietario";
-import AuthPage from "./pages/AuthPage";
-import PerfilPage from "./pages/PerfilPage";
-import EditarPerfilPage from "./pages/EditarPerfilPage";
-import AyudaPage from "./pages/AyudaPage";
-import TerminosPage from "./pages/TerminosPage";
-import PrivacidadPage from "./pages/PrivacidadPage";
 import "./index.css";
+
+// Lazy loading de páginas y modales pesados para code-splitting
+const HomePage = lazy(() => import("./pages/HomePage"));
+const FavoritosPage = lazy(() => import("./pages/FavoritosPage"));
+const BusinessDetail = lazy(() => import("./components/BusinessDetail"));
+const PanelPropietario = lazy(() => import("./pages/PanelPropietario"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const PerfilPage = lazy(() => import("./pages/PerfilPage"));
+const EditarPerfilPage = lazy(() => import("./pages/EditarPerfilPage"));
+const AyudaPage = lazy(() => import("./pages/AyudaPage"));
+const TerminosPage = lazy(() => import("./pages/TerminosPage"));
+const PrivacidadPage = lazy(() => import("./pages/PrivacidadPage"));
+const FormularioNegocio = lazy(() => import("./components/FormularioNegocio"));
+
+const PageLoader = () => (
+  <div style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+    <div className="spinner"></div>
+  </div>
+);
 
 function AppContent() {
   const { user } = useAuth();
@@ -101,11 +109,13 @@ function AppContent() {
   // ── Si estamos en la página de auth, la mostramos sola (sin navbar/footer) ──
   if (vista === "auth") {
     return (
-      <AuthPage
-        vistaInicial={vistaAuthInicial}
-        onCerrar={cerrarAuth}
-        onExito={cerrarAuth}
-      />
+      <Suspense fallback={<PageLoader />}>
+        <AuthPage
+          vistaInicial={vistaAuthInicial}
+          onCerrar={cerrarAuth}
+          onExito={cerrarAuth}
+        />
+      </Suspense>
     );
   }
 
@@ -128,68 +138,70 @@ function AppContent() {
       />
 
       <main style={{ flex: 1 }}>
-        {mostrarHome && (
-          <HomePage
-            onVerDetalle={verDetalle}
-            onAbrirAuth={() => irAuth("login")}
-            busqueda={busqueda}
-            onBusqueda={setBusqueda}
-            modoNegocios={vista === "negocios"}
-          />
-        )}
+        <Suspense fallback={<PageLoader />}>
+          {mostrarHome && (
+            <HomePage
+              onVerDetalle={verDetalle}
+              onAbrirAuth={() => irAuth("login")}
+              busqueda={busqueda}
+              onBusqueda={setBusqueda}
+              modoNegocios={vista === "negocios"}
+            />
+          )}
 
-        {vista === "favoritos" && (
-          <FavoritosPage
-            onVerDetalle={verDetalle}
-            onAbrirAuth={() => irAuth("login")}
-            onVolver={volver}
-          />
-        )}
+          {vista === "favoritos" && (
+            <FavoritosPage
+              onVerDetalle={verDetalle}
+              onAbrirAuth={() => irAuth("login")}
+              onVolver={volver}
+            />
+          )}
 
-        {vista === "detalle" && negocioActivo && (
-          <BusinessDetail
-            negocio={negocioActivo}
-            onVolver={volver}
-            onAbrirAuth={() => irAuth("login")}
-          />
-        )}
+          {vista === "detalle" && negocioActivo && (
+            <BusinessDetail
+              negocio={negocioActivo}
+              onVolver={volver}
+              onAbrirAuth={() => irAuth("login")}
+            />
+          )}
 
-        {vista === "panel" && (
-          <PanelPropietario onAbrirFormulario={abrirFormulario} />
-        )}
+          {vista === "panel" && (
+            <PanelPropietario onAbrirFormulario={abrirFormulario} />
+          )}
 
-        {vista === "perfil" && (
-          <PerfilPage
-            onVerDetalle={verDetalle}
-            onAbrirPanel={() => setVista("panel")}
-            onIrInicio={irInicio}
-            onEditarPerfil={() => {
-              setVista("editar-perfil");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
-        )}
+          {vista === "perfil" && (
+            <PerfilPage
+              onVerDetalle={verDetalle}
+              onAbrirPanel={() => setVista("panel")}
+              onIrInicio={irInicio}
+              onEditarPerfil={() => {
+                setVista("editar-perfil");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          )}
 
-        {vista === "editar-perfil" && (
-          <EditarPerfilPage
-            onVolver={() => {
-              setVista("perfil");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
-        )}
+          {vista === "editar-perfil" && (
+            <EditarPerfilPage
+              onVolver={() => {
+                setVista("perfil");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          )}
 
-        {vista === "ayuda" && (
-          <AyudaPage onIrInicio={irInicio} />
-        )}
+          {vista === "ayuda" && (
+            <AyudaPage onIrInicio={irInicio} />
+          )}
 
-        {vista === "terminos" && (
-          <TerminosPage onIrInicio={irInicio} />
-        )}
+          {vista === "terminos" && (
+            <TerminosPage onIrInicio={irInicio} />
+          )}
 
-        {vista === "privacidad" && (
-          <PrivacidadPage onIrInicio={irInicio} />
-        )}
+          {vista === "privacidad" && (
+            <PrivacidadPage onIrInicio={irInicio} />
+          )}
+        </Suspense>
       </main>
 
       <Footer
@@ -201,9 +213,11 @@ function AppContent() {
         onIrPrivacidad={() => { setVista("privacidad"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
       />
 
-      {formularioOpen && (
-        <FormularioNegocio negocioInicial={negocioEditar} onCerrar={cerrarFormulario} />
-      )}
+      <Suspense fallback={null}>
+        {formularioOpen && (
+          <FormularioNegocio negocioInicial={negocioEditar} onCerrar={cerrarFormulario} />
+        )}
+      </Suspense>
     </div>
   );
 }
