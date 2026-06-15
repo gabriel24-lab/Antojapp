@@ -1,6 +1,5 @@
 const express        = require("express");
 const multer         = require("multer");
-const { v4: uuidv4 } = require("uuid");
 const router         = express.Router();
 
 const auth           = require("../middleware/auth");
@@ -8,6 +7,7 @@ const esNegocio      = require("../middleware/esNegocio");
 const esPropietario  = require("../middleware/esPropietario");
 const validarImagen  = require("../middleware/validarImagen");
 const validarBody    = require("../middleware/validarBody");
+const { withSafeFilename } = require("../middleware/upload");
 const { crearNegocioSchema, actualizarNegocioSchema } = require("../schemas/negocios");
 
 const {
@@ -38,29 +38,6 @@ const upload = multer({
     else cb(new Error("Solo se permiten imágenes"), false);
   },
 }).single; // se usa como upload.single("campo") — ver rutas abajo
-
-// Wrapper que añade req.file.safeExt (extensión derivada del MIME type real,
-// nunca del nombre original) y req.file.safeName (UUID).
-function withSafeFilename(fieldName) {
-  const mimeToExt = { "image/jpeg": "jpg", "image/png": "png" };
-  return [
-    multer({
-      storage: multer.memoryStorage(),
-      limits:  { fileSize: 2 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith("image/")) cb(null, true);
-        else cb(new Error("Solo se permiten imágenes"), false);
-      },
-    }).single(fieldName),
-    (req, res, next) => {
-      if (req.file) {
-        req.file.safeExt  = mimeToExt[req.file.mimetype] || "jpg";
-        req.file.safeName = `${uuidv4()}.${req.file.safeExt}`;
-      }
-      next();
-    },
-  ];
-}
 
 // ── Rutas públicas ─────────────────────────────────────────────
 router.get("/categorias",  getCategorias);

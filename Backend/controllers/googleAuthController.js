@@ -46,7 +46,7 @@ async function googleLogin(req, res) {
     });
 
     const payload = ticket.getPayload();
-    const { email, name: nombre, email_verified } = payload;
+    const { email, name: nombre, email_verified, picture } = payload;
 
     if (!email)
       return res.status(400).json({ error: "No se pudo obtener el correo de Google" });
@@ -56,20 +56,28 @@ async function googleLogin(req, res) {
 
     // ── ¿Ya existe el usuario? ──
     const result = await pool.query(
-      "SELECT id, nombre, email, rol, token_version FROM usuarios WHERE email = $1",
+      "SELECT id, nombre, email, rol, token_version, foto_perfil FROM usuarios WHERE email = $1",
       [email.toLowerCase()]
     );
 
     if (result.rows.length > 0) {
       // Usuario existente → login normal
       const usuario = result.rows[0];
-      await pool.query("UPDATE usuarios SET es_google = TRUE WHERE id = $1", [usuario.id]);
+
+      // Solo usar la foto de Google si el usuario no ha subido la suya propia
+      // (no sobrescribir una foto personalizada con la de Google en cada login).
+      const fotoPerfil = usuario.foto_perfil || picture || null;
+
+      await pool.query(
+        "UPDATE usuarios SET es_google = TRUE, foto_perfil = COALESCE(foto_perfil, $2) WHERE id = $1",
+        [usuario.id, picture || null]
+      );
 
       const token = generarToken(usuario);
       res.cookie("token", token, COOKIE_OPTS);
       return res.json({
         esNuevo: false,
-        usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+        usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, foto_perfil: fotoPerfil },
       });
     }
 
@@ -87,10 +95,10 @@ async function googleLogin(req, res) {
 
     // Ya viene rol → crear la cuenta
     const insert = await pool.query(
-      `INSERT INTO usuarios (nombre, email, es_google, rol)
-       VALUES ($1, $2, TRUE, $3)
-       RETURNING id, nombre, email, rol, token_version`,
-      [nombre || email.split("@")[0], email.toLowerCase(), rol]
+      `INSERT INTO usuarios (nombre, email, es_google, rol, foto_perfil)
+       VALUES ($1, $2, TRUE, $3, $4)
+       RETURNING id, nombre, email, rol, token_version, foto_perfil`,
+      [nombre || email.split("@")[0], email.toLowerCase(), rol, picture || null]
     );
     const usuario = insert.rows[0];
 
@@ -98,7 +106,7 @@ async function googleLogin(req, res) {
     res.cookie("token", token, COOKIE_OPTS);
     return res.json({
       esNuevo: true,
-      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol },
+      usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, foto_perfil: usuario.foto_perfil },
     });
 
   } catch (err) {

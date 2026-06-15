@@ -1,6 +1,7 @@
-const argon2 = require("argon2");
-const jwt    = require("jsonwebtoken");
-const pool   = require("../db/pool");
+const argon2   = require("argon2");
+const jwt      = require("jsonwebtoken");
+const pool     = require("../db/pool");
+const supabase = require("../db/supabase");
 
 // Configuración de la cookie HttpOnly
 const COOKIE_OPTS = {
@@ -142,7 +143,7 @@ async function login(req, res) {
 async function me(req, res) {
   try {
     const result = await pool.query(
-      "SELECT id, nombre, email, rol, creado_en FROM usuarios WHERE id = $1",
+      "SELECT id, nombre, email, rol, es_google, foto_perfil, creado_en FROM usuarios WHERE id = $1",
       [req.usuario.id]
     );
 
@@ -176,4 +177,108 @@ async function logout(req, res) {
   res.json({ mensaje: "Sesión cerrada" });
 }
 
-module.exports = { registro, login, me, logout };
+// PUT /api/auth/perfil — actualizar nombre (requiere auth)
+async function actualizarPerfil(req, res) {
+  const { nombre } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE usuarios SET nombre = $1 WHERE id = $2
+       RETURNING id, nombre, email, rol, es_google, foto_perfil, creado_en`,
+      [nombre, req.usuario.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const usuario = result.rows[0];
+    const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
+
+    // NOTA: req.usuario.nombre (claim del JWT) queda desactualizado hasta el
+    // próximo login/refresh, pero crearResena ya NO confía en ese claim
+    // (lee de BD), así que no hay inconsistencia en reseñas nuevas.
+    res.json({ ...usuario, rol: rolNormalizado });
+  } catch (err) {
+    console.error("[actualizarPerfil]", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+// PUT /api/auth/password — cambiar contraseña (requiere auth, no aplica a cuentas Google)
+async function cambiarPassword(req, res) {
+  const { passwordActual, passwordNueva } = req.body;
+
+  try {
+    const result = await pool.query(
+      "SELECT password, es_google, token_version FROM usuarios WHERE id = $1",
+      [req.usuario.id]
+    );
+
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+
+    const usuario = result.rows[0];
+
+    if (usuario.es_google)
+      return res.status(400).json({ error: "Esta cuenta usa Google para iniciar sesión y no tiene contraseña" });
+
+    const coincide = await argon2.verify(usuario.password, passwordActual);
+    if (!coincide)
+      return res.status(401).json({ error: "La contraseña actual es incorrecta" });
+
+    const hashNuevo = await argon2.hash(passwordNueva);
+
+    // SEGURIDAD: incrementar token_version invalida todas las sesiones
+    // existentes (incluyendo la de un posible atacante con token robado).
+    // El usuario actual debe volver a iniciar sesión.
+    await pool.query(
+      "UPDATE usuarios SET password = $1, token_version = token_version + 1 WHERE id = $2",
+      [hashNuevo, req.usuario.id]
+    );
+
+    res.clearCookie("token", { ...COOKIE_OPTS, maxAge: 0 });
+    res.json({ mensaje: "Contraseña actualizada. Por favor, inicia sesión de nuevo." });
+  } catch (err) {
+    console.error("[cambiarPassword]", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+}
+
+// POST /api/auth/foto — subir foto de perfil (requiere auth, multipart)
+async function subirFotoPerfil(req, res) {
+  if (!req.file)
+    return res.status(400).json({ error: "No se recibió ningún archivo" });
+
+  try {
+    const filename = `${req.usuario.id}/${req.file.safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("usuarios")
+      .upload(filename, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert:      true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("usuarios")
+      .getPublicUrl(filename);
+
+    const result = await pool.query(
+      `UPDATE usuarios SET foto_perfil = $1 WHERE id = $2
+       RETURNING id, nombre, email, rol, es_google, foto_perfil, creado_en`,
+      [publicUrl, req.usuario.id]
+    );
+
+    const usuario = result.rows[0];
+    const rolNormalizado = usuario.rol === "propietario" ? "negocio" : usuario.rol;
+
+    res.json({ ...usuario, rol: rolNormalizado });
+  } catch (err) {
+    console.error("[subirFotoPerfil]", err.message);
+    res.status(500).json({ error: "Error al subir la foto de perfil" });
+  }
+}
+
+module.exports = { registro, login, me, logout, actualizarPerfil, cambiarPassword, subirFotoPerfil };

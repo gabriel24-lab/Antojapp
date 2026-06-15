@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS usuarios (
   es_google   BOOLEAN       DEFAULT FALSE,
   rol         VARCHAR(20)   NOT NULL DEFAULT 'usuario'
                             CHECK (rol IN ('usuario', 'negocio')),
+  -- token_version: se incrementa para revocar todos los JWT emitidos
+  -- previamente (logout global, cambio de password, baneo de cuenta).
+  token_version INTEGER     NOT NULL DEFAULT 1,
+  -- URL pública de la foto de perfil (Supabase Storage, bucket "usuarios").
+  -- NULL = usar avatar de iniciales por defecto en el frontend.
+  foto_perfil VARCHAR(500),
   creado_en   TIMESTAMP     DEFAULT NOW()
 );
 

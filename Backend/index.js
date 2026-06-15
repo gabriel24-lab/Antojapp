@@ -48,8 +48,10 @@ app.use(helmet({
         "'self'",
         "data:",
         "blob:",
-        // Supabase storage donde se suben las imágenes de negocios
+        // Supabase storage donde se suben las imágenes de negocios/usuarios
         process.env.SUPABASE_URL || "",
+        // Fotos de perfil de Google (campo "picture" del id_token)
+        "https://lh3.googleusercontent.com",
       ].filter(Boolean),
       connectSrc:  ["'self'", process.env.FRONTEND_URL],
       fontSrc:     ["'self'", "https://fonts.gstatic.com"],
