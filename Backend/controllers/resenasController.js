@@ -66,7 +66,7 @@ async function crearResena(req, res) {
       return res.status(409).json({ error: "Ya dejaste una reseña en este negocio" });
 
     captureError(err, "[crearResena]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -83,7 +83,7 @@ async function getResenas(req, res) {
     res.json(resenas);
   } catch (err) {
     captureError(err, "[getResenas]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 

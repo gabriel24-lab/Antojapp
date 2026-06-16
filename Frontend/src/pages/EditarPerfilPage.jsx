@@ -144,7 +144,7 @@ export default function EditarPerfilPage({ onVolver }) {
       mostrarToast("Perfil actualizado", "exito");
       onVolver();
     } catch {
-      setErrorDatos("No se pudo conectar con el servidor");
+      setErrorDatos("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargandoDatos(false);
     }
@@ -180,7 +180,7 @@ export default function EditarPerfilPage({ onVolver }) {
       setPasswordNueva("");
       setPasswordConfirmar("");
     } catch {
-      setErrorPassword("No se pudo conectar con el servidor");
+      setErrorPassword("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargandoPassword(false);
     }
@@ -210,7 +210,7 @@ export default function EditarPerfilPage({ onVolver }) {
       }
       mostrarToast("Negocio actualizado exitosamente", "exito");
     } catch {
-      setErrorNegocio("No se pudo conectar con el servidor.");
+      setErrorNegocio("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setGuardandoNegocio(false);
     }

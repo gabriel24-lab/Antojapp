@@ -73,7 +73,7 @@ export default function AuthModal({ onCerrar }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Error al iniciar sesión con Google");
+        setError(data.error || "Ocurrió un problema al iniciar sesión con Google. Inténtalo de nuevo.");
         return;
       }
 
@@ -87,7 +87,7 @@ export default function AuthModal({ onCerrar }) {
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre);
     } catch {
-      setError("No se pudo conectar con el servidor");
+      setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargando(false);
     }
@@ -107,14 +107,14 @@ export default function AuthModal({ onCerrar }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Error al crear la cuenta con Google");
+        setError(data.error || "Ocurrió un problema al crear tu cuenta con Google. Inténtalo de nuevo.");
         return;
       }
 
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre, true);
     } catch {
-      setError("No se pudo conectar con el servidor");
+      setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargando(false);
       setPendienteGoogle(null);
@@ -140,11 +140,11 @@ export default function AuthModal({ onCerrar }) {
         body:    JSON.stringify({ email: form.email, password: form.password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al iniciar sesión"); return; }
+      if (!res.ok) { setError(data.error || "Tuvimos un problema al iniciar sesión. Verifica tus datos e intenta nuevamente."); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre);
     } catch {
-      setError("No se pudo conectar con el servidor");
+      setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargando(false);
     }
@@ -165,11 +165,11 @@ export default function AuthModal({ onCerrar }) {
         body:    JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password, rol: form.rol }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
+      if (!res.ok) { setError(data.error || "Tuvimos un problema al crear tu cuenta. Intenta de nuevo más tarde."); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre, true);
     } catch {
-      setError("No se pudo conectar con el servidor");
+      setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargando(false);
     }

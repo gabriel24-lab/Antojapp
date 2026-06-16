@@ -77,7 +77,7 @@ async function getNegocios(req, res) {
     res.json(negociosMapeados);
   } catch (err) {
     captureError(err, "[getNegocios]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -141,7 +141,7 @@ async function getNegocioById(req, res) {
     });
   } catch (err) {
     captureError(err, "[getNegocioById]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -157,7 +157,7 @@ async function getCategorias(req, res) {
     res.json(categorias.map(c => c.categoria));
   } catch (err) {
     captureError(err, "[getCategorias]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -220,7 +220,7 @@ async function crearNegocio(req, res) {
         return res.status(409).json({ error: "Ya existe un negocio con ese nombre y categoría" });
     }
     captureError(err, "[crearNegocio]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -253,7 +253,7 @@ async function actualizarNegocio(req, res) {
     if (err.code === 'P2025') {
         return res.status(404).json({ error: "Negocio no encontrado" });
     }
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -423,7 +423,7 @@ async function getMiNegocio(req, res) {
     });
   } catch (err) {
     captureError(err, "[getMiNegocio]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 

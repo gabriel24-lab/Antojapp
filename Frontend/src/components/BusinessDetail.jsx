@@ -80,14 +80,14 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
         })
       });
       const data = await res.json();
-      if (!res.ok) { setErrorResena(data.error || "Error al publicar"); return; }
+      if (!res.ok) { setErrorResena(data.error || "Ocurrió un problema al publicar. Inténtalo de nuevo."); return; }
 
       setResenas(prev => [data, ...prev]);
       setNuevaResena({ estrellas: 0, comentario: "" });
       setEnviadoResena(true);
       setTimeout(() => setEnviadoResena(false), 3000);
     } catch {
-      setErrorResena("No se pudo conectar con el servidor");
+      setErrorResena("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setEnviando(false);
     }

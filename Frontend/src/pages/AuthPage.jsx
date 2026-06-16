@@ -92,7 +92,7 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
       if (data.pendiente) { setPendienteGoogle({ credential, nombre: data.nombre, email: data.email }); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre);
-    } catch { setError("No se pudo conectar con el servidor"); }
+    } catch { setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde."); }
     finally { setCargando(false); }
   };
 
@@ -106,10 +106,10 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
+      if (!res.ok) { setError(data.error || "Ocurrió un problema al crear tu cuenta. Inténtalo de nuevo."); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre, true);
-    } catch { setError("No se pudo conectar con el servidor"); }
+    } catch { setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde."); }
     finally { setCargando(false); setPendienteGoogle(null); }
   };
 
@@ -127,10 +127,10 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al iniciar sesión"); return; }
+      if (!res.ok) { setError(data.error || "Tuvimos un problema al iniciar sesión. Verifica tus datos e intenta nuevamente."); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre);
-    } catch { setError("No se pudo conectar con el servidor"); }
+    } catch { setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde."); }
     finally { setCargando(false); }
   };
 
@@ -148,10 +148,10 @@ export default function AuthPage({ onCerrar, onExito, vistaInicial = "login" }) 
         credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Error al crear la cuenta"); return; }
+      if (!res.ok) { setError(data.error || "Ocurrió un problema al crear tu cuenta. Inténtalo de nuevo."); return; }
       login(data.token, data.usuario);
       cerrarConExito(data.usuario.nombre, true);
-    } catch { setError("No se pudo conectar con el servidor"); }
+    } catch { setError("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde."); }
     finally { setCargando(false); }
   };
 

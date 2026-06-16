@@ -86,7 +86,7 @@ async function registro(req, res) {
     });
   } catch (err) {
     captureError(err, "[registro]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -137,7 +137,7 @@ async function login(req, res) {
     });
   } catch (err) {
     captureError(err, "[login]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -157,7 +157,7 @@ async function me(req, res) {
     res.json({ ...usuario, rol: rolNormalizado });
   } catch (err) {
     captureError(err, "[me]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -195,7 +195,7 @@ async function actualizarPerfil(req, res) {
     if (err.code === 'P2025') {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -239,7 +239,7 @@ async function cambiarPassword(req, res) {
     res.json({ mensaje: "Contraseña actualizada. Por favor, inicia sesión de nuevo." });
   } catch (err) {
     captureError(err, "[cambiarPassword]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -278,7 +278,7 @@ async function subirFotoPerfil(req, res) {
     if (err.code === 'P2025') {
         return res.status(404).json({ error: "Usuario no encontrado" });
     }
-    res.status(500).json({ error: "Error al subir la foto de perfil" });
+    res.status(500).json({ error: "Tuvimos un problema al subir tu foto. Inténtalo más tarde." });
   }
 }
 

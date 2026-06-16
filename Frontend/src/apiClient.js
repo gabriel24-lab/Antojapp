@@ -5,7 +5,7 @@ import API_URL from "./api";
 export async function apiFetch(path) {
   const res  = await fetch(`${API_URL}${path}`, { credentials: "include" });
   const data = await res.json();
-  if (!res.ok) return { data: null, error: data.error || "Error desconocido" };
+  if (!res.ok) return { data: null, error: data.error || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde." };
   return { data, error: null };
 }
 
@@ -18,7 +18,7 @@ export async function apiMutate(method, path, body) {
     body:        JSON.stringify(body),
   });
   const data = await res.json();
-  if (!res.ok) return { data: null, error: data.error || "Error desconocido" };
+  if (!res.ok) return { data: null, error: data.error || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde." };
   return { data, error: null };
 }
 
@@ -31,7 +31,7 @@ export async function apiUpload(path, formData) {
     body:        formData,
   });
   const data = await res.json();
-  if (!res.ok) return { data: null, error: data.error || "Error al subir archivo" };
+  if (!res.ok) return { data: null, error: data.error || "Tuvimos un problema al subir tu archivo. Inténtalo más tarde." };
   return { data, error: null };
 }
 
@@ -44,6 +44,6 @@ export async function apiDelete(path, body = null) {
     body:        body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
-  if (!res.ok) return { data: null, error: data.error || "Error desconocido" };
+  if (!res.ok) return { data: null, error: data.error || "Ocurrió un error inesperado. Por favor intenta de nuevo más tarde." };
   return { data, error: null };
 }

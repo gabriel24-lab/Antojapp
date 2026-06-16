@@ -71,7 +71,7 @@ export default function EditarPerfilModal({ onCerrar }) {
         });
         const dataFoto = await resFoto.json();
         if (!resFoto.ok) {
-          setErrorDatos(dataFoto.error || "No se pudo subir la foto");
+          setErrorDatos(dataFoto.error || "Ocurrió un problema al subir la foto. Inténtalo más tarde.");
           return;
         }
         usuarioActualizado = dataFoto;
@@ -88,7 +88,7 @@ export default function EditarPerfilModal({ onCerrar }) {
         });
         const dataNombre = await resNombre.json();
         if (!resNombre.ok) {
-          setErrorDatos(dataNombre.error || "No se pudo actualizar el nombre");
+          setErrorDatos(dataNombre.error || "Ocurrió un problema al actualizar tu nombre. Inténtalo más tarde.");
           return;
         }
         usuarioActualizado = dataNombre;
@@ -101,7 +101,7 @@ export default function EditarPerfilModal({ onCerrar }) {
       mostrarToast("Perfil actualizado", "exito");
       onCerrar();
     } catch {
-      setErrorDatos("No se pudo conectar con el servidor");
+      setErrorDatos("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargandoDatos(false);
     }
@@ -129,7 +129,7 @@ export default function EditarPerfilModal({ onCerrar }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setErrorPassword(data.error || "No se pudo actualizar la contraseña");
+        setErrorPassword(data.error || "Ocurrió un problema al actualizar tu contraseña. Inténtalo de nuevo.");
         return;
       }
       setExitoPassword(data.mensaje || "Contraseña actualizada. Vuelve a iniciar sesión.");
@@ -137,7 +137,7 @@ export default function EditarPerfilModal({ onCerrar }) {
       setPasswordNueva("");
       setPasswordConfirmar("");
     } catch {
-      setErrorPassword("No se pudo conectar con el servidor");
+      setErrorPassword("Ups, algo salió mal. Estamos trabajando en ello, intenta más tarde.");
     } finally {
       setCargandoPassword(false);
     }

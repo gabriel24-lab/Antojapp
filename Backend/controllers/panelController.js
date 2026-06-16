@@ -110,7 +110,7 @@ async function getEstadisticas(req, res) {
     });
   } catch (err) {
     captureError(err, "[getEstadisticas]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -152,7 +152,7 @@ async function getAdminNegocios(req, res) {
     res.json(result);
   } catch (err) {
     captureError(err, "[getAdminNegocios]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -181,7 +181,7 @@ async function actualizarEstadoNegocio(req, res) {
         return res.status(404).json({ error: "Negocio no encontrado" });
     }
     captureError(err, "[actualizarEstadoNegocio]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 

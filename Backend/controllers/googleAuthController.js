@@ -114,7 +114,7 @@ async function googleLogin(req, res) {
     if (err.message?.includes("Token used too late") || err.message?.includes("Invalid token"))
       return res.status(401).json({ error: "Token de Google inválido o expirado" });
 
-    res.status(500).json({ error: "Error al autenticar con Google" });
+    res.status(500).json({ error: "Estamos experimentando problemas con Google. Inténtalo más tarde." });
   }
 }
 

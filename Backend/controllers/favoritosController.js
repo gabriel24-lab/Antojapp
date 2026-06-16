@@ -22,7 +22,7 @@ async function getFavoritos(req, res) {
     res.json(negocios);
   } catch (err) {
     captureError(err, "[getFavoritos]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -45,7 +45,7 @@ async function agregarFavorito(req, res) {
       return res.status(201).json({ mensaje: "Favorito agregado" });
     }
     captureError(err, "[agregarFavorito]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -70,7 +70,7 @@ async function quitarFavorito(req, res) {
       return res.json({ mensaje: "Favorito eliminado" });
     }
     captureError(err, "[quitarFavorito]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
@@ -86,7 +86,7 @@ async function getFavoritosIds(req, res) {
     res.json(favoritos.map(f => f.negocio_id));
   } catch (err) {
     captureError(err, "[getFavoritosIds]");
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
   }
 }
 
