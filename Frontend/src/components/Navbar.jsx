@@ -141,7 +141,7 @@ export default function Navbar({
               height: 34, borderRadius: 8,
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.12)",
-              color: "var(--surface)", flexShrink: 0,
+              color: "var(--surface)", flexShrink: 1, minWidth: 0,
               padding: "0 8px",
               fontSize: 11, fontWeight: 600,
               maxWidth: 110, overflow: "hidden",
@@ -227,7 +227,7 @@ export default function Navbar({
               width: 38, height: 38, borderRadius: 8,
               background: "rgba(255,255,255,.08)",
               border: "1px solid rgba(255,255,255,.12)",
-              color: "var(--surface)", flexShrink: 0,
+              color: "var(--surface)", flexShrink: 0, marginLeft: "auto",
             }}
             aria-label="Buscar"
           >

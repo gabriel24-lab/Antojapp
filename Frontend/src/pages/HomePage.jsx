@@ -252,7 +252,7 @@ export default function HomePage({
 
           {/* Skeletons */}
           {cargando && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            <div className="negocios-grid">
               {[1,2,3,4,5,6].map(i => (
                 <div key={i} style={{ height: 320, background: "#F0EBE5", borderRadius: 12, animation: "pulse 1.5s infinite" }} />
               ))}
@@ -261,7 +261,7 @@ export default function HomePage({
 
           {/* Grid */}
           {!cargando && negociosPaginados.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+            <div className="negocios-grid">
               {negociosPaginados.map((negocio, index) => (
                 <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} prioritaria={pagina === 1 && index === 0} />
               ))}
