@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./Frontend/public/Antojapp%20icon.png" alt="Logo de Antojapp" width="150" style="margin-bottom: 10px;" />
   <h1>
     <img src="https://img.icons8.com/color/48/000000/hamburger.png" alt="Hamburger" width="45" height="45" style="vertical-align: middle;" /> 
     Antojapp 
@@ -37,7 +38,7 @@ No necesitas ser un experto en tecnología para entender de qué se trata. ¡Es 
 
 | Pantalla Principal | Detalles de un Lugar |
 |:---:|:---:|
-| <img src="https://via.placeholder.com/300x400/FF9F43/FFFFFF?text=Tu+Inicio+Aqui" alt="Inicio" /> | <img src="https://via.placeholder.com/300x400/2ED573/FFFFFF?text=Tus+Detalles+Aqui" alt="Detalles" /> |
+| <img src="./Frontend/public/inicio.png" alt="Inicio" height="400" /> | <img src="./Frontend/public/detallesnegocio.png" alt="Detalles" height="400" /> |
 
 ---
 
