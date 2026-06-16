@@ -1,8 +1,8 @@
 <div align="center">
   <h1>
-    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Food%20and%20Drink/Hamburger.png" alt="Hamburger" width="45" height="45" style="vertical-align: middle;" /> 
+    <img src="https://img.icons8.com/color/48/000000/hamburger.png" alt="Hamburger" width="45" height="45" style="vertical-align: middle;" /> 
     Antojapp 
-    <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Food%20and%20Drink/Pizza.png" alt="Pizza" width="45" height="45" style="vertical-align: middle;" />
+    <img src="https://img.icons8.com/color/48/000000/pizza.png" alt="Pizza" width="45" height="45" style="vertical-align: middle;" />
   </h1>
   <p><strong>Encuentra tus antojos favoritos en un solo lugar</strong></p>
 
@@ -16,22 +16,22 @@
 
 ---
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Star" width="25" height="25" style="vertical-align: text-bottom;" /> ¿Qué es Antojapp?
+## <img src="https://img.icons8.com/color/48/000000/star--v1.png" alt="Star" width="25" height="25" style="vertical-align: text-bottom;" /> ¿Qué es Antojapp?
 
-¡Bienvenido a **Antojapp**! <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Food%20and%20Drink/Taco.png" alt="Taco" width="20" height="20" style="vertical-align: text-bottom;" /> Esta es una aplicación web diseñada para que los amantes de la buena comida puedan descubrir negocios locales, leer reseñas de otras personas y guardar sus lugares favoritos para que nunca se queden con el antojo. 
+¡Bienvenido a **Antojapp**! <img src="https://img.icons8.com/color/48/000000/taco.png" alt="Taco" width="20" height="20" style="vertical-align: text-bottom;" /> Esta es una aplicación web diseñada para que los amantes de la buena comida puedan descubrir negocios locales, leer reseñas de otras personas y guardar sus lugares favoritos para que nunca se queden con el antojo. 
 
 No necesitas ser un experto en tecnología para entender de qué se trata. ¡Es simplemente tu guía confiable para encontrar qué comer hoy!
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Sparkles.png" alt="Sparkles" width="25" height="25" style="vertical-align: text-bottom;" /> Características Principales
+## <img src="https://img.icons8.com/color/48/000000/sparkling.png" alt="Sparkles" width="25" height="25" style="vertical-align: text-bottom;" /> Características Principales
 
-- <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Magnifying%20Glass%20Tilted%20Left.png" alt="Search" width="20" height="20" style="vertical-align: text-bottom;" /> **Explora tu ciudad:** Encuentra negocios por nombre, categorías (ej. Fritanga, Carnes, Postres) o revisa cuáles están abiertos ahora mismo.
-- <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Star.png" alt="Review" width="20" height="20" style="vertical-align: text-bottom;" /> **Lee y comparte experiencias:** Conoce lo que opinan otras personas sobre un lugar o deja tu propia reseña después de visitarlo.
-- <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Heart" width="20" height="20" style="vertical-align: text-bottom;" /> **Guarda tus Favoritos:** ¿Encontraste un lugar increíble? ¡Guárdalo en tu lista personalizada para tenerlo siempre a mano!
-- <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" alt="Lock" width="20" height="20" style="vertical-align: text-bottom;" /> **Acceso súper sencillo:** Puedes crear una cuenta con tu correo o simplemente entrar de forma segura usando tu cuenta de Google con un solo clic.
+- <img src="https://img.icons8.com/color/48/000000/search--v1.png" alt="Search" width="20" height="20" style="vertical-align: text-bottom;" /> **Explora tu ciudad:** Encuentra negocios por nombre, categorías (ej. Fritanga, Carnes, Postres) o revisa cuáles están abiertos ahora mismo.
+- <img src="https://img.icons8.com/color/48/000000/filled-star--v1.png" alt="Review" width="20" height="20" style="vertical-align: text-bottom;" /> **Lee y comparte experiencias:** Conoce lo que opinan otras personas sobre un lugar o deja tu propia reseña después de visitarlo.
+- <img src="https://img.icons8.com/color/48/000000/like--v1.png" alt="Heart" width="20" height="20" style="vertical-align: text-bottom;" /> **Guarda tus Favoritos:** ¿Encontraste un lugar increíble? ¡Guárdalo en tu lista personalizada para tenerlo siempre a mano!
+- <img src="https://img.icons8.com/color/48/000000/lock.png" alt="Lock" width="20" height="20" style="vertical-align: text-bottom;" /> **Acceso súper sencillo:** Puedes crear una cuenta con tu correo o simplemente entrar de forma segura usando tu cuenta de Google con un solo clic.
 
 ---
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" alt="Phone" width="25" height="25" style="vertical-align: text-bottom;" /> Vistazo a la Aplicación
+## <img src="https://img.icons8.com/color/48/000000/iphone.png" alt="Phone" width="25" height="25" style="vertical-align: text-bottom;" /> Vistazo a la Aplicación
 
 *(Espacio reservado para capturas de pantalla de la app. Puedes arrastrar y soltar tus imágenes aquí más adelante).*
 
@@ -41,17 +41,17 @@ No necesitas ser un experto en tecnología para entender de qué se trata. ¡Es 
 
 ---
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="25" height="25" style="vertical-align: text-bottom;" /> Para Desarrolladores o Curiosos Técnicos
+## <img src="https://img.icons8.com/color/48/000000/space-shuttle.png" alt="Rocket" width="25" height="25" style="vertical-align: text-bottom;" /> Para Desarrolladores o Curiosos Técnicos
 
 Si sabes de programación y quieres entender cómo está construido el proyecto o hacerlo funcionar en tu computadora, Antojapp está dividida en dos piezas principales:
 
-1. **[<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Artist%20Palette.png" alt="Palette" width="20" height="20" style="vertical-align: text-bottom;" /> Frontend (La Interfaz Visual)](./Frontend/README.md):** Creada con React y Vite. Es lo que ves en la pantalla de tu celular o computadora.
-2. **[<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" alt="Gear" width="20" height="20" style="vertical-align: text-bottom;" /> Backend (El Motor)](./Backend/README.md):** Construido con Node.js, Express y una base de datos alojada en Supabase (PostgreSQL). Se encarga de la seguridad, guardar los usuarios y las reseñas.
+1. **[<img src="https://img.icons8.com/color/48/000000/color-palette.png" alt="Palette" width="20" height="20" style="vertical-align: text-bottom;" /> Frontend (La Interfaz Visual)](./Frontend/README.md):** Creada con React y Vite. Es lo que ves en la pantalla de tu celular o computadora.
+2. **[<img src="https://img.icons8.com/color/48/000000/settings--v1.png" alt="Gear" width="20" height="20" style="vertical-align: text-bottom;" /> Backend (El Motor)](./Backend/README.md):** Construido con Node.js, Express y una base de datos alojada en Supabase (PostgreSQL). Se encarga de la seguridad, guardar los usuarios y las reseñas.
 
-> <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="16" height="16" style="vertical-align: middle;" /> **Nota:** Cada carpeta (`Frontend` y `Backend`) tiene su propia guía (`README.md`) con instrucciones paso a paso de cómo instalarlas y configurarlas. ¡Haz clic en los enlaces de arriba para ir a ellas!
+> <img src="https://img.icons8.com/color/48/000000/idea.png" alt="Bulb" width="16" height="16" style="vertical-align: middle;" /> **Nota:** Cada carpeta (`Frontend` y `Backend`) tiene su propia guía (`README.md`) con instrucciones paso a paso de cómo instalarlas y configurarlas. ¡Haz clic en los enlaces de arriba para ir a ellas!
 
 ---
 
 <div align="center">
-  <p>Hecho con <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Heart" width="16" height="16" style="vertical-align: middle;" /> para los amantes de la buena comida.</p>
+  <p>Hecho con <img src="https://img.icons8.com/color/48/000000/like--v1.png" alt="Heart" width="16" height="16" style="vertical-align: middle;" /> para los amantes de la buena comida.</p>
 </div>
