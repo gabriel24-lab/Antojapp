@@ -119,14 +119,20 @@ export function useLocationData() {
     }
   }, []);
 
-  return { countries, loadingCountries, errorCountries, fetchStates, fetchCities };
+  return {
+    countries,
+    loadingCountries,
+    errorCountries,
+    fetchStates,
+    fetchCities,
+  };
 }
 
 // Convertir código ISO2 a emoji de bandera
 function getFlagEmoji(iso2) {
   if (!iso2 || iso2.length !== 2) return "🌐";
   const codePoints = [...iso2.toUpperCase()].map(
-    (c) => 127397 + c.charCodeAt(0)
+    (c) => 127397 + c.charCodeAt(0),
   );
   return String.fromCodePoint(...codePoints);
 }
@@ -134,9 +140,19 @@ function getFlagEmoji(iso2) {
 // Limpiar sufijos que la API agrega a los nombres de estados/departamentos
 // Ej: "Antioquia Department" → "Antioquia", "New York State" → "New York"
 const STATE_SUFFIXES = [
-  " Department", " State", " Province", " Region", " Oblast",
-  " Territory", " District", " County", " Prefecture",
-  " Governorate", " Canton", " Autonomous", " Municipality",
+  " Department",
+  " State",
+  " Province",
+  " Region",
+  " Oblast",
+  " Territory",
+  " District",
+  " County",
+  " Prefecture",
+  " Governorate",
+  " Canton",
+  " Autonomous",
+  " Municipality",
 ];
 function cleanStateName(name) {
   if (!name) return "";

@@ -1,4 +1,4 @@
-const jwt  = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const pool = require("../db/pool");
 
 async function authMiddleware(req, res, next) {
@@ -26,14 +26,16 @@ async function authMiddleware(req, res, next) {
     // y se rechaza aunque la firma y expiración sean válidas.
     const usuario = await pool.usuarios.findUnique({
       where: { id: payload.id },
-      select: { token_version: true }
+      select: { token_version: true },
     });
 
     if (!usuario)
       return res.status(401).json({ error: "Token inválido o expirado" });
 
     if (usuario.token_version !== payload.tv)
-      return res.status(401).json({ error: "Sesión revocada, inicia sesión de nuevo" });
+      return res
+        .status(401)
+        .json({ error: "Sesión revocada, inicia sesión de nuevo" });
 
     req.usuario = payload; // { id, nombre, email, rol, tv }
     next();

@@ -8,7 +8,7 @@ function validarBody(schema) {
     const result = schema.safeParse(req.body);
     if (!result.success) {
       const mensaje = result.error.errors
-        .map(e => `${e.path.join(".")}: ${e.message}`)
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
         .join("; ");
       return res.status(400).json({ error: mensaje });
     }

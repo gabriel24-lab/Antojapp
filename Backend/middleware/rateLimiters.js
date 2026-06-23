@@ -19,25 +19,32 @@ function keyPorUsuario(req) {
 // lo que req.body está disponible.
 const loginPorCuentaLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max:      5, // 5 intentos por cuenta cada 15 min, independientemente de la IP
+  max: 5, // 5 intentos por cuenta cada 15 min, independientemente de la IP
   standardHeaders: true,
-  legacyHeaders:   false,
+  legacyHeaders: false,
   keyGenerator: (req) => {
-    const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase().trim() : "";
+    const email =
+      typeof req.body?.email === "string"
+        ? req.body.email.toLowerCase().trim()
+        : "";
     return email ? `email:${email}` : req.ip;
   },
-  message: { error: "Demasiados intentos para esta cuenta. Intenta en 15 minutos." },
+  message: {
+    error: "Demasiados intentos para esta cuenta. Intenta en 15 minutos.",
+  },
 });
 
 // ── Subida de imágenes (icono/portada de negocio, fotos, fotos de platos) ──
 // Costoso en I/O y cuota de Supabase Storage (hasta 2MB por archivo).
 const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,      // 1 hora
-  max:      20,                  // 20 subidas/hora por usuario
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 20, // 20 subidas/hora por usuario
   standardHeaders: true,
-  legacyHeaders:   false,
+  legacyHeaders: false,
   keyGenerator: keyPorUsuario,
-  message: { error: "Demasiadas subidas de imágenes. Intenta de nuevo en una hora." },
+  message: {
+    error: "Demasiadas subidas de imágenes. Intenta de nuevo en una hora.",
+  },
 });
 
 // ── Reseñas ──────────────────────────────────────────────────────
@@ -45,22 +52,24 @@ const uploadLimiter = rateLimit({
 // negocio, pero sin límite un atacante podría intentar crear reseñas en
 // cientos de negocios distintos rápidamente (spam).
 const resenaLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,      // 1 hora
-  max:      10,                  // 10 reseñas/hora por usuario
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10, // 10 reseñas/hora por usuario
   standardHeaders: true,
-  legacyHeaders:   false,
+  legacyHeaders: false,
   keyGenerator: keyPorUsuario,
-  message: { error: "Demasiadas reseñas creadas. Intenta de nuevo en una hora." },
+  message: {
+    error: "Demasiadas reseñas creadas. Intenta de nuevo en una hora.",
+  },
 });
 
 // ── Favoritos (agregar/quitar) ──────────────────────────────────
 // Operación liviana en BD, pero sin límite permite "martillar" el
 // endpoint (toggle masivo) como vector de DoS de baja intensidad.
 const favoritoLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,       // 5 minutos
-  max:      60,                  // 60 cambios/5min por usuario
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 60, // 60 cambios/5min por usuario
   standardHeaders: true,
-  legacyHeaders:   false,
+  legacyHeaders: false,
   keyGenerator: keyPorUsuario,
   message: { error: "Demasiados cambios en favoritos. Espera unos minutos." },
 });
@@ -69,10 +78,10 @@ const favoritoLimiter = rateLimit({
 // Operaciones de escritura del propietario; menos frecuentes pero
 // conviene acotarlas para evitar scripts automatizados de alta cadencia.
 const escrituraNegocioLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,      // 15 minutos
-  max:      60,                  // 60 escrituras/15min por usuario
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 60, // 60 escrituras/15min por usuario
   standardHeaders: true,
-  legacyHeaders:   false,
+  legacyHeaders: false,
   keyGenerator: keyPorUsuario,
   message: { error: "Demasiadas solicitudes de escritura. Intenta más tarde." },
 });

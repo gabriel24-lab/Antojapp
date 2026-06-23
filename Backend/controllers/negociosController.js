@@ -1,4 +1,4 @@
-const prisma   = require("../db/pool");
+const prisma = require("../db/pool");
 const supabase = require("../db/supabase");
 const { captureError } = require("../lib/sentry");
 
@@ -15,10 +15,11 @@ if (dsnRedis) {
   const connection = new IORedis(dsnRedis, { maxRetriesPerRequest: null });
 
   connection.on("error", (err) => {
-    if (err.code !== "ECONNREFUSED") console.error("[Redis Error Queue]", err.message);
+    if (err.code !== "ECONNREFUSED")
+      console.error("[Redis Error Queue]", err.message);
   });
 
-  analyticsQueue = new Queue('analyticsQueue', { connection });
+  analyticsQueue = new Queue("analyticsQueue", { connection });
 } else {
   console.warn("[Queue] REDIS_URL no definido. Cola de analytics desactivada.");
 }
@@ -27,12 +28,13 @@ const LIMITE_NEGOCIOS = 4;
 
 // GET /api/negocios
 async function getNegocios(req, res) {
-  const { busqueda, categoria, soloAbiertos, pais, departamento, ciudad } = req.query;
+  const { busqueda, categoria, soloAbiertos, pais, departamento, ciudad } =
+    req.query;
 
   try {
     const whereClause = {
       activo: true,
-      estado: 'aprobado'
+      estado: "aprobado",
     };
 
     if (categoria && categoria !== "Todas") {
@@ -42,10 +44,10 @@ async function getNegocios(req, res) {
     if (busqueda && busqueda.trim()) {
       const search = busqueda.toLowerCase();
       whereClause.OR = [
-        { nombre: { contains: search, mode: 'insensitive' } },
-        { descripcion: { contains: search, mode: 'insensitive' } },
-        { categoria: { contains: search, mode: 'insensitive' } },
-        { etiquetas: { has: search } }
+        { nombre: { contains: search, mode: "insensitive" } },
+        { descripcion: { contains: search, mode: "insensitive" } },
+        { categoria: { contains: search, mode: "insensitive" } },
+        { etiquetas: { has: search } },
       ];
     }
 
@@ -53,31 +55,39 @@ async function getNegocios(req, res) {
       whereClause.pais = pais.trim().toUpperCase();
     }
     if (departamento && departamento.trim()) {
-      whereClause.departamento = { equals: departamento.trim(), mode: 'insensitive' };
+      whereClause.departamento = {
+        equals: departamento.trim(),
+        mode: "insensitive",
+      };
     }
     if (ciudad && ciudad.trim()) {
-      whereClause.ciudad = { equals: ciudad.trim(), mode: 'insensitive' };
+      whereClause.ciudad = { equals: ciudad.trim(), mode: "insensitive" };
     }
 
     const negocios = await prisma.negocios.findMany({
       where: whereClause,
       include: {
         sedes: true,
-        propietario: { select: { nombre: true, foto_perfil: true } }
+        propietario: { select: { nombre: true, foto_perfil: true } },
       },
-      orderBy: { calificacion: 'desc' }
+      orderBy: { calificacion: "desc" },
     });
 
     let negociosMapeados = negocios.map(formatearNegocio);
 
     if (soloAbiertos === "true") {
-      negociosMapeados = negociosMapeados.filter(n => estaAbierto(n.sedes));
+      negociosMapeados = negociosMapeados.filter((n) => estaAbierto(n.sedes));
     }
 
     res.json(negociosMapeados);
   } catch (err) {
     captureError(err, "[getNegocios]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -90,37 +100,42 @@ async function getNegocioById(req, res) {
       where: {
         id: parseInt(id),
         activo: true,
-        estado: 'aprobado'
+        estado: "aprobado",
       },
       include: {
         propietario: { select: { nombre: true, foto_perfil: true } },
-        sedes: { orderBy: { id: 'asc' } },
+        sedes: { orderBy: { id: "asc" } },
         resenas: {
-          select: { id: true, negocio_id: true, usuario_nombre: true, estrellas: true, comentario: true, creado_en: true },
-          orderBy: { creado_en: 'desc' }
+          select: {
+            id: true,
+            negocio_id: true,
+            usuario_nombre: true,
+            estrellas: true,
+            comentario: true,
+            creado_en: true,
+          },
+          orderBy: { creado_en: "desc" },
         },
         platos: {
           include: {
             plato_descuentos: {
-              select: { dia: true, precio_descuento: true, precio_desc: true }
-            }
+              select: { dia: true, precio_descuento: true, precio_desc: true },
+            },
           },
-          orderBy: [
-            { tipo: 'asc' },
-            { nombre: 'asc' }
-          ]
-        }
-      }
+          orderBy: [{ tipo: "asc" }, { nombre: "asc" }],
+        },
+      },
     });
 
     if (!negocio)
       return res.status(404).json({ error: "Negocio no encontrado" });
 
     // Procesar platos
-    const platosMapped = negocio.platos.map(p => {
-      const descuentos = p.plato_descuentos.map(d => ({
+    const platosMapped = negocio.platos.map((p) => {
+      const descuentos = p.plato_descuentos.map((d) => ({
         dia: d.dia,
-        precio_descuento: d.precio_desc !== null ? d.precio_desc : d.precio_descuento
+        precio_descuento:
+          d.precio_desc !== null ? d.precio_desc : d.precio_descuento,
       }));
       delete p.plato_descuentos;
       return { ...p, descuentos };
@@ -128,8 +143,9 @@ async function getNegocioById(req, res) {
 
     // Registrar visita en background (Job Queue Tip 8)
     if (analyticsQueue) {
-      analyticsQueue.add("registrarVisita", { negocioId: parseInt(id) })
-        .catch(e => captureError(e, "[BullMQ registrarVisita]"));
+      analyticsQueue
+        .add("registrarVisita", { negocioId: parseInt(id) })
+        .catch((e) => captureError(e, "[BullMQ registrarVisita]"));
     }
 
     const result = formatearNegocio(negocio);
@@ -137,11 +153,16 @@ async function getNegocioById(req, res) {
 
     res.json({
       ...resto,
-      platos: platosMapped
+      platos: platosMapped,
     });
   } catch (err) {
     captureError(err, "[getNegocioById]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -150,14 +171,19 @@ async function getCategorias(req, res) {
   try {
     const categorias = await prisma.negocios.findMany({
       where: { activo: true },
-      distinct: ['categoria'],
+      distinct: ["categoria"],
       select: { categoria: true },
-      orderBy: { categoria: 'asc' }
+      orderBy: { categoria: "asc" },
     });
-    res.json(categorias.map(c => c.categoria));
+    res.json(categorias.map((c) => c.categoria));
   } catch (err) {
     captureError(err, "[getCategorias]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -165,17 +191,24 @@ async function getCategorias(req, res) {
 async function crearNegocio(req, res) {
   const propietarioId = req.usuario.id;
   const {
-    nombre, categoria, descripcion, etiquetas,
-    maps_url, whatsapp, instagram,
+    nombre,
+    categoria,
+    descripcion,
+    etiquetas,
+    maps_url,
+    whatsapp,
+    instagram,
     sedes = [],
   } = req.body;
 
   if (!nombre || !categoria)
-    return res.status(400).json({ error: "Nombre y categoría son obligatorios" });
+    return res
+      .status(400)
+      .json({ error: "Nombre y categoría son obligatorios" });
 
   try {
     const totalExistentes = await prisma.negocios.count({
-      where: { propietario_id: propietarioId }
+      where: { propietario_id: propietarioId },
     });
 
     if (totalExistentes >= LIMITE_NEGOCIOS)
@@ -185,15 +218,19 @@ async function crearNegocio(req, res) {
         total: totalExistentes,
       });
 
-    const sedesData = sedes.map(s => ({
+    const sedesData = sedes.map((s) => ({
       nombre: s.nombre,
       direccion: s.direccion,
-      telefonos: Array.isArray(s.telefonos) ? s.telefonos : (s.telefonos ? [s.telefonos] : []),
+      telefonos: Array.isArray(s.telefonos)
+        ? s.telefonos
+        : s.telefonos
+          ? [s.telefonos]
+          : [],
       lat: s.lat ? parseFloat(s.lat) : null,
       lng: s.lng ? parseFloat(s.lng) : null,
       horario: s.horario,
       maps_url: s.maps_url,
-      referencia: s.referencia
+      referencia: s.referencia,
     }));
 
     const negocio = await prisma.negocios.create({
@@ -207,20 +244,27 @@ async function crearNegocio(req, res) {
         whatsapp: whatsapp || null,
         instagram: instagram || null,
         activo: false,
-        estado: 'pendiente',
+        estado: "pendiente",
         sedes: {
-          create: sedesData
-        }
-      }
+          create: sedesData,
+        },
+      },
     });
 
     res.status(201).json(negocio);
   } catch (err) {
-    if (err.code === 'P2002') {
-        return res.status(409).json({ error: "Ya existe un negocio con ese nombre y categoría" });
+    if (err.code === "P2002") {
+      return res
+        .status(409)
+        .json({ error: "Ya existe un negocio con ese nombre y categoría" });
     }
     captureError(err, "[crearNegocio]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -228,8 +272,13 @@ async function crearNegocio(req, res) {
 async function actualizarNegocio(req, res) {
   const { id } = req.params;
   const {
-    nombre, categoria, descripcion, etiquetas,
-    maps_url, whatsapp, instagram,
+    nombre,
+    categoria,
+    descripcion,
+    etiquetas,
+    maps_url,
+    whatsapp,
+    instagram,
   } = req.body;
 
   try {
@@ -244,22 +293,27 @@ async function actualizarNegocio(req, res) {
 
     const negocio = await prisma.negocios.update({
       where: { id: parseInt(id) },
-      data: dataUpdate
+      data: dataUpdate,
     });
 
     res.json(negocio);
   } catch (err) {
     captureError(err, "[actualizarNegocio]");
-    if (err.code === 'P2025') {
-        return res.status(404).json({ error: "Negocio no encontrado" });
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Negocio no encontrado" });
     }
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
 // POST /api/negocios/:id/imagen
 async function subirImagen(req, res) {
-  const { id }  = req.params;
+  const { id } = req.params;
   const { tipo } = req.body;
 
   if (!req.file)
@@ -275,20 +329,21 @@ async function subirImagen(req, res) {
       .from("negocios")
       .upload(filename, req.file.buffer, {
         contentType: req.file.mimetype,
-        upsert:      true,
+        upsert: true,
       });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("negocios")
-      .getPublicUrl(filename);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("negocios").getPublicUrl(filename);
 
-    const dataUpdate = tipo === "icono" ? { icono: publicUrl } : { portada: publicUrl };
+    const dataUpdate =
+      tipo === "icono" ? { icono: publicUrl } : { portada: publicUrl };
 
     await prisma.negocios.update({
       where: { id: parseInt(id) },
-      data: dataUpdate
+      data: dataUpdate,
     });
 
     res.json({ url: publicUrl });
@@ -312,20 +367,20 @@ async function subirFoto(req, res) {
       .from("negocios")
       .upload(filename, req.file.buffer, {
         contentType: req.file.mimetype,
-        upsert:      false,
+        upsert: false,
       });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("negocios")
-      .getPublicUrl(filename);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("negocios").getPublicUrl(filename);
 
     await prisma.negocios.update({
       where: { id: parseInt(id) },
       data: {
-        fotos: { push: publicUrl }
-      }
+        fotos: { push: publicUrl },
+      },
     });
 
     res.json({ url: publicUrl });
@@ -337,7 +392,7 @@ async function subirFoto(req, res) {
 
 // DELETE /api/negocios/:id/fotos
 async function eliminarFoto(req, res) {
-  const { id }  = req.params;
+  const { id } = req.params;
   const { url } = req.body;
 
   if (!url)
@@ -346,20 +401,22 @@ async function eliminarFoto(req, res) {
   try {
     const negocio = await prisma.negocios.findUnique({
       where: { id: parseInt(id) },
-      select: { fotos: true }
+      select: { fotos: true },
     });
 
     if (!negocio || !negocio.fotos.includes(url))
-      return res.status(404).json({ error: "La foto no pertenece a este negocio" });
+      return res
+        .status(404)
+        .json({ error: "La foto no pertenece a este negocio" });
 
     const path = url.split("/negocios/")[1];
     await supabase.storage.from("negocios").remove([path]);
-    
-    const nuevasFotos = negocio.fotos.filter(f => f !== url);
+
+    const nuevasFotos = negocio.fotos.filter((f) => f !== url);
 
     await prisma.negocios.update({
       where: { id: parseInt(id) },
-      data: { fotos: nuevasFotos }
+      data: { fotos: nuevasFotos },
     });
 
     res.json({ mensaje: "Foto eliminada" });
@@ -376,54 +433,59 @@ async function getMiNegocio(req, res) {
   try {
     const negocios = await prisma.negocios.findMany({
       where: { propietario_id: propietarioId },
-      orderBy: { id: 'asc' },
+      orderBy: { id: "asc" },
       include: {
-        sedes: { orderBy: { id: 'asc' } },
+        sedes: { orderBy: { id: "asc" } },
         platos: {
           include: {
             plato_descuentos: {
-              select: { dia: true, precio_descuento: true, precio_desc: true }
-            }
+              select: { dia: true, precio_descuento: true, precio_desc: true },
+            },
           },
-          orderBy: [
-            { tipo: 'asc' },
-            { nombre: 'asc' }
-          ]
-        }
-      }
+          orderBy: [{ tipo: "asc" }, { nombre: "asc" }],
+        },
+      },
     });
 
     if (negocios.length === 0)
-      return res.status(404).json({ error: "No tienes ningún negocio registrado" });
+      return res
+        .status(404)
+        .json({ error: "No tienes ningún negocio registrado" });
 
-    const negociosCompletos = negocios.map(negocio => {
-      const platosMapped = negocio.platos.map(p => {
-        const descuentos = p.plato_descuentos.map(d => ({
+    const negociosCompletos = negocios.map((negocio) => {
+      const platosMapped = negocio.platos.map((p) => {
+        const descuentos = p.plato_descuentos.map((d) => ({
           dia: d.dia,
-          precio_descuento: d.precio_desc !== null ? d.precio_desc : d.precio_descuento
+          precio_descuento:
+            d.precio_desc !== null ? d.precio_desc : d.precio_descuento,
         }));
         delete p.plato_descuentos;
         return { ...p, descuentos };
       });
-      
+
       const formated = formatearNegocio(negocio);
       delete formated.platos;
 
       return {
         ...formated,
-        platos: platosMapped
+        platos: platosMapped,
       };
     });
 
     res.json({
-      negocio:   negociosCompletos[0],
-      negocios:  negociosCompletos,
-      total:     negociosCompletos.length,
-      limite:    LIMITE_NEGOCIOS,
+      negocio: negociosCompletos[0],
+      negocios: negociosCompletos,
+      total: negociosCompletos.length,
+      limite: LIMITE_NEGOCIOS,
     });
   } catch (err) {
     captureError(err, "[getMiNegocio]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -440,15 +502,23 @@ function formatearNegocio(n) {
   };
 }
 
-const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+const DIAS = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miercoles",
+  "jueves",
+  "viernes",
+  "sabado",
+];
 
 function estaAbierto(sedes) {
   if (!sedes || sedes.length === 0) return false;
-  const ahora  = new Date();
+  const ahora = new Date();
   const diaNom = DIAS[ahora.getDay()];
   const actual = ahora.getHours() * 60 + ahora.getMinutes();
 
-  return sedes.some(sede => {
+  return sedes.some((sede) => {
     const horaDia = sede.horario?.[diaNom];
     if (!horaDia || horaDia === "cerrado") return false;
     const [apertura, cierre] = horaDia.split("-");
@@ -468,5 +538,5 @@ module.exports = {
   subirFoto,
   eliminarFoto,
   getMiNegocio,
-  analyticsQueue
+  analyticsQueue,
 };

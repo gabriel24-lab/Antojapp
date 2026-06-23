@@ -1,4 +1,4 @@
-const prisma   = require("../db/pool");
+const prisma = require("../db/pool");
 const supabase = require("../db/supabase");
 const { captureError } = require("../lib/sentry");
 
@@ -11,20 +11,18 @@ async function getPlatos(req, res) {
       where: { negocio_id: parseInt(negocioId) },
       include: {
         plato_descuentos: {
-          select: { dia: true, precio_descuento: true, precio_desc: true }
-        }
+          select: { dia: true, precio_descuento: true, precio_desc: true },
+        },
       },
-      orderBy: [
-        { tipo: 'asc' },
-        { nombre: 'asc' }
-      ]
+      orderBy: [{ tipo: "asc" }, { nombre: "asc" }],
     });
 
-    const result = platos.map(p => {
-      const descuentos = p.plato_descuentos.map(d => ({
+    const result = platos.map((p) => {
+      const descuentos = p.plato_descuentos.map((d) => ({
         dia: d.dia,
-        precio_descuento: d.precio_desc !== null ? d.precio_desc : d.precio_descuento,
-        precio_desc: d.precio_desc
+        precio_descuento:
+          d.precio_desc !== null ? d.precio_desc : d.precio_descuento,
+        precio_desc: d.precio_desc,
       }));
       delete p.plato_descuentos;
       return { ...p, descuentos };
@@ -33,25 +31,46 @@ async function getPlatos(req, res) {
     res.json(result);
   } catch (err) {
     captureError(err, "[getPlatos]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
 // POST /api/negocios/:id/platos
 async function crearPlato(req, res) {
   const { id: negocioId } = req.params;
-  const { nombre, descripcion, tipo, precio, disponible = true, descuentos = [], foto_menu_b } = req.body;
+  const {
+    nombre,
+    descripcion,
+    tipo,
+    precio,
+    disponible = true,
+    descuentos = [],
+    foto_menu_b,
+  } = req.body;
 
-  const esMenu = tipo?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "menu";
+  const esMenu =
+    tipo
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") === "menu";
 
   if (!nombre || !tipo)
     return res.status(400).json({ error: "nombre y tipo son obligatorios" });
 
   if (!esMenu && precio === undefined)
-    return res.status(400).json({ error: "El precio es obligatorio para platos que no son menú" });
+    return res
+      .status(400)
+      .json({ error: "El precio es obligatorio para platos que no son menú" });
 
   if (tipo.length > 50)
-    return res.status(400).json({ error: "El tipo no puede superar 50 caracteres" });
+    return res
+      .status(400)
+      .json({ error: "El tipo no puede superar 50 caracteres" });
 
   try {
     const precioFinal = esMenu ? null : parseInt(precio);
@@ -66,26 +85,39 @@ async function crearPlato(req, res) {
         foto_menu_b: foto_menu_b || null,
         disponible,
         plato_descuentos: {
-          create: descuentos.map(d => ({
+          create: descuentos.map((d) => ({
             dia: d.dia,
             precio_descuento: d.precio_desc || 0,
-            precio_desc: d.precio_desc
-          }))
-        }
-      }
+            precio_desc: d.precio_desc,
+          })),
+        },
+      },
     });
 
     res.status(201).json(plato);
   } catch (err) {
     captureError(err, "[crearPlato]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
 // PUT /api/negocios/:id/platos/:platoId
 async function actualizarPlato(req, res) {
   const { id: negocioId, platoId } = req.params;
-  const { nombre, descripcion, tipo, precio, disponible, descuentos, foto_menu_b } = req.body;
+  const {
+    nombre,
+    descripcion,
+    tipo,
+    precio,
+    disponible,
+    descuentos,
+    foto_menu_b,
+  } = req.body;
 
   try {
     const transacciones = [];
@@ -93,8 +125,8 @@ async function actualizarPlato(req, res) {
     if (descuentos !== undefined) {
       transacciones.push(
         prisma.plato_descuentos.deleteMany({
-          where: { plato_id: parseInt(platoId) }
-        })
+          where: { plato_id: parseInt(platoId) },
+        }),
       );
     }
 
@@ -108,11 +140,11 @@ async function actualizarPlato(req, res) {
 
     if (descuentos !== undefined && descuentos.length > 0) {
       dataUpdate.plato_descuentos = {
-        create: descuentos.map(d => ({
+        create: descuentos.map((d) => ({
           dia: d.dia,
           precio_descuento: d.precio_desc || 0,
-          precio_desc: d.precio_desc
-        }))
+          precio_desc: d.precio_desc,
+        })),
       };
     }
 
@@ -121,13 +153,13 @@ async function actualizarPlato(req, res) {
       transacciones.push(
         prisma.platos.update({
           where: { id: parseInt(platoId) },
-          data: dataUpdate
-        })
+          data: dataUpdate,
+        }),
       );
     }
 
     if (transacciones.length === 0) {
-        return res.json({});
+      return res.json({});
     }
 
     const results = await prisma.$transaction(transacciones);
@@ -136,10 +168,15 @@ async function actualizarPlato(req, res) {
     res.json(platoActualizado);
   } catch (err) {
     captureError(err, "[actualizarPlato]");
-    if (err.code === 'P2025') {
-        return res.status(404).json({ error: "Plato no encontrado" });
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Plato no encontrado" });
     }
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -150,7 +187,7 @@ async function eliminarPlato(req, res) {
   try {
     const plato = await prisma.platos.findUnique({
       where: { id: parseInt(platoId) },
-      select: { foto: true, negocio_id: true }
+      select: { foto: true, negocio_id: true },
     });
 
     if (!plato || plato.negocio_id !== parseInt(negocioId))
@@ -162,13 +199,18 @@ async function eliminarPlato(req, res) {
     }
 
     await prisma.platos.delete({
-      where: { id: parseInt(platoId) }
+      where: { id: parseInt(platoId) },
     });
 
     res.json({ mensaje: "Plato eliminado" });
   } catch (err) {
     captureError(err, "[eliminarPlato]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -183,33 +225,34 @@ async function subirFotoPlato(req, res) {
   try {
     const plato = await prisma.platos.findUnique({
       where: { id: parseInt(platoId) },
-      select: { id: true, negocio_id: true }
+      select: { id: true, negocio_id: true },
     });
 
     if (!plato || plato.negocio_id !== parseInt(negocioId))
       return res.status(404).json({ error: "Plato no encontrado" });
 
-    const suffix   = lado === "b" ? "-menu-b" : "";
+    const suffix = lado === "b" ? "-menu-b" : "";
     const filename = `${negocioId}/${platoId}${suffix}-${req.file.safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("platos")
       .upload(filename, req.file.buffer, {
         contentType: req.file.mimetype,
-        upsert:      true,
+        upsert: true,
       });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("platos")
-      .getPublicUrl(filename);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("platos").getPublicUrl(filename);
 
-    const dataUpdate = lado === "b" ? { foto_menu_b: publicUrl } : { foto: publicUrl };
+    const dataUpdate =
+      lado === "b" ? { foto_menu_b: publicUrl } : { foto: publicUrl };
 
     await prisma.platos.update({
       where: { id: parseInt(platoId) },
-      data: dataUpdate
+      data: dataUpdate,
     });
 
     res.json({ url: publicUrl });
@@ -219,4 +262,10 @@ async function subirFotoPlato(req, res) {
   }
 }
 
-module.exports = { getPlatos, crearPlato, actualizarPlato, eliminarPlato, subirFotoPlato };
+module.exports = {
+  getPlatos,
+  crearPlato,
+  actualizarPlato,
+  eliminarPlato,
+  subirFotoPlato,
+};

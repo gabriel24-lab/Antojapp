@@ -9,11 +9,13 @@ async function getEstadisticas(req, res) {
     // 1. Obtener negocio del propietario
     const negocio = await prisma.negocios.findFirst({
       where: { propietario_id: propietarioId },
-      select: { id: true, nombre: true }
+      select: { id: true, nombre: true },
     });
 
     if (!negocio)
-      return res.status(404).json({ error: "No tienes ningún negocio registrado" });
+      return res
+        .status(404)
+        .json({ error: "No tienes ningún negocio registrado" });
 
     const negocioId = negocio.id;
 
@@ -37,17 +39,17 @@ async function getEstadisticas(req, res) {
       prisma.visitas.count({
         where: {
           negocio_id: negocioId,
-          visitado_en: { gte: hace7Dias }
-        }
+          visitado_en: { gte: hace7Dias },
+        },
       }),
 
       // Visitas en los últimos 30 días para agrupar
       prisma.visitas.findMany({
         where: {
           negocio_id: negocioId,
-          visitado_en: { gte: hace30Dias }
+          visitado_en: { gte: hace30Dias },
         },
-        select: { visitado_en: true }
+        select: { visitado_en: true },
       }),
 
       // Total de veces guardado como favorito
@@ -59,15 +61,20 @@ async function getEstadisticas(req, res) {
       // Promedio de estrellas
       prisma.resenas.aggregate({
         where: { negocio_id: negocioId },
-        _avg: { estrellas: true }
+        _avg: { estrellas: true },
       }),
 
       // Últimas 5 reseñas
       prisma.resenas.findMany({
         where: { negocio_id: negocioId },
-        orderBy: { creado_en: 'desc' },
+        orderBy: { creado_en: "desc" },
         take: 5,
-        select: { usuario_nombre: true, estrellas: true, comentario: true, creado_en: true }
+        select: {
+          usuario_nombre: true,
+          estrellas: true,
+          comentario: true,
+          creado_en: true,
+        },
       }),
     ]);
 
@@ -78,7 +85,7 @@ async function getEstadisticas(req, res) {
       visitasMap[d.toISOString().slice(0, 10)] = 0;
     }
 
-    visitas30Dias.forEach(v => {
+    visitas30Dias.forEach((v) => {
       if (v.visitado_en) {
         const diaStr = v.visitado_en.toISOString().slice(0, 10);
         if (visitasMap[diaStr] !== undefined) {
@@ -87,30 +94,38 @@ async function getEstadisticas(req, res) {
       }
     });
 
-    const porDia = Object.keys(visitasMap).sort().map(dia => ({
-      dia,
-      visitas: visitasMap[dia]
-    }));
+    const porDia = Object.keys(visitasMap)
+      .sort()
+      .map((dia) => ({
+        dia,
+        visitas: visitasMap[dia],
+      }));
 
-    const promedioRedondeado = Math.round((agregacionResenas._avg.estrellas || 0) * 10) / 10;
+    const promedioRedondeado =
+      Math.round((agregacionResenas._avg.estrellas || 0) * 10) / 10;
 
     res.json({
       negocio,
       visitas: {
-        total:  visitasTotal,
+        total: visitasTotal,
         semana: visitasSemana,
         porDia: porDia,
       },
       favoritos: totalFavoritos,
       resenas: {
-        total:   totalResenas,
+        total: totalResenas,
         promedio: promedioRedondeado,
-        ultimas:  ultimasResenas,
+        ultimas: ultimasResenas,
       },
     });
   } catch (err) {
     captureError(err, "[getEstadisticas]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
@@ -136,52 +151,64 @@ async function getAdminNegocios(req, res) {
         estado: true,
         creado_en: true,
         propietario: {
-          select: { nombre: true, email: true }
-        }
+          select: { nombre: true, email: true },
+        },
       },
-      orderBy: { creado_en: 'asc' }
+      orderBy: { creado_en: "asc" },
     });
 
     // Mapear para mantener compatibilidad con el frontend
-    const result = negocios.map(n => ({
+    const result = negocios.map((n) => ({
       ...n,
       propietario: n.propietario ? n.propietario.nombre : null,
-      propietario_email: n.propietario ? n.propietario.email : null
+      propietario_email: n.propietario ? n.propietario.email : null,
     }));
 
     res.json(result);
   } catch (err) {
     captureError(err, "[getAdminNegocios]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 
 // PATCH /api/panel/admin/negocios/:id/estado
 async function actualizarEstadoNegocio(req, res) {
-  const { id }     = req.params;
+  const { id } = req.params;
   const { estado } = req.body;
 
   const estadosValidos = ["aprobado", "rechazado"];
   if (!estadosValidos.includes(estado))
-    return res.status(400).json({ error: "Estado debe ser 'aprobado' o 'rechazado'" });
+    return res
+      .status(400)
+      .json({ error: "Estado debe ser 'aprobado' o 'rechazado'" });
 
   try {
     const negocio = await prisma.negocios.update({
       where: { id: parseInt(id) },
       data: {
         estado,
-        activo: estado === "aprobado"
+        activo: estado === "aprobado",
       },
-      select: { id: true, nombre: true, estado: true }
+      select: { id: true, nombre: true, estado: true },
     });
 
     res.json(negocio);
   } catch (err) {
-    if (err.code === 'P2025') {
-        return res.status(404).json({ error: "Negocio no encontrado" });
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Negocio no encontrado" });
     }
     captureError(err, "[actualizarEstadoNegocio]");
-    res.status(500).json({ error: "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde." });
+    res
+      .status(500)
+      .json({
+        error:
+          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+      });
   }
 }
 

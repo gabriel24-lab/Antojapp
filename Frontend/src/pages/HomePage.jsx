@@ -7,24 +7,29 @@ import AppIcon from "../components/AppIcon";
 import { useUbicacionContext } from "../context/UbicacionContext";
 
 export default function HomePage({
-  onVerDetalle, onAbrirAuth, busqueda, onBusqueda, modoNegocios,
+  onVerDetalle,
+  onAbrirAuth,
+  busqueda,
+  onBusqueda,
+  modoNegocios,
 }) {
-  const { pais, departamento, ciudad, cambiarUbicacion, limpiarUbicacion } = useUbicacionContext();
+  const { pais, departamento, ciudad, cambiarUbicacion, limpiarUbicacion } =
+    useUbicacionContext();
 
   // Alias para no cambiar el JSX interno de una vez
-  const paisSeleccionado         = pais?.iso2   ?? null;
-  const paisNombre               = pais?.nombre ?? null;
+  const paisSeleccionado = pais?.iso2 ?? null;
+  const paisNombre = pais?.nombre ?? null;
   const departamentoSeleccionado = departamento;
-  const ciudadSeleccionada       = ciudad;
-  const onCambiarUbicacion       = cambiarUbicacion;
-  const [negocios,     setNegocios]     = useState([]);
-  const [categorias,   setCategorias]   = useState(["Todas"]);
-  const [categoria,    setCategoria]    = useState("Todas");
+  const ciudadSeleccionada = ciudad;
+  const onCambiarUbicacion = cambiarUbicacion;
+  const [negocios, setNegocios] = useState([]);
+  const [categorias, setCategorias] = useState(["Todas"]);
+  const [categoria, setCategoria] = useState("Todas");
   const [soloAbiertos, setSoloAbiertos] = useState(false);
-  const [cargando,     setCargando]     = useState(true);
-  const [error,        setError]        = useState("");
-  const [usandoMock,   setUsandoMock]   = useState(false);
-  const [pagina,       setPagina]       = useState(1);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+  const [usandoMock, setUsandoMock] = useState(false);
+  const [pagina, setPagina] = useState(1);
 
   const [modalUbicacion, setModalUbicacion] = useState(false);
 
@@ -39,7 +44,14 @@ export default function HomePage({
   // Scroll en modo Negocios / Inicio
   useEffect(() => {
     if (modoNegocios && resultadosRef.current) {
-      setTimeout(() => resultadosRef.current.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+      setTimeout(
+        () =>
+          resultadosRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        80,
+      );
     } else if (!modoNegocios) {
       setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 80);
     }
@@ -48,47 +60,63 @@ export default function HomePage({
   // Cargar categorías
   useEffect(() => {
     fetch(`${API_URL}/negocios/categorias`)
-      .then(r => r.json())
-      .then(data => setCategorias(["Todas", ...data]))
+      .then((r) => r.json())
+      .then((data) => setCategorias(["Todas", ...data]))
       .catch(() => {});
   }, []);
 
   // Cargar negocios con debounce
   const cargarNegocios = useCallback(() => {
-    setCargando(true); setError(""); setPagina(1);
+    setCargando(true);
+    setError("");
+    setPagina(1);
     const p = new URLSearchParams();
-    if (busqueda?.trim())           p.set("busqueda",     busqueda.trim());
-    if (categoria !== "Todas")      p.set("categoria",    categoria);
-    if (soloAbiertos)               p.set("soloAbiertos", "true");
-    if (paisSeleccionado)           p.set("pais",         paisSeleccionado);
-    if (departamentoSeleccionado)   p.set("departamento", departamentoSeleccionado);
-    if (ciudadSeleccionada)         p.set("ciudad",       ciudadSeleccionada);
+    if (busqueda?.trim()) p.set("busqueda", busqueda.trim());
+    if (categoria !== "Todas") p.set("categoria", categoria);
+    if (soloAbiertos) p.set("soloAbiertos", "true");
+    if (paisSeleccionado) p.set("pais", paisSeleccionado);
+    if (departamentoSeleccionado)
+      p.set("departamento", departamentoSeleccionado);
+    if (ciudadSeleccionada) p.set("ciudad", ciudadSeleccionada);
     fetch(`${API_URL}/negocios?${p}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { setNegocios(data); setUsandoMock(false); setCargando(false); })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        setNegocios(data);
+        setUsandoMock(false);
+        setCargando(false);
+      })
       .catch(() => {
         let mock = NEGOCIOS;
         if (busqueda?.trim()) {
           const q = busqueda.trim().toLowerCase();
-          mock = mock.filter(n =>
-            n.nombre.toLowerCase().includes(q) ||
-            n.descripcion.toLowerCase().includes(q) ||
-            n.categoria.toLowerCase().includes(q) ||
-            n.etiquetas?.some(t => t.toLowerCase().includes(q))
+          mock = mock.filter(
+            (n) =>
+              n.nombre.toLowerCase().includes(q) ||
+              n.descripcion.toLowerCase().includes(q) ||
+              n.categoria.toLowerCase().includes(q) ||
+              n.etiquetas?.some((t) => t.toLowerCase().includes(q)),
           );
         }
-        if (categoria !== "Todas") mock = mock.filter(n => n.categoria === categoria);
-        if (soloAbiertos)          mock = mock.filter(n => n.abierto);
-        
+        if (categoria !== "Todas")
+          mock = mock.filter((n) => n.categoria === categoria);
+        if (soloAbiertos) mock = mock.filter((n) => n.abierto);
+
         // Ordenar siempre por la mejor calificación
         mock.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
-        
+
         setNegocios(mock);
         setUsandoMock(true);
         setCargando(false);
-        setCategorias(["Todas", ...new Set(NEGOCIOS.map(n => n.categoria))]);
+        setCategorias(["Todas", ...new Set(NEGOCIOS.map((n) => n.categoria))]);
       });
-  }, [busqueda, categoria, soloAbiertos, paisSeleccionado, departamentoSeleccionado, ciudadSeleccionada]);
+  }, [
+    busqueda,
+    categoria,
+    soloAbiertos,
+    paisSeleccionado,
+    departamentoSeleccionado,
+    ciudadSeleccionada,
+  ]);
 
   useEffect(() => {
     const t = setTimeout(cargarNegocios, busqueda ? 380 : 0);
@@ -103,7 +131,10 @@ export default function HomePage({
   const ITEMS_POR_PAGINA = 9;
   const totalPaginas = Math.ceil(negociosFiltrados.length / ITEMS_POR_PAGINA);
   const startIndex = (pagina - 1) * ITEMS_POR_PAGINA;
-  const negociosPaginados = negociosFiltrados.slice(startIndex, startIndex + ITEMS_POR_PAGINA);
+  const negociosPaginados = negociosFiltrados.slice(
+    startIndex,
+    startIndex + ITEMS_POR_PAGINA,
+  );
 
   // El modal ahora maneja GPS + departamento + ciudad internamente
   const handleConfirmarUbicacion = ({ iso2, nombre, departamento, ciudad }) => {
@@ -127,33 +158,96 @@ export default function HomePage({
 
       {/* ── Hero ── */}
       {!modoNegocios && (
-        <section style={{ background: "var(--text-1)", padding: "52px 20px 44px", textAlign: "center" }}>
+        <section
+          style={{
+            background: "var(--text-1)",
+            padding: "52px 20px 44px",
+            textAlign: "center",
+          }}
+        >
           <div style={{ maxWidth: 620, margin: "0 auto" }}>
-            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "2px", color: "var(--brand)", textTransform: "uppercase", marginBottom: 14 }}>
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: "2px",
+                color: "var(--brand)",
+                textTransform: "uppercase",
+                marginBottom: 14,
+              }}
+            >
               Descubre lo que está cerca
             </p>
-            <h1 style={{
-              fontFamily: "'Manrope', sans-serif", fontWeight: 800,
-              fontSize: "clamp(28px, 5vw, 44px)", color: "var(--surface)", lineHeight: 1.15, marginBottom: 16,
-            }}>
-              Tu antojo comienza <br /><span style={{ color: "var(--brand)" }}>aquí</span>
+            <h1
+              style={{
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 800,
+                fontSize: "clamp(28px, 5vw, 44px)",
+                color: "var(--surface)",
+                lineHeight: 1.15,
+                marginBottom: 16,
+              }}
+            >
+              Tu antojo comienza <br />
+              <span style={{ color: "var(--brand)" }}>aquí</span>
             </h1>
-            <p style={{ fontSize: 16, color: "rgba(255,255,255,.55)", marginBottom: 28, lineHeight: 1.6 }}>
-              Comida, tiendas, servicios y emprendimientos de tu zona en un solo lugar
+            <p
+              style={{
+                fontSize: 16,
+                color: "rgba(255,255,255,.55)",
+                marginBottom: 28,
+                lineHeight: 1.6,
+              }}
+            >
+              Comida, tiendas, servicios y emprendimientos de tu zona en un solo
+              lugar
             </p>
-            <div style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}>
-              <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)", pointerEvents: "none" }}>
+            <div
+              style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}
+            >
+              <span
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-3)",
+                  pointerEvents: "none",
+                }}
+              >
                 <AppIcon name="search" size={19} />
               </span>
               <input
-                className="input" type="text"
+                className="input"
+                type="text"
                 placeholder="Carne asada, empanadas, corozo, ramen…"
                 value={busqueda}
-                onChange={e => onBusqueda(e.target.value)}
-                style={{ paddingLeft: 46, paddingRight: busqueda ? 40 : 14, fontSize: 15, borderRadius: 50, height: 52, boxShadow: "0 4px 20px rgba(0,0,0,.3)", border: "2px solid rgba(255,255,255,.1)" }}
+                onChange={(e) => onBusqueda(e.target.value)}
+                style={{
+                  paddingLeft: 46,
+                  paddingRight: busqueda ? 40 : 14,
+                  fontSize: 15,
+                  borderRadius: 50,
+                  height: 52,
+                  boxShadow: "0 4px 20px rgba(0,0,0,.3)",
+                  border: "2px solid rgba(255,255,255,.1)",
+                }}
               />
               {busqueda && (
-                <button onClick={() => onBusqueda("")} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-3)", cursor: "pointer", padding: 2 }}>
+                <button
+                  onClick={() => onBusqueda("")}
+                  style={{
+                    position: "absolute",
+                    right: 14,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-3)",
+                    cursor: "pointer",
+                    padding: 2,
+                  }}
+                >
                   <AppIcon name="x" size={18} />
                 </button>
               )}
@@ -163,32 +257,87 @@ export default function HomePage({
       )}
 
       {/* ── Filtros sticky ── */}
-      <section style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)", position: "sticky", top: 64, zIndex: 50 }}>
+      <section
+        style={{
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border)",
+          position: "sticky",
+          top: 64,
+          zIndex: 50,
+        }}
+      >
         <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", padding: "10px 0", scrollbarWidth: "none" }}>
-            {categorias.map(cat => (
-              <button key={cat} onClick={() => setCategoria(cat)} style={{
-                flexShrink: 0, padding: "7px 16px", borderRadius: 50, fontSize: 13, fontWeight: 500,
-                border: "1.5px solid", whiteSpace: "nowrap",
-                borderColor: categoria === cat ? "var(--brand)" : "var(--border)",
-                background:  categoria === cat ? "var(--brand)" : "var(--surface)",
-                color:       categoria === cat ? "#fff"    : "var(--text-2)",
-                cursor: "pointer", transition: "all var(--transition)",
-              }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              overflowX: "auto",
+              padding: "10px 0",
+              scrollbarWidth: "none",
+            }}
+          >
+            {categorias.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoria(cat)}
+                style={{
+                  flexShrink: 0,
+                  padding: "7px 16px",
+                  borderRadius: 50,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: "1.5px solid",
+                  whiteSpace: "nowrap",
+                  borderColor:
+                    categoria === cat ? "var(--brand)" : "var(--border)",
+                  background:
+                    categoria === cat ? "var(--brand)" : "var(--surface)",
+                  color: categoria === cat ? "#fff" : "var(--text-2)",
+                  cursor: "pointer",
+                  transition: "all var(--transition)",
+                }}
+              >
                 {cat}
               </button>
             ))}
-            <div style={{ width: 1, height: 22, background: "var(--border)", flexShrink: 0, margin: "0 4px" }} />
-            <button onClick={() => setSoloAbiertos(!soloAbiertos)} style={{
-              flexShrink: 0, display: "flex", alignItems: "center", gap: 6,
-              padding: "7px 14px", borderRadius: 50, fontSize: 13, fontWeight: 500,
-              border: "1.5px solid",
-              borderColor: soloAbiertos ? "var(--green)" : "var(--border)",
-              background:  soloAbiertos ? "var(--green-bg)" : "var(--surface)",
-              color:       soloAbiertos ? "var(--green)" : "var(--text-2)",
-              cursor: "pointer", transition: "all var(--transition)",
-            }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: soloAbiertos ? "var(--green)" : "var(--text-3)", display: "inline-block" }} />
+            <div
+              style={{
+                width: 1,
+                height: 22,
+                background: "var(--border)",
+                flexShrink: 0,
+                margin: "0 4px",
+              }}
+            />
+            <button
+              onClick={() => setSoloAbiertos(!soloAbiertos)}
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 14px",
+                borderRadius: 50,
+                fontSize: 13,
+                fontWeight: 500,
+                border: "1.5px solid",
+                borderColor: soloAbiertos ? "var(--green)" : "var(--border)",
+                background: soloAbiertos ? "var(--green-bg)" : "var(--surface)",
+                color: soloAbiertos ? "var(--green)" : "var(--text-2)",
+                cursor: "pointer",
+                transition: "all var(--transition)",
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: soloAbiertos ? "var(--green)" : "var(--text-3)",
+                  display: "inline-block",
+                }}
+              />
               Solo abiertos
             </button>
           </div>
@@ -196,53 +345,124 @@ export default function HomePage({
       </section>
 
       {/* ── Layout principal: solo grid (sin sidebar) ── */}
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 20px 60px" }}>
+      <div
+        style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 20px 60px" }}
+      >
         <section ref={resultadosRef}>
           {/* Banner modo mock */}
           {usandoMock && (
-            <div style={{
-              background: "#FFF9EC", border: "1px solid #F0D58C", borderRadius: 10,
-              padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#8A6A00",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
+            <div
+              style={{
+                background: "#FFF9EC",
+                border: "1px solid #F0D58C",
+                borderRadius: 10,
+                padding: "10px 14px",
+                marginBottom: 16,
+                fontSize: 12,
+                color: "#8A6A00",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <AppIcon name="info" size={14} />
               Mostrando negocios de ejemplo
             </div>
           )}
 
           {error && (
-            <div style={{ background: "var(--red-bg)", border: "1px solid var(--red)", borderRadius: 10, padding: "14px 18px", marginBottom: 20, fontSize: 14, color: "var(--red)", display: "flex", alignItems: "center", gap: 8 }}>
+            <div
+              style={{
+                background: "var(--red-bg)",
+                border: "1px solid var(--red)",
+                borderRadius: 10,
+                padding: "14px 18px",
+                marginBottom: 20,
+                fontSize: 14,
+                color: "var(--red)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <AppIcon name="alert" size={18} /> {error}
             </div>
           )}
 
           {/* Contador + filtro activo */}
           {!cargando && !error && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 8 }}>
-              <p style={{ fontSize: 14, color: "var(--text-2)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                {busqueda ? <><strong style={{ color: "var(--text-1)" }}>"{busqueda}"</strong> — </> : ""}
-                <strong style={{ color: "var(--text-1)" }}>{negociosFiltrados.length}</strong>{" "}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "var(--text-2)",
+                  margin: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {busqueda ? (
+                  <>
+                    <strong style={{ color: "var(--text-1)" }}>
+                      "{busqueda}"
+                    </strong>{" "}
+                    —{" "}
+                  </>
+                ) : (
+                  ""
+                )}
+                <strong style={{ color: "var(--text-1)" }}>
+                  {negociosFiltrados.length}
+                </strong>{" "}
                 {negociosFiltrados.length === 1 ? "negocio" : "negocios"}
                 {paisSeleccionado && (
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 5,
-                    background: "var(--brand-light)", color: "var(--brand)",
-                    padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                  }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      background: "var(--brand-light)",
+                      color: "var(--brand)",
+                      padding: "3px 10px",
+                      borderRadius: 20,
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
                     <AppIcon name="mapPin" size={11} />
                     {ciudadSeleccionada
                       ? `${ciudadSeleccionada}${departamentoSeleccionado ? `, ${departamentoSeleccionado}` : ""}`
                       : departamentoSeleccionado
                         ? `${departamentoSeleccionado}, ${paisNombre}`
-                        : paisNombre
-                    }
+                        : paisNombre}
                   </span>
                 )}
               </p>
               {paisSeleccionado && (
                 <button
                   onClick={() => limpiarUbicacion()}
-                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 20, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text-2)", fontSize: 12, cursor: "pointer" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "4px 10px",
+                    borderRadius: 20,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    color: "var(--text-2)",
+                    fontSize: 12,
+                    cursor: "pointer",
+                  }}
                 >
                   <AppIcon name="x" size={11} /> Quitar filtro de zona
                 </button>
@@ -253,8 +473,16 @@ export default function HomePage({
           {/* Skeletons */}
           {cargando && (
             <div className="negocios-grid">
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} style={{ height: 320, background: "#F0EBE5", borderRadius: 12, animation: "pulse 1.5s infinite" }} />
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 320,
+                    background: "#F0EBE5",
+                    borderRadius: 12,
+                    animation: "pulse 1.5s infinite",
+                  }}
+                />
               ))}
             </div>
           )}
@@ -263,67 +491,137 @@ export default function HomePage({
           {!cargando && negociosPaginados.length > 0 && (
             <div className="negocios-grid">
               {negociosPaginados.map((negocio, index) => (
-                <BusinessCard key={negocio.id} negocio={negocio} onClick={() => onVerDetalle(negocio)} onAbrirAuth={onAbrirAuth} prioritaria={pagina === 1 && index === 0} />
+                <BusinessCard
+                  key={negocio.id}
+                  negocio={negocio}
+                  onClick={() => onVerDetalle(negocio)}
+                  onAbrirAuth={onAbrirAuth}
+                  prioritaria={pagina === 1 && index === 0}
+                />
               ))}
             </div>
           )}
 
           {/* Paginación */}
           {!cargando && totalPaginas > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 40,
+              }}
+            >
               <button
                 disabled={pagina === 1}
-                onClick={() => { setPagina(p => p - 1); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
+                onClick={() => {
+                  setPagina((p) => p - 1);
+                  if (resultadosRef.current)
+                    window.scrollTo({
+                      top: resultadosRef.current.offsetTop - 80,
+                      behavior: "smooth",
+                    });
+                }}
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 38, height: 38, borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
                   background: pagina === 1 ? "var(--bg)" : "var(--surface)",
-                  border: "1.5px solid", borderColor: pagina === 1 ? "var(--border)" : "var(--brand)",
+                  border: "1.5px solid",
+                  borderColor: pagina === 1 ? "var(--border)" : "var(--brand)",
                   color: pagina === 1 ? "var(--text-3)" : "var(--brand)",
                   cursor: pagina === 1 ? "not-allowed" : "pointer",
-                  transition: "all 0.2s"
+                  transition: "all 0.2s",
                 }}
               >
                 <AppIcon name="chevronLeft" size={20} />
               </button>
-              
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(num => {
-                // Lógica para no mostrar más de 5 números (con elipses) si son muchas páginas
-                if (totalPaginas > 5 && Math.abs(pagina - num) > 1 && num !== 1 && num !== totalPaginas) {
-                  if (num === 2 || num === totalPaginas - 1) return <span key={num} style={{ color: "var(--text-3)", margin: "0 4px" }}>...</span>;
-                  return null;
-                }
-                return (
-                  <button
-                    key={num}
-                    onClick={() => { setPagina(num); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      width: 38, height: 38, borderRadius: 10,
-                      background: pagina === num ? "var(--brand)" : "var(--surface)",
-                      border: "1.5px solid", borderColor: pagina === num ? "var(--brand)" : "var(--border)",
-                      color: pagina === num ? "#fff" : "var(--text-2)",
-                      fontWeight: pagina === num ? 700 : 500,
-                      cursor: "pointer",
-                      transition: "all 0.2s"
-                    }}
-                  >
-                    {num}
-                  </button>
-                );
-              })}
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                (num) => {
+                  // Lógica para no mostrar más de 5 números (con elipses) si son muchas páginas
+                  if (
+                    totalPaginas > 5 &&
+                    Math.abs(pagina - num) > 1 &&
+                    num !== 1 &&
+                    num !== totalPaginas
+                  ) {
+                    if (num === 2 || num === totalPaginas - 1)
+                      return (
+                        <span
+                          key={num}
+                          style={{ color: "var(--text-3)", margin: "0 4px" }}
+                        >
+                          ...
+                        </span>
+                      );
+                    return null;
+                  }
+                  return (
+                    <button
+                      key={num}
+                      onClick={() => {
+                        setPagina(num);
+                        if (resultadosRef.current)
+                          window.scrollTo({
+                            top: resultadosRef.current.offsetTop - 80,
+                            behavior: "smooth",
+                          });
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 38,
+                        height: 38,
+                        borderRadius: 10,
+                        background:
+                          pagina === num ? "var(--brand)" : "var(--surface)",
+                        border: "1.5px solid",
+                        borderColor:
+                          pagina === num ? "var(--brand)" : "var(--border)",
+                        color: pagina === num ? "#fff" : "var(--text-2)",
+                        fontWeight: pagina === num ? 700 : 500,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {num}
+                    </button>
+                  );
+                },
+              )}
 
               <button
                 disabled={pagina === totalPaginas}
-                onClick={() => { setPagina(p => p + 1); if (resultadosRef.current) window.scrollTo({ top: resultadosRef.current.offsetTop - 80, behavior: "smooth" }); }}
+                onClick={() => {
+                  setPagina((p) => p + 1);
+                  if (resultadosRef.current)
+                    window.scrollTo({
+                      top: resultadosRef.current.offsetTop - 80,
+                      behavior: "smooth",
+                    });
+                }}
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 38, height: 38, borderRadius: 10,
-                  background: pagina === totalPaginas ? "var(--bg)" : "var(--surface)",
-                  border: "1.5px solid", borderColor: pagina === totalPaginas ? "var(--border)" : "var(--brand)",
-                  color: pagina === totalPaginas ? "var(--text-3)" : "var(--brand)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background:
+                    pagina === totalPaginas ? "var(--bg)" : "var(--surface)",
+                  border: "1.5px solid",
+                  borderColor:
+                    pagina === totalPaginas ? "var(--border)" : "var(--brand)",
+                  color:
+                    pagina === totalPaginas ? "var(--text-3)" : "var(--brand)",
                   cursor: pagina === totalPaginas ? "not-allowed" : "pointer",
-                  transition: "all 0.2s"
+                  transition: "all 0.2s",
                 }}
               >
                 <AppIcon name="chevronRight" size={20} />
@@ -333,25 +631,42 @@ export default function HomePage({
 
           {/* Vacío */}
           {!cargando && !error && negociosFiltrados.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--text-3)" }}>
-              <div style={{ marginBottom: 16 }}><AppIcon name="utensils" size={48} /></div>
-              <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, color: "var(--text-2)", marginBottom: 8 }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "var(--text-3)",
+              }}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <AppIcon name="utensils" size={48} />
+              </div>
+              <h3
+                style={{
+                  fontFamily: "'Manrope', sans-serif",
+                  fontSize: 20,
+                  color: "var(--text-2)",
+                  marginBottom: 8,
+                }}
+              >
                 {busqueda
                   ? `No encontramos "${busqueda}" aquí`
                   : paisSeleccionado
                     ? `No hay negocios en ${ciudadSeleccionada || paisNombre || paisSeleccionado} aún`
-                    : "No hay negocios disponibles"
-                }
+                    : "No hay negocios disponibles"}
               </h3>
               <p style={{ fontSize: 15, lineHeight: 1.6 }}>
                 {paisSeleccionado
                   ? "Prueba cambiando la zona desde el selector arriba."
-                  : "Intenta con otras palabras: \"carne\", \"frito\", \"dulce\"…"
-                }
+                  : 'Intenta con otras palabras: "carne", "frito", "dulce"…'}
               </p>
               <button
                 className="btn-secondary"
-                onClick={() => { onBusqueda(""); setCategoria("Todas"); limpiarUbicacion(); }}
+                onClick={() => {
+                  onBusqueda("");
+                  setCategoria("Todas");
+                  limpiarUbicacion();
+                }}
                 style={{ marginTop: 20 }}
               >
                 Ver todos los negocios

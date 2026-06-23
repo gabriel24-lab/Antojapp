@@ -31,12 +31,12 @@ export function useUbicacion() {
         try {
           // BigDataCloud: reverse geocoding gratuito, sin API key
           const res = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`,
           );
           const data = await res.json();
 
-          const iso2   = data.countryCode  || null;   // ej. "CO"
-          const nombre = data.countryName  || null;   // ej. "Colombia"
+          const iso2 = data.countryCode || null; // ej. "CO"
+          const nombre = data.countryName || null; // ej. "Colombia"
 
           setPaisDetectado(iso2 ? { iso2, nombre } : null);
         } catch {
@@ -49,7 +49,7 @@ export function useUbicacion() {
       () => {
         setEstado("denegada");
       },
-      { timeout: 10000, maximumAge: 300000 }
+      { timeout: 10000, maximumAge: 300000 },
     );
   }, []);
 

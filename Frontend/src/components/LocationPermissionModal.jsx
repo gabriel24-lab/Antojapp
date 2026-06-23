@@ -22,21 +22,26 @@ import { useUbicacion } from "../hooks/useUbicacion";
  * onSaltar() => void
  */
 export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
-  const [paso, setPaso]               = useState("consent");
-  const [paisElegido, setPaisElegido] = useState(null);   // { iso2, nombre, bandera }
-  const [deptElegido, setDeptElegido] = useState(null);   // string (display)
-  const [busqueda, setBusqueda]       = useState("");
+  const [paso, setPaso] = useState("consent");
+  const [paisElegido, setPaisElegido] = useState(null); // { iso2, nombre, bandera }
+  const [deptElegido, setDeptElegido] = useState(null); // string (display)
+  const [busqueda, setBusqueda] = useState("");
 
-  const [estados, setEstados]                   = useState([]);
-  const [ciudades, setCiudades]                 = useState([]);
-  const [loadingEstados, setLoadingEstados]     = useState(false);
-  const [loadingCiudades, setLoadingCiudades]   = useState(false);
+  const [estados, setEstados] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [loadingEstados, setLoadingEstados] = useState(false);
+  const [loadingCiudades, setLoadingCiudades] = useState(false);
 
   const [gpsEstado, setGpsEstado] = useState("idle");
-  const [gpsPais, setGpsPais]     = useState(null);
+  const [gpsPais, setGpsPais] = useState(null);
 
-  const { countries, loadingCountries, fetchStates, fetchCities } = useLocationData();
-  const { estado: gpsHookEstado, paisDetectado, solicitarUbicacion } = useUbicacion();
+  const { countries, loadingCountries, fetchStates, fetchCities } =
+    useLocationData();
+  const {
+    estado: gpsHookEstado,
+    paisDetectado,
+    solicitarUbicacion,
+  } = useUbicacion();
 
   // ── GPS ────────────────────────────────────────────────────────
   const solicitarGPS = () => {
@@ -49,7 +54,11 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
   useEffect(() => {
     if (gpsHookEstado === "concedida" && paisDetectado) {
       const { iso2, nombre } = paisDetectado;
-      const c = countries.find(c => c.iso2 === iso2) || { iso2, nombre, bandera: getFlagEmoji(iso2) };
+      const c = countries.find((c) => c.iso2 === iso2) || {
+        iso2,
+        nombre,
+        bandera: getFlagEmoji(iso2),
+      };
       const pais = { iso2, nombre: nombre || c.nombre, bandera: c.bandera };
       setGpsPais(pais);
       setPaisElegido(pais);
@@ -95,32 +104,73 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
 
   // Confirmar solo con el país
   const confirmarSoloPais = () => {
-    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: null, ciudad: null });
+    onConfirmar({
+      iso2: paisElegido.iso2,
+      nombre: paisElegido.nombre,
+      departamento: null,
+      ciudad: null,
+    });
   };
 
   // Confirmar con país + departamento (sin ciudad)
   const confirmarSoloDept = () => {
-    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad: null });
+    onConfirmar({
+      iso2: paisElegido.iso2,
+      nombre: paisElegido.nombre,
+      departamento: deptElegido,
+      ciudad: null,
+    });
   };
 
   // Confirmar con ciudad
   const confirmarCiudad = (ciudad) => {
-    onConfirmar({ iso2: paisElegido.iso2, nombre: paisElegido.nombre, departamento: deptElegido, ciudad });
+    onConfirmar({
+      iso2: paisElegido.iso2,
+      nombre: paisElegido.nombre,
+      departamento: deptElegido,
+      ciudad,
+    });
   };
 
   // ── Filtrados ──────────────────────────────────────────────────
   const q = busqueda.toLowerCase();
-  const paisesFiltrados   = q ? countries.filter(p => p.nombre.toLowerCase().includes(q)) : countries;
-  const estadosFiltrados  = q ? estados.filter(e => e.display.toLowerCase().includes(q))  : estados;
-  const ciudadesFiltradas = q ? ciudades.filter(c => c.toLowerCase().includes(q))          : ciudades;
+  const paisesFiltrados = q
+    ? countries.filter((p) => p.nombre.toLowerCase().includes(q))
+    : countries;
+  const estadosFiltrados = q
+    ? estados.filter((e) => e.display.toLowerCase().includes(q))
+    : estados;
+  const ciudadesFiltradas = q
+    ? ciudades.filter((c) => c.toLowerCase().includes(q))
+    : ciudades;
 
   // ── Títulos por paso ───────────────────────────────────────────
   const titulos = {
-    consent:      { icon: "mapPin",  title: "¿Dónde estás?",               sub: "Personaliza tu experiencia según tu ubicación" },
-    detectando:   { icon: "search",  title: "Detectando tu ubicación…",    sub: "Por favor espera un momento" },
-    pais_manual:  { icon: "globe",   title: "Elige tu país",               sub: "Selecciona el país donde estás" },
-    departamento: { icon: "mapPin",  title: `Departamento en ${paisElegido?.nombre || "…"}`, sub: "Elige tu zona o confirma solo el país" },
-    ciudad:       { icon: "store",   title: `Ciudad en ${deptElegido || "…"}`,              sub: "Elige tu ciudad o confirma solo el departamento" },
+    consent: {
+      icon: "mapPin",
+      title: "¿Dónde estás?",
+      sub: "Personaliza tu experiencia según tu ubicación",
+    },
+    detectando: {
+      icon: "search",
+      title: "Detectando tu ubicación…",
+      sub: "Por favor espera un momento",
+    },
+    pais_manual: {
+      icon: "globe",
+      title: "Elige tu país",
+      sub: "Selecciona el país donde estás",
+    },
+    departamento: {
+      icon: "mapPin",
+      title: `Departamento en ${paisElegido?.nombre || "…"}`,
+      sub: "Elige tu zona o confirma solo el país",
+    },
+    ciudad: {
+      icon: "store",
+      title: `Ciudad en ${deptElegido || "…"}`,
+      sub: "Elige tu ciudad o confirma solo el departamento",
+    },
   };
   const t = titulos[paso] || titulos.consent;
 
@@ -132,50 +182,83 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
       <div
         onClick={onSaltar}
         style={{
-          position: "fixed", inset: 0, background: "rgba(26,18,8,.60)",
-          zIndex: 900, backdropFilter: "blur(6px)", cursor: "pointer",
+          position: "fixed",
+          inset: 0,
+          background: "rgba(26,18,8,.60)",
+          zIndex: 900,
+          backdropFilter: "blur(6px)",
+          cursor: "pointer",
         }}
       />
 
-      <div style={{
-        position: "fixed", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 901,
-        background: "var(--surface)", borderRadius: 20,
-        boxShadow: "0 32px 80px rgba(26,18,8,.28)",
-        width: "min(440px, 92vw)",
-        overflow: "hidden",
-        animation: "modalIn 0.22s cubic-bezier(.34,1.56,.64,1)",
-      }}>
-
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 901,
+          background: "var(--surface)",
+          borderRadius: 20,
+          boxShadow: "0 32px 80px rgba(26,18,8,.28)",
+          width: "min(440px, 92vw)",
+          overflow: "hidden",
+          animation: "modalIn 0.22s cubic-bezier(.34,1.56,.64,1)",
+        }}
+      >
         {/* Barra de progreso */}
         {paso !== "consent" && paso !== "detectando" && (
           <div style={{ height: 3, background: "#F0EBE5" }}>
-            <div style={{
-              height: "100%", background: "linear-gradient(90deg, var(--brand), #FF6B35)",
-              width: progreso[paso] || "25%",
-              transition: "width 0.4s ease", borderRadius: 3,
-            }} />
+            <div
+              style={{
+                height: "100%",
+                background: "linear-gradient(90deg, var(--brand), #FF6B35)",
+                width: progreso[paso] || "25%",
+                transition: "width 0.4s ease",
+                borderRadius: 3,
+              }}
+            />
           </div>
         )}
 
         {/* Header */}
-        <div style={{ padding: "28px 28px 20px", textAlign: "center", borderBottom: paso === "consent" ? "none" : "1px solid #F0EBE5", position: "relative" }}>
-
+        <div
+          style={{
+            padding: "28px 28px 20px",
+            textAlign: "center",
+            borderBottom: paso === "consent" ? "none" : "1px solid #F0EBE5",
+            position: "relative",
+          }}
+        >
           {/* Cerrar */}
           <button
             onClick={onSaltar}
             title="Cerrar"
             style={{
-              position: "absolute", right: 14, top: 14,
-              width: 30, height: 30,
-              background: "var(--bg)", border: "none", borderRadius: "50%",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "var(--text-2)", fontSize: 16,
+              position: "absolute",
+              right: 14,
+              top: 14,
+              width: 30,
+              height: 30,
+              background: "var(--bg)",
+              border: "none",
+              borderRadius: "50%",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--text-2)",
+              fontSize: 16,
               transition: "background 0.15s, color 0.15s",
             }}
-            onMouseOver={e => { e.currentTarget.style.background = "var(--border)"; e.currentTarget.style.color = "var(--text-1)"; }}
-            onMouseOut={e => { e.currentTarget.style.background = "var(--bg)"; e.currentTarget.style.color = "var(--text-2)"; }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "var(--border)";
+              e.currentTarget.style.color = "var(--text-1)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "var(--bg)";
+              e.currentTarget.style.color = "var(--text-2)";
+            }}
           >
             <AppIcon name="x" size={14} />
           </button>
@@ -184,15 +267,27 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           {paso !== "consent" && paso !== "detectando" && (
             <button
               onClick={() => {
-                if (paso === "pais_manual")  setPaso("consent");
-                if (paso === "departamento") { setPaso(gpsPais ? "consent" : "pais_manual"); }
-                if (paso === "ciudad")        setPaso("departamento");
+                if (paso === "pais_manual") setPaso("consent");
+                if (paso === "departamento") {
+                  setPaso(gpsPais ? "consent" : "pais_manual");
+                }
+                if (paso === "ciudad") setPaso("departamento");
               }}
               style={{
-                position: "absolute", left: 16, top: 18,
-                background: "var(--bg)", border: "none", borderRadius: 8,
-                padding: "6px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                color: "var(--text-2)", fontSize: 12, fontWeight: 600,
+                position: "absolute",
+                left: 16,
+                top: 18,
+                background: "var(--bg)",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 10px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                color: "var(--text-2)",
+                fontSize: 12,
+                fontWeight: 600,
               }}
             >
               <AppIcon name="chevronLeft" size={13} /> Atrás
@@ -200,16 +295,32 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
           )}
 
           {/* Ícono */}
-          <div style={{
-            width: 60, height: 60, borderRadius: "50%",
-            background: paso === "detectando" ? "#F0EBE5" : "linear-gradient(135deg, var(--brand-light), #FFE4D6)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 16px", fontSize: 26,
-            boxShadow: "0 4px 16px rgba(232,70,10,.15)",
-            animation: paso === "detectando" ? "pulseIcon 1.2s infinite" : "none",
-          }}>
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: "50%",
+              background:
+                paso === "detectando"
+                  ? "#F0EBE5"
+                  : "linear-gradient(135deg, var(--brand-light), #FFE4D6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              fontSize: 26,
+              boxShadow: "0 4px 16px rgba(232,70,10,.15)",
+              animation:
+                paso === "detectando" ? "pulseIcon 1.2s infinite" : "none",
+            }}
+          >
             {paso === "detectando" ? (
-              <div style={{ animation: "spin 1s linear infinite", display: "flex" }}>
+              <div
+                style={{
+                  animation: "spin 1s linear infinite",
+                  display: "flex",
+                }}
+              >
                 <AppIcon name="refresh" size={24} color="var(--brand)" />
               </div>
             ) : (
@@ -217,24 +328,57 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
             )}
           </div>
 
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 800, color: "var(--text-1)", marginBottom: 6, lineHeight: 1.25 }}>
+          <h2
+            style={{
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: 18,
+              fontWeight: 800,
+              color: "var(--text-1)",
+              marginBottom: 6,
+              lineHeight: 1.25,
+            }}
+          >
             {t.title}
           </h2>
-          <p style={{ fontSize: 13, color: "var(--text-2)", margin: 0, lineHeight: 1.55 }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--text-2)",
+              margin: 0,
+              lineHeight: 1.55,
+            }}
+          >
             {t.sub}
           </p>
 
           {/* Badge país GPS */}
           {gpsPais && paso === "departamento" && (
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "var(--brand-light)", color: "var(--brand)",
-              padding: "5px 14px", borderRadius: 20, fontSize: 13, fontWeight: 700,
-              marginTop: 10,
-            }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: "var(--brand-light)",
+                color: "var(--brand)",
+                padding: "5px 14px",
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: 700,
+                marginTop: 10,
+              }}
+            >
               <span style={{ fontSize: 18 }}>{gpsPais.bandera}</span>
               {gpsPais.nombre}
-              <span style={{ fontSize: 10, background: "var(--brand)", color: "var(--surface)", padding: "1px 6px", borderRadius: 10, marginLeft: 2 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  background: "var(--brand)",
+                  color: "var(--surface)",
+                  padding: "1px 6px",
+                  borderRadius: 10,
+                  marginLeft: 2,
+                }}
+              >
                 GPS <AppIcon name="check" size={10} color="#fff" />
               </span>
             </div>
@@ -250,16 +394,32 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               <button
                 onClick={solicitarGPS}
                 style={{
-                  width: "100%", padding: "14px 20px", borderRadius: 12,
+                  width: "100%",
+                  padding: "14px 20px",
+                  borderRadius: 12,
                   background: "linear-gradient(135deg, var(--brand), #FF6B35)",
-                  color: "var(--surface)", border: "none", cursor: "pointer",
-                  fontSize: 14, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  color: "var(--surface)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                   boxShadow: "0 4px 16px rgba(232,70,10,.35)",
                   transition: "transform 0.15s, box-shadow 0.15s",
                 }}
-                onMouseOver={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(232,70,10,.45)"; }}
-                onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(232,70,10,.35)"; }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 6px 20px rgba(232,70,10,.45)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 16px rgba(232,70,10,.35)";
+                }}
               >
                 <AppIcon name="mapPin" size={16} />
                 Usar mi ubicación GPS
@@ -268,28 +428,61 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
               <button
                 onClick={() => setPaso("pais_manual")}
                 style={{
-                  width: "100%", padding: "12px 20px", borderRadius: 12,
-                  background: "var(--bg)", color: "var(--text-1)",
-                  border: "1.5px solid var(--border)", cursor: "pointer",
-                  fontSize: 13, fontWeight: 600,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  width: "100%",
+                  padding: "12px 20px",
+                  borderRadius: 12,
+                  background: "var(--bg)",
+                  color: "var(--text-1)",
+                  border: "1.5px solid var(--border)",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                   transition: "all var(--transition)",
                 }}
-                onMouseOver={e => e.currentTarget.style.background = "#F0EBE5"}
-                onMouseOut={e => e.currentTarget.style.background = "var(--bg)"}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.background = "#F0EBE5")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.background = "var(--bg)")
+                }
               >
                 <AppIcon name="globe" size={16} /> Elegir país manualmente
               </button>
 
               <button
                 onClick={onSaltar}
-                style={{ width: "100%", padding: "10px", border: "none", background: "transparent", color: "var(--text-3)", cursor: "pointer", fontSize: 12, fontWeight: 500 }}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--text-3)",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
               >
                 Mostrar todos los negocios sin filtrar
               </button>
             </div>
-            <p style={{ fontSize: 10, color: "var(--text-4)", marginTop: 14, textAlign: "center", lineHeight: 1.5 }}>
-              <AppIcon name="lock" size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+            <p
+              style={{
+                fontSize: 10,
+                color: "var(--text-4)",
+                marginTop: 14,
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              <AppIcon
+                name="lock"
+                size={12}
+                style={{ verticalAlign: "middle", marginRight: 4 }}
+              />
               Tu ubicación no se guarda ni se comparte con terceros.
             </p>
           </div>
@@ -298,18 +491,44 @@ export default function LocationPermissionModal({ onConfirmar, onSaltar }) {
         {/* PASO: detectando GPS */}
         {paso === "detectando" && (
           <div style={{ padding: "20px 28px 32px", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 16 }}>
-              {[0, 1, 2].map(i => (
-                <div key={i} style={{
-                  width: 8, height: 8, borderRadius: "50%", background: "var(--brand)",
-                  animation: `bounce 0.8s ease ${i * 0.15}s infinite`,
-                }} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 6,
+                marginBottom: 16,
+              }}
+            >
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "var(--brand)",
+                    animation: `bounce 0.8s ease ${i * 0.15}s infinite`,
+                  }}
+                />
               ))}
             </div>
-            <p style={{ fontSize: 13, color: "var(--text-3)" }}>Obteniendo tu país…</p>
+            <p style={{ fontSize: 13, color: "var(--text-3)" }}>
+              Obteniendo tu país…
+            </p>
             <button
-              onClick={() => { setPaso("pais_manual"); setGpsEstado("idle"); }}
-              style={{ marginTop: 16, background: "none", border: "none", color: "var(--text-3)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+              onClick={() => {
+                setPaso("pais_manual");
+                setGpsEstado("idle");
+              }}
+              style={{
+                marginTop: 16,
+                background: "none",
+                border: "none",
+                color: "var(--text-3)",
+                fontSize: 12,
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
             >
               Elegir manualmente
             </button>
@@ -425,34 +644,64 @@ function ConfirmBanner({ icon, label, sublabel, onClick }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 12,
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
         padding: "12px 20px",
         background: hover ? "#FFF5F0" : "var(--brand-light)",
-        border: "none", borderBottom: "1px solid var(--brand-border)",
-        cursor: "pointer", textAlign: "left",
+        border: "none",
+        borderBottom: "1px solid var(--brand-border)",
+        cursor: "pointer",
+        textAlign: "left",
         transition: "background 0.15s",
       }}
     >
-      <div style={{
-        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-        background: "linear-gradient(135deg, var(--brand), #FF6B35)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        {icon === "mapPin"
-          ? <AppIcon name="mapPin" size={16} color="#fff" />
-          : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
-        }
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          flexShrink: 0,
+          background: "linear-gradient(135deg, var(--brand), #FF6B35)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {icon === "mapPin" ? (
+          <AppIcon name="mapPin" size={16} color="#fff" />
+        ) : (
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+        )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--brand)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "var(--brand)",
+            marginBottom: 2,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {label}
         </div>
         <div style={{ fontSize: 11, color: "var(--text-3)" }}>{sublabel}</div>
       </div>
-      <div style={{
-        flexShrink: 0, background: "var(--brand)", color: "var(--surface)",
-        fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20,
-      }}>
+      <div
+        style={{
+          flexShrink: 0,
+          background: "var(--brand)",
+          color: "var(--surface)",
+          fontSize: 11,
+          fontWeight: 700,
+          padding: "4px 10px",
+          borderRadius: 20,
+        }}
+      >
         Confirmar
       </div>
     </button>
@@ -460,40 +709,76 @@ function ConfirmBanner({ icon, label, sublabel, onClick }) {
 }
 
 // ── Lista de selección con buscador ─────────────────────────────
-function StepLista({ items, loading, busqueda, onBusqueda, placeholder, renderItem, skeletonCount, emptyText }) {
+function StepLista({
+  items,
+  loading,
+  busqueda,
+  onBusqueda,
+  placeholder,
+  renderItem,
+  skeletonCount,
+  emptyText,
+}) {
   return (
     <div>
       <div style={{ padding: "10px 16px", borderBottom: "1px solid #F0EBE5" }}>
         <div style={{ position: "relative" }}>
-          <AppIcon name="search" size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)" }} />
+          <AppIcon
+            name="search"
+            size={13}
+            style={{
+              position: "absolute",
+              left: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-3)",
+            }}
+          />
           <input
             autoFocus
             type="text"
             placeholder={placeholder}
             value={busqueda}
-            onChange={e => onBusqueda(e.target.value)}
+            onChange={(e) => onBusqueda(e.target.value)}
             style={{
-              width: "100%", boxSizing: "border-box",
-              padding: "8px 10px 8px 32px", borderRadius: 8,
-              border: "1.5px solid var(--border)", fontSize: 13, color: "var(--text-1)",
-              background: "var(--surface)", outline: "none", transition: "border-color 0.15s",
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "8px 10px 8px 32px",
+              borderRadius: 8,
+              border: "1.5px solid var(--border)",
+              fontSize: 13,
+              color: "var(--text-1)",
+              background: "var(--surface)",
+              outline: "none",
+              transition: "border-color 0.15s",
             }}
-            onFocus={e => e.target.style.borderColor = "var(--brand)"}
-            onBlur={e => e.target.style.borderColor = "var(--border)"}
+            onFocus={(e) => (e.target.style.borderColor = "var(--brand)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
           />
         </div>
       </div>
 
-      <div style={{ maxHeight: 280, overflowY: "auto", padding: "8px 12px 12px" }}>
+      <div
+        style={{ maxHeight: 280, overflowY: "auto", padding: "8px 12px 12px" }}
+      >
         {loading ? (
           <SkeletonRows count={skeletonCount} />
         ) : items.length > 0 ? (
           items.map((item, i) => {
             const { icon, label, onClick } = renderItem(item);
-            return <RowBtn key={i} icon={icon} label={label} onClick={onClick} />;
+            return (
+              <RowBtn key={i} icon={icon} label={label} onClick={onClick} />
+            );
           })
         ) : (
-          <div style={{ textAlign: "center", padding: "24px", color: "var(--text-3)", fontSize: 13 }}>
+          <div
+            style={{
+              textAlign: "center",
+              padding: "24px",
+              color: "var(--text-3)",
+              fontSize: 13,
+            }}
+          >
             {emptyText || "Sin resultados"}
           </div>
         )}
@@ -510,8 +795,15 @@ function RowBtn({ icon, label, onClick }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 10,
-        padding: "9px 10px", borderRadius: 9, border: "none", cursor: "pointer", textAlign: "left",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 10px",
+        borderRadius: 9,
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
         background: hover ? "var(--brand-light)" : "transparent",
         color: hover ? "var(--brand)" : "var(--text-1)",
         transition: "background 0.12s, color 0.12s",
@@ -519,16 +811,42 @@ function RowBtn({ icon, label, onClick }) {
       }}
     >
       {icon !== null && (
-        <span style={{ width: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          {(icon === "mapPin" || icon === "globe" || icon === "store" || icon === "search")
-            ? <AppIcon name={icon} size={18} color="var(--text-2)" />
-            : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>}
+        <span
+          style={{
+            width: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {icon === "mapPin" ||
+          icon === "globe" ||
+          icon === "store" ||
+          icon === "search" ? (
+            <AppIcon name={icon} size={18} color="var(--text-2)" />
+          ) : (
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+          )}
         </span>
       )}
-      <span style={{ fontSize: 13, fontWeight: 500, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      <span
+        style={{
+          fontSize: 13,
+          fontWeight: 500,
+          flex: 1,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
         {label}
       </span>
-      <AppIcon name="chevronRight" size={12} style={{ opacity: 0.3, flexShrink: 0 }} />
+      <AppIcon
+        name="chevronRight"
+        size={12}
+        style={{ opacity: 0.3, flexShrink: 0 }}
+      />
     </button>
   );
 }
@@ -537,9 +855,34 @@ function SkeletonRows({ count }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", marginBottom: 1 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#F0EBE5", animation: "shimmer 1.2s infinite" }} />
-          <div style={{ height: 13, borderRadius: 4, background: "#F0EBE5", animation: "shimmer 1.2s infinite", width: `${55 + (i * 17 % 35)}%` }} />
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "9px 10px",
+            marginBottom: 1,
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "#F0EBE5",
+              animation: "shimmer 1.2s infinite",
+            }}
+          />
+          <div
+            style={{
+              height: 13,
+              borderRadius: 4,
+              background: "#F0EBE5",
+              animation: "shimmer 1.2s infinite",
+              width: `${55 + ((i * 17) % 35)}%`,
+            }}
+          />
         </div>
       ))}
       <style>{`@keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
@@ -549,5 +892,7 @@ function SkeletonRows({ count }) {
 
 function getFlagEmoji(iso2) {
   if (!iso2 || iso2.length !== 2) return null;
-  return String.fromCodePoint(...[...iso2.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+  return String.fromCodePoint(
+    ...[...iso2.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)),
+  );
 }

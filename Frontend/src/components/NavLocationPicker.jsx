@@ -1,4 +1,10 @@
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useLocationData } from "../hooks/useLocationData";
 import AppIcon from "./AppIcon";
 
@@ -7,28 +13,32 @@ import AppIcon from "./AppIcon";
  * Va en la navbar. Flujo: País → Departamento/Estado → Ciudad.
  * Carga todos los países del mundo desde la API countriesnow.space.
  */
-const NavLocationPicker = forwardRef(function NavLocationPicker({
-  paisSeleccionado,       // iso2 | null
-  paisNombre,             // nombre legible del país seleccionado
-  departamentoSeleccionado,
-  ciudadSeleccionada,
-  onCambiar,              // ({ iso2, nombre, departamento, ciudad }) => void
-  renderTrigger = true,   // si es false, no se renderiza el botón visual (solo el dropdown, controlado por ref)
-}, refExterno) {
-  const [abierto, setAbierto]     = useState(false);
-  const [paso, setPaso]           = useState("pais"); // "pais" | "departamento" | "ciudad"
-  const [paisTemp, setPaisTemp]   = useState(null);   // { iso2, nombre }
-  const [deptTemp, setDeptTemp]   = useState(null);   // { display, original }
-  const [busqueda, setBusqueda]   = useState("");
+const NavLocationPicker = forwardRef(function NavLocationPicker(
+  {
+    paisSeleccionado, // iso2 | null
+    paisNombre, // nombre legible del país seleccionado
+    departamentoSeleccionado,
+    ciudadSeleccionada,
+    onCambiar, // ({ iso2, nombre, departamento, ciudad }) => void
+    renderTrigger = true, // si es false, no se renderiza el botón visual (solo el dropdown, controlado por ref)
+  },
+  refExterno,
+) {
+  const [abierto, setAbierto] = useState(false);
+  const [paso, setPaso] = useState("pais"); // "pais" | "departamento" | "ciudad"
+  const [paisTemp, setPaisTemp] = useState(null); // { iso2, nombre }
+  const [deptTemp, setDeptTemp] = useState(null); // { display, original }
+  const [busqueda, setBusqueda] = useState("");
 
   // Estados y ciudades cargados dinámicamente
-  const [estados, setEstados]       = useState([]);
-  const [ciudades, setCiudades]     = useState([]);
-  const [loadingEstados, setLoadingEstados]   = useState(false);
+  const [estados, setEstados] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [loadingEstados, setLoadingEstados] = useState(false);
   const [loadingCiudades, setLoadingCiudades] = useState(false);
 
   const ref = useRef(null);
-  const { countries, loadingCountries, fetchStates, fetchCities } = useLocationData();
+  const { countries, loadingCountries, fetchStates, fetchCities } =
+    useLocationData();
 
   // Cerrar al click fuera
   useEffect(() => {
@@ -60,7 +70,10 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
 
   // Permite que un botón externo (ej. en móvil) abra este selector
   useImperativeHandle(refExterno, () => ({
-    abrir: () => { setAbierto(true); resetTemp(); },
+    abrir: () => {
+      setAbierto(true);
+      resetTemp();
+    },
   }));
 
   // ── Cargar estados al elegir país ──
@@ -91,19 +104,34 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
   };
 
   const elegirCiudad = (ciudad) => {
-    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp.display, ciudad });
+    onCambiar({
+      iso2: paisTemp.iso2,
+      nombre: paisTemp.nombre,
+      departamento: deptTemp.display,
+      ciudad,
+    });
     setAbierto(false);
     resetTemp();
   };
 
   const elegirSoloPais = () => {
-    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: null, ciudad: null });
+    onCambiar({
+      iso2: paisTemp.iso2,
+      nombre: paisTemp.nombre,
+      departamento: null,
+      ciudad: null,
+    });
     setAbierto(false);
     resetTemp();
   };
 
   const elegirSoloDept = () => {
-    onCambiar({ iso2: paisTemp.iso2, nombre: paisTemp.nombre, departamento: deptTemp.display, ciudad: null });
+    onCambiar({
+      iso2: paisTemp.iso2,
+      nombre: paisTemp.nombre,
+      departamento: deptTemp.display,
+      ciudad: null,
+    });
     setAbierto(false);
     resetTemp();
   };
@@ -128,58 +156,109 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
 
   // ── Label del botón trigger ──
   const labelPrincipal = ciudadSeleccionada || paisNombre || null;
-  const labelSub       = ciudadSeleccionada
-    ? (departamentoSeleccionado || paisNombre)
+  const labelSub = ciudadSeleccionada
+    ? departamentoSeleccionado || paisNombre
     : departamentoSeleccionado || null;
 
   const titulos = {
-    pais:         "¿En qué país?",
-    departamento: paisTemp ? `Departamento · ${paisTemp.nombre}` : "Departamento / Estado",
-    ciudad:       deptTemp ? `Ciudad en ${deptTemp.display}` : "Ciudad",
+    pais: "¿En qué país?",
+    departamento: paisTemp
+      ? `Departamento · ${paisTemp.nombre}`
+      : "Departamento / Estado",
+    ciudad: deptTemp ? `Ciudad en ${deptTemp.display}` : "Ciudad",
   };
 
   return (
     <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
       {/* ── Botón trigger ── */}
       {renderTrigger && (
-      <button
-        id="nav-location-picker-btn"
-        onClick={abrir}
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "rgba(255,255,255,.07)",
-          border: "1px solid rgba(255,255,255,.13)",
-          borderRadius: 10, padding: "5px 10px",
-          cursor: "pointer", transition: "background 0.15s",
-          maxWidth: 200, minWidth: 80,
-        }}
-        onMouseOver={(e) => e.currentTarget.style.background = "rgba(255,255,255,.12)"}
-        onMouseOut={(e) => e.currentTarget.style.background = "rgba(255,255,255,.07)"}
-      >
-        <AppIcon name="mapPin" size={14} color="var(--brand)" />
-        <div style={{ overflow: "hidden", textAlign: "left", flex: 1, minWidth: 0 }}>
-          {labelPrincipal ? (
-            <>
-              {labelSub && (
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,.45)", lineHeight: 1, marginBottom: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {labelSub}
+        <button
+          id="nav-location-picker-btn"
+          onClick={abrir}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "rgba(255,255,255,.07)",
+            border: "1px solid rgba(255,255,255,.13)",
+            borderRadius: 10,
+            padding: "5px 10px",
+            cursor: "pointer",
+            transition: "background 0.15s",
+            maxWidth: 200,
+            minWidth: 80,
+          }}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,.12)")
+          }
+          onMouseOut={(e) =>
+            (e.currentTarget.style.background = "rgba(255,255,255,.07)")
+          }
+        >
+          <AppIcon name="mapPin" size={14} color="var(--brand)" />
+          <div
+            style={{
+              overflow: "hidden",
+              textAlign: "left",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {labelPrincipal ? (
+              <>
+                {labelSub && (
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "rgba(255,255,255,.45)",
+                      lineHeight: 1,
+                      marginBottom: 1,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {labelSub}
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "var(--surface)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {labelPrincipal}
                 </div>
-              )}
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--surface)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.2 }}>
-                {labelPrincipal}
+              </>
+            ) : (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "rgba(255,255,255,.55)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Seleccionar zona
               </div>
-            </>
-          ) : (
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,.55)", whiteSpace: "nowrap" }}>
-              Seleccionar zona
-            </div>
-          )}
-        </div>
-        <AppIcon
-          name="chevronDown" size={12}
-          style={{ opacity: 0.4, flexShrink: 0, marginLeft: 2, transition: "transform 0.2s", transform: abierto ? "rotate(180deg)" : "rotate(0deg)" }}
-        />
-      </button>
+            )}
+          </div>
+          <AppIcon
+            name="chevronDown"
+            size={12}
+            style={{
+              opacity: 0.4,
+              flexShrink: 0,
+              marginLeft: 2,
+              transition: "transform 0.2s",
+              transform: abierto ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          />
+        </button>
       )}
 
       {/* ── Dropdown ── */}
@@ -187,60 +266,136 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
         <>
           {/* Overlay */}
           <div
-            style={{ position: "fixed", inset: 0, zIndex: renderTrigger ? 149 : 599 }}
-            onClick={() => { setAbierto(false); resetTemp(); }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: renderTrigger ? 149 : 599,
+            }}
+            onClick={() => {
+              setAbierto(false);
+              resetTemp();
+            }}
           />
 
-          <div style={
-            renderTrigger ? {
-              position: "absolute", left: 0, top: "calc(100% + 8px)",
-              background: "var(--surface)", borderRadius: 14,
-              border: "1px solid var(--border)",
-              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
-              width: 300, overflow: "hidden", zIndex: 200,
-              animation: "locSlide 0.18s ease",
-            } : {
-              position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-              background: "var(--surface)", borderRadius: 14,
-              border: "1px solid var(--border)",
-              boxShadow: "0 12px 40px rgba(0,0,0,.18)",
-              width: "calc(100vw - 32px)", maxWidth: 340, overflow: "hidden", zIndex: 600,
-              animation: "locSlide 0.18s ease",
+          <div
+            style={
+              renderTrigger
+                ? {
+                    position: "absolute",
+                    left: 0,
+                    top: "calc(100% + 8px)",
+                    background: "var(--surface)",
+                    borderRadius: 14,
+                    border: "1px solid var(--border)",
+                    boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+                    width: 300,
+                    overflow: "hidden",
+                    zIndex: 200,
+                    animation: "locSlide 0.18s ease",
+                  }
+                : {
+                    position: "fixed",
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    background: "var(--surface)",
+                    borderRadius: 14,
+                    border: "1px solid var(--border)",
+                    boxShadow: "0 12px 40px rgba(0,0,0,.18)",
+                    width: "calc(100vw - 32px)",
+                    maxWidth: 340,
+                    overflow: "hidden",
+                    zIndex: 600,
+                    animation: "locSlide 0.18s ease",
+                  }
             }
-          }>
-
+          >
             {/* ── Header ── */}
-            <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid #F0EBE5", background: "#FDFAF8" }}>
+            <div
+              style={{
+                padding: "14px 16px 10px",
+                borderBottom: "1px solid #F0EBE5",
+                background: "#FDFAF8",
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {paso !== "pais" && (
                   <button
                     onClick={() => {
-                      if (paso === "ciudad") { setPaso("departamento"); setBusqueda(""); }
-                      else { setPaso("pais"); setBusqueda(""); }
+                      if (paso === "ciudad") {
+                        setPaso("departamento");
+                        setBusqueda("");
+                      } else {
+                        setPaso("pais");
+                        setBusqueda("");
+                      }
                     }}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", color: "var(--text-3)", display: "flex", alignItems: "center" }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "2px 4px",
+                      color: "var(--text-3)",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
                   >
                     <AppIcon name="chevronLeft" size={14} />
                   </button>
                 )}
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", flex: 1 }}>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--text-1)",
+                    flex: 1,
+                  }}
+                >
                   {titulos[paso]}
                 </span>
                 {/* Breadcrumb bandera */}
                 {paisTemp && paso !== "pais" && (
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{paisTemp.bandera}</span>
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>
+                    {paisTemp.bandera}
+                  </span>
                 )}
               </div>
               {/* Breadcrumb pills */}
               {(paisTemp || deptTemp) && (
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    marginTop: 6,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {paisTemp && (
-                    <span style={{ fontSize: 10, background: "var(--brand-light)", color: "var(--brand)", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        background: "var(--brand-light)",
+                        color: "var(--brand)",
+                        padding: "2px 8px",
+                        borderRadius: 20,
+                        fontWeight: 600,
+                      }}
+                    >
                       {paisTemp.nombre}
                     </span>
                   )}
                   {deptTemp && (
-                    <span style={{ fontSize: 10, background: "#F0EBE5", color: "var(--text-2)", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        background: "#F0EBE5",
+                        color: "var(--text-2)",
+                        padding: "2px 8px",
+                        borderRadius: 20,
+                        fontWeight: 600,
+                      }}
+                    >
                       {deptTemp.display}
                     </span>
                   )}
@@ -249,34 +404,55 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
             </div>
 
             {/* ── Buscador ── */}
-            <div style={{ padding: "8px 12px", borderBottom: "1px solid #F0EBE5" }}>
+            <div
+              style={{ padding: "8px 12px", borderBottom: "1px solid #F0EBE5" }}
+            >
               <div style={{ position: "relative" }}>
-                <AppIcon name="search" size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--text-3)" }} />
+                <AppIcon
+                  name="search"
+                  size={13}
+                  style={{
+                    position: "absolute",
+                    left: 9,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--text-3)",
+                  }}
+                />
                 <input
                   autoFocus
                   type="text"
                   placeholder={
-                    paso === "pais"         ? "Buscar país…"         :
-                    paso === "departamento" ? "Buscar departamento…" :
-                                             "Buscar ciudad…"
+                    paso === "pais"
+                      ? "Buscar país…"
+                      : paso === "departamento"
+                        ? "Buscar departamento…"
+                        : "Buscar ciudad…"
                   }
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   style={{
-                    width: "100%", boxSizing: "border-box",
-                    padding: "7px 10px 7px 30px", borderRadius: 8,
-                    border: "1.5px solid var(--border)", fontSize: 13, color: "var(--text-1)",
-                    background: "var(--surface)", outline: "none", transition: "border-color 0.15s",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "7px 10px 7px 30px",
+                    borderRadius: 8,
+                    border: "1.5px solid var(--border)",
+                    fontSize: 13,
+                    color: "var(--text-1)",
+                    background: "var(--surface)",
+                    outline: "none",
+                    transition: "border-color 0.15s",
                   }}
-                  onFocus={(e) => e.target.style.borderColor = "var(--brand)"}
-                  onBlur={(e) => e.target.style.borderColor = "var(--border)"}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--brand)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                 />
               </div>
             </div>
 
             {/* ── Lista ── */}
-            <div style={{ maxHeight: 300, overflowY: "auto", padding: "6px 8px" }}>
-
+            <div
+              style={{ maxHeight: 300, overflowY: "auto", padding: "6px 8px" }}
+            >
               {/* PASO: países */}
               {paso === "pais" && (
                 <>
@@ -311,7 +487,10 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
                 <>
                   <ItemBtn
                     onClick={elegirSoloPais}
-                    activo={paisSeleccionado === paisTemp?.iso2 && !departamentoSeleccionado}
+                    activo={
+                      paisSeleccionado === paisTemp?.iso2 &&
+                      !departamentoSeleccionado
+                    }
                     icon={paisTemp?.bandera || null}
                     label={`Todo ${paisTemp?.nombre}`}
                     sub="Sin filtro de departamento"
@@ -323,7 +502,10 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
                       <ItemBtn
                         key={d.original}
                         onClick={() => elegirDept(d)}
-                        activo={departamentoSeleccionado === d.display && !ciudadSeleccionada}
+                        activo={
+                          departamentoSeleccionado === d.display &&
+                          !ciudadSeleccionada
+                        }
                         icon="mapPin"
                         label={d.display}
                         chevron
@@ -340,7 +522,10 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
                 <>
                   <ItemBtn
                     onClick={elegirSoloDept}
-                    activo={departamentoSeleccionado === deptTemp?.display && !ciudadSeleccionada}
+                    activo={
+                      departamentoSeleccionado === deptTemp?.display &&
+                      !ciudadSeleccionada
+                    }
                     icon="mapPin"
                     label={`Todo ${deptTemp?.display}`}
                     sub="Sin filtro de ciudad"
@@ -364,23 +549,51 @@ const NavLocationPicker = forwardRef(function NavLocationPicker({
               )}
 
               {/* Vacío en búsqueda */}
-              {paso === "pais" && !loadingCountries && paisesFiltrados.length === 0 && busqueda && (
-                <EmptyMsg texto={`No se encontró "${busqueda}"`} />
-              )}
+              {paso === "pais" &&
+                !loadingCountries &&
+                paisesFiltrados.length === 0 &&
+                busqueda && <EmptyMsg texto={`No se encontró "${busqueda}"`} />}
             </div>
 
             {/* ── Footer: selección actual ── */}
             {paisSeleccionado && (
-              <div style={{ padding: "10px 14px", borderTop: "1px solid #F0EBE5", background: "#FDFAF8", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontSize: 11, color: "var(--text-3)", display: "flex", alignItems: "center", gap: 5 }}>
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderTop: "1px solid #F0EBE5",
+                  background: "#FDFAF8",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                  }}
+                >
                   <AppIcon name="mapPin" size={11} color="var(--brand)" />
                   <span>
-                    {ciudadSeleccionada || departamentoSeleccionado || paisNombre}
+                    {ciudadSeleccionada ||
+                      departamentoSeleccionado ||
+                      paisNombre}
                   </span>
                 </div>
                 <button
                   onClick={limpiarTodo}
-                  style={{ fontSize: 11, color: "var(--brand)", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: "2px 6px" }}
+                  style={{
+                    fontSize: 11,
+                    color: "var(--brand)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                  }}
                 >
                   Limpiar
                 </button>
@@ -412,26 +625,78 @@ function ItemBtn({ onClick, activo, icon, label, sub, chevron }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        width: "100%", display: "flex", alignItems: "center", gap: 10,
-        padding: "9px 10px", borderRadius: 8, border: "none", cursor: "pointer", textAlign: "left",
-        background: activo ? "var(--brand-light)" : hover ? "var(--bg)" : "transparent",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 10px",
+        borderRadius: 8,
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        background: activo
+          ? "var(--brand-light)"
+          : hover
+            ? "var(--bg)"
+            : "transparent",
         transition: "background 0.12s",
       }}
     >
-      <span style={{ width: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        {icon === null ? null
-          : (icon === "globe" || icon === "mapPin" || icon === "store")
-            ? <AppIcon name={icon} size={18} color={activo ? "var(--brand)" : "var(--text-2)"} />
-            : <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>}
+      <span
+        style={{
+          width: 22,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {icon === null ? null : icon === "globe" ||
+          icon === "mapPin" ||
+          icon === "store" ? (
+          <AppIcon
+            name={icon}
+            size={18}
+            color={activo ? "var(--brand)" : "var(--text-2)"}
+          />
+        ) : (
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+        )}
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: activo ? 700 : 500, color: activo ? "var(--brand)" : "var(--text-1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: activo ? 700 : 500,
+            color: activo ? "var(--brand)" : "var(--text-1)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {label}
         </div>
-        {sub && <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 1 }}>{sub}</div>}
+        {sub && (
+          <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 1 }}>
+            {sub}
+          </div>
+        )}
       </div>
-      {activo && !chevron && <AppIcon name="check" size={14} color="var(--brand)" style={{ flexShrink: 0 }} />}
-      {chevron && <AppIcon name="chevronRight" size={13} style={{ opacity: 0.35, flexShrink: 0 }} />}
+      {activo && !chevron && (
+        <AppIcon
+          name="check"
+          size={14}
+          color="var(--brand)"
+          style={{ flexShrink: 0 }}
+        />
+      )}
+      {chevron && (
+        <AppIcon
+          name="chevronRight"
+          size={13}
+          style={{ opacity: 0.35, flexShrink: 0 }}
+        />
+      )}
     </button>
   );
 }
@@ -440,10 +705,34 @@ function LoadingSkeleton({ count = 5 }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: "#F0EBE5", animation: "shimmer 1.2s infinite" }} />
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "9px 10px",
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: "#F0EBE5",
+              animation: "shimmer 1.2s infinite",
+            }}
+          />
           <div style={{ flex: 1 }}>
-            <div style={{ height: 12, borderRadius: 4, background: "#F0EBE5", animation: "shimmer 1.2s infinite", width: `${60 + Math.random() * 30}%` }} />
+            <div
+              style={{
+                height: 12,
+                borderRadius: 4,
+                background: "#F0EBE5",
+                animation: "shimmer 1.2s infinite",
+                width: `${60 + Math.random() * 30}%`,
+              }}
+            />
           </div>
         </div>
       ))}
@@ -459,7 +748,14 @@ function LoadingSkeleton({ count = 5 }) {
 
 function EmptyMsg({ texto }) {
   return (
-    <div style={{ padding: "20px", textAlign: "center", color: "var(--text-3)", fontSize: 13 }}>
+    <div
+      style={{
+        padding: "20px",
+        textAlign: "center",
+        color: "var(--text-3)",
+        fontSize: 13,
+      }}
+    >
       {texto}
     </div>
   );

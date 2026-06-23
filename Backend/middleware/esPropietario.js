@@ -9,14 +9,16 @@ async function esPropietario(req, res, next) {
   try {
     const result = await pool.query(
       "SELECT propietario_id FROM negocios WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0)
       return res.status(404).json({ error: "Negocio no encontrado" });
 
     if (result.rows[0].propietario_id !== usuarioId)
-      return res.status(403).json({ error: "No tienes permiso para modificar este negocio" });
+      return res
+        .status(403)
+        .json({ error: "No tienes permiso para modificar este negocio" });
 
     next();
   } catch (err) {

@@ -21,27 +21,38 @@ const PrivacidadPage = lazy(() => import("./pages/PrivacidadPage"));
 const FormularioNegocio = lazy(() => import("./components/FormularioNegocio"));
 
 const PageLoader = () => (
-  <div style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+  <div
+    style={{
+      padding: "80px 20px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
     <div className="spinner"></div>
   </div>
 );
 
 function AppContent() {
   const { user } = useAuth();
-  const [vista,          setVista]          = useState("home");
-  const [vistaAnterior,  setVistaAnterior]  = useState("home"); // para volver tras el auth
-  const [negocioActivo,  setNegocioActivo]  = useState(null);
+  const [vista, setVista] = useState("home");
+  const [vistaAnterior, setVistaAnterior] = useState("home"); // para volver tras el auth
+  const [negocioActivo, setNegocioActivo] = useState(null);
   const [formularioOpen, setFormularioOpen] = useState(false);
-  const [negocioEditar,  setNegocioEditar]  = useState(null);
-  const [busqueda,       setBusqueda]       = useState("");
+  const [negocioEditar, setNegocioEditar] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
   const [vistaAuthInicial, setVistaAuthInicial] = useState("login");
 
   // ── Conteo de negocios del propietario (para el límite) ─────────────────
-  const [totalNegocios,  setTotalNegocios]  = useState(0);
+  const [totalNegocios, setTotalNegocios] = useState(0);
   const [limiteNegocios, setLimiteNegocios] = useState(4);
 
   useEffect(() => {
-    if (user?.rol !== "negocio") { setTotalNegocios(0); return; }
+    if (user?.rol !== "negocio") {
+      setTotalNegocios(0);
+      return;
+    }
     apiFetch("/negocios/mio/negocio").then(({ data }) => {
       if (data?.total !== undefined) {
         setTotalNegocios(data.total);
@@ -68,8 +79,16 @@ function AppContent() {
     setVista(vistaAnterior === "auth" ? "home" : vistaAnterior);
   };
 
-  const irInicio   = () => { setVista("home"); setNegocioActivo(null); setBusqueda(""); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const irNegocios = () => { setVista("negocios"); setNegocioActivo(null); };
+  const irInicio = () => {
+    setVista("home");
+    setNegocioActivo(null);
+    setBusqueda("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const irNegocios = () => {
+    setVista("negocios");
+    setNegocioActivo(null);
+  };
 
   const verDetalle = async (negocio) => {
     setNegocioActivo(negocio);
@@ -77,11 +96,19 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     try {
       const res = await fetch(`${API_URL}/negocios/${negocio.id}`);
-      if (res.ok) { const datos = await res.json(); setNegocioActivo(datos); }
-    } catch { /* usa los datos en caché */ }
+      if (res.ok) {
+        const datos = await res.json();
+        setNegocioActivo(datos);
+      }
+    } catch {
+      /* usa los datos en caché */
+    }
   };
 
-  const volver = () => { setVista("home"); setNegocioActivo(null); };
+  const volver = () => {
+    setVista("home");
+    setNegocioActivo(null);
+  };
 
   const abrirFormulario = (negocio = null) => {
     setNegocioEditar(negocio);
@@ -120,8 +147,14 @@ function AppContent() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
-
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Navbar
         onAbrirAuth={irAuth}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
@@ -190,17 +223,11 @@ function AppContent() {
             />
           )}
 
-          {vista === "ayuda" && (
-            <AyudaPage onIrInicio={irInicio} />
-          )}
+          {vista === "ayuda" && <AyudaPage onIrInicio={irInicio} />}
 
-          {vista === "terminos" && (
-            <TerminosPage onIrInicio={irInicio} />
-          )}
+          {vista === "terminos" && <TerminosPage onIrInicio={irInicio} />}
 
-          {vista === "privacidad" && (
-            <PrivacidadPage onIrInicio={irInicio} />
-          )}
+          {vista === "privacidad" && <PrivacidadPage onIrInicio={irInicio} />}
         </Suspense>
       </main>
 
@@ -208,14 +235,26 @@ function AppContent() {
         onIrInicio={irInicio}
         onIrNegocios={irNegocios}
         onVerFavoritos={(ir) => setVista(ir ? "favoritos" : "home")}
-        onIrAyuda={() => { setVista("ayuda"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        onIrTerminos={() => { setVista("terminos"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-        onIrPrivacidad={() => { setVista("privacidad"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+        onIrAyuda={() => {
+          setVista("ayuda");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onIrTerminos={() => {
+          setVista("terminos");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onIrPrivacidad={() => {
+          setVista("privacidad");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
 
       <Suspense fallback={null}>
         {formularioOpen && (
-          <FormularioNegocio negocioInicial={negocioEditar} onCerrar={cerrarFormulario} />
+          <FormularioNegocio
+            negocioInicial={negocioEditar}
+            onCerrar={cerrarFormulario}
+          />
         )}
       </Suspense>
     </div>
