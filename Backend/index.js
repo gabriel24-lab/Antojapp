@@ -44,6 +44,7 @@ app.set("trust proxy", 1);
 // ── Seguridad: headers HTTP con CSP explícita ──────────────────
 app.use(
   helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],

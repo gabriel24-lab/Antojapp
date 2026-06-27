@@ -71,6 +71,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
   const [enviadoResena, setEnviadoResena] = useState(false);
   const [errorResena, setErrorResena] = useState("");
 
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
   const favorito = esFavorito(negocio.id);
   const sede = negocio.sedes[sedeActiva];
   const abierto = estaAbierto(sede.horario);
@@ -81,6 +83,19 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       return;
     }
     toggleFavorito(negocio.id);
+  };
+
+  const urlCompartir = `${window.location.origin}/negocio/${negocio.id}`;
+
+  const handleShareWhatsApp = () => {
+    const text = `¡Mira este negocio en Antojapp!\n\n*${negocio.nombre}*\n${negocio.descripcion}\n\n${urlCompartir}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(urlCompartir);
+    setLinkCopiado(true);
+    setTimeout(() => setLinkCopiado(false), 2000);
   };
 
   const enviarResena = async (e) => {
@@ -133,14 +148,47 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
         padding: "16px var(--content-px, 16px) 80px",
       }}
     >
-      {/* Volver */}
-      <button
-        onClick={onVolver}
-        className="btn-ghost"
-        style={{ marginBottom: 20 }}
-      >
-        <AppIcon name="arrowLeft" size={16} /> Volver a resultados
-      </button>
+      {/* Barra superior con volver y compartir */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <button
+          onClick={onVolver}
+          className="btn-ghost"
+          style={{ paddingLeft: 0 }}
+        >
+          <AppIcon name="arrowLeft" size={16} /> Volver a resultados
+        </button>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={handleShareWhatsApp}
+            className="btn-ghost"
+            style={{ color: "var(--green)", background: "var(--green-bg)", padding: "6px 12px", borderRadius: 8, fontSize: 14 }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style={{ marginRight: 6 }}
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.859L.057 23.57a.75.75 0 00.914.914l5.701-1.479A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.694 9.694 0 01-4.945-1.352l-.354-.21-3.668.951.972-3.558-.229-.368A9.694 9.694 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z" />
+            </svg>
+            WhatsApp
+          </button>
+          
+          <button
+            onClick={handleCopyLink}
+            className="btn-ghost"
+            style={{ padding: "6px 12px", borderRadius: 8, fontSize: 14, background: "var(--bg)", border: "1px solid var(--border)" }}
+          >
+            <AppIcon name={linkCopiado ? "check" : "share"} size={16} color={linkCopiado ? "var(--green)" : "currentColor"} />
+            <span style={{ marginLeft: 6, color: linkCopiado ? "var(--green)" : "inherit" }}>
+              {linkCopiado ? "Copiado" : "Copiar"}
+            </span>
+          </button>
+        </div>
+      </div>
 
       {/* Hero */}
       <div
