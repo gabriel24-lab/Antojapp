@@ -228,11 +228,15 @@ function AppContent() {
           )}
 
           {vista === "detalle" && negocioActivo && (
-            <BusinessDetail
-              negocio={negocioActivo}
-              onVolver={volver}
-              onAbrirAuth={() => irAuth("login")}
-            />
+            negocioActivo.nombre ? (
+              <BusinessDetail
+                negocio={negocioActivo}
+                onVolver={volver}
+                onAbrirAuth={() => irAuth("login")}
+              />
+            ) : (
+              <PageLoader />
+            )
           )}
 
           {vista === "panel" && (

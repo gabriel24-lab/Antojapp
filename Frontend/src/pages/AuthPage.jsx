@@ -720,7 +720,7 @@ export default function AuthPage({
                     >
                       {cargando ? "Verificando..." : "Iniciar sesión"}
                     </button>
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
                       <button
                         type="button"
                         className="btn-ghost"
@@ -729,6 +729,17 @@ export default function AuthPage({
                       >
                         ¿Olvidaste tu contraseña?
                       </button>
+                      <div style={{ fontSize: 14, color: "var(--text-2)" }}>
+                        ¿No tienes cuenta?{" "}
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => cambiarVista("registro")}
+                          style={{ fontSize: 14, fontWeight: 700, padding: 0 }}
+                        >
+                          Regístrate
+                        </button>
+                      </div>
                     </div>
                   </form>
                 )}
@@ -870,6 +881,19 @@ export default function AuthPage({
                     >
                       {cargando ? "Creando cuenta..." : "Crear cuenta gratis"}
                     </button>
+                    <div style={{ textAlign: "center", marginTop: 8 }}>
+                      <div style={{ fontSize: 14, color: "var(--text-2)" }}>
+                        ¿Ya tienes cuenta?{" "}
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => cambiarVista("login")}
+                          style={{ fontSize: 14, fontWeight: 700, padding: 0 }}
+                        >
+                          Inicia sesión
+                        </button>
+                      </div>
+                    </div>
                   </form>
                 )}
 
@@ -954,41 +978,6 @@ export default function AuthPage({
                   </form>
                 )}
 
-                {/* Toggle login ↔ registro */}
-                {vista !== "recuperar" && (
-                  <div
-                    style={{
-                      marginTop: 24,
-                      paddingTop: 20,
-                      borderTop: "1px solid var(--border)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: 14, color: "var(--text-2)" }}>
-                      {vista === "login"
-                        ? "¿No tienes cuenta? "
-                        : "¿Ya tienes cuenta? "}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        cambiarVista(vista === "login" ? "registro" : "login")
-                      }
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: "var(--brand)",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {vista === "login"
-                        ? "Regístrate gratis"
-                        : "Inicia sesión"}
-                    </button>
-                  </div>
-                )}
               </>
             )}
           </div>
