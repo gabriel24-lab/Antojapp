@@ -105,6 +105,20 @@ function AppContent() {
     }
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const negocioParam = params.get("negocio");
+    if (negocioParam) {
+      const parts = negocioParam.split("-");
+      const idStr = parts[parts.length - 1];
+      const id = parseInt(idStr, 10);
+      if (!isNaN(id)) {
+        verDetalle({ id });
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, []);
+
   const volver = () => {
     setVista("home");
     setNegocioActivo(null);

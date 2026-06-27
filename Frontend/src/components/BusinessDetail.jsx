@@ -85,7 +85,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
     toggleFavorito(negocio.id);
   };
 
-  const urlCompartir = `${window.location.origin}/negocio/${negocio.id}`;
+  const slug = negocio.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, '-');
+  const urlCompartir = `${window.location.origin}/?negocio=${slug}-${negocio.id}`;
 
   const handleShareWhatsApp = () => {
     const text = `¡Mira este negocio en Antojapp!\n\n*${negocio.nombre}*\n${negocio.descripcion}\n\n${urlCompartir}`;
