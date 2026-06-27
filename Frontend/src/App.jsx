@@ -90,10 +90,15 @@ function AppContent() {
     setNegocioActivo(null);
   };
 
-  const verDetalle = async (negocio) => {
+  const verDetalle = async (negocio, fromHistory = false) => {
     setNegocioActivo(negocio);
     setVista("detalle");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    if (!fromHistory) {
+      window.history.pushState({ vista: "detalle", id: negocio.id }, "");
+    }
+
     try {
       const res = await fetch(`${API_URL}/negocios/${negocio.id}`);
       if (res.ok) {
@@ -106,6 +111,11 @@ function AppContent() {
   };
 
   useEffect(() => {
+    // Inicializar el estado de la historia base si no existe
+    if (!window.history.state) {
+      window.history.replaceState({ vista: "home" }, "");
+    }
+
     const params = new URLSearchParams(window.location.search);
     const negocioParam = params.get("negocio");
     if (negocioParam) {
@@ -113,15 +123,28 @@ function AppContent() {
       const idStr = parts[parts.length - 1];
       const id = parseInt(idStr, 10);
       if (!isNaN(id)) {
-        verDetalle({ id });
-        window.history.replaceState({}, '', window.location.pathname);
+        verDetalle({ id }, true);
+        window.history.replaceState({ vista: "detalle", id }, '', window.location.pathname);
       }
     }
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.vista === "detalle") {
+        verDetalle({ id: e.state.id }, true);
+      } else {
+        setVista(e.state?.vista || "home");
+        setNegocioActivo(null);
+      }
+    };
+    
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   const volver = () => {
     setVista("home");
     setNegocioActivo(null);
+    window.history.pushState({ vista: "home" }, "");
   };
 
   const abrirFormulario = (negocio = null) => {
