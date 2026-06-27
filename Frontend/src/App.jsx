@@ -69,8 +69,9 @@ function AppContent() {
   }, [user]);
 
   const irAuth = (vistaForm = "login") => {
+    const vistaDestino = typeof vistaForm === "string" ? vistaForm : "login";
     setVistaAnterior(vista === "auth" ? vistaAnterior : vista);
-    setVistaAuthInicial(vistaForm);
+    setVistaAuthInicial(vistaDestino);
     setVista("auth");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
