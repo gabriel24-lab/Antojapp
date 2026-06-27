@@ -1,25 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { apiMutate, apiFetch, apiUpload, apiDelete } from "../apiClient";
 import AppIcon from "./AppIcon";
+import { TODAS_LAS_CATEGORIAS } from "../data/categoriasPorPais";
 
 // ── Constantes ────────────────────────────────────────────────
-const CATEGORIAS = [
-  "Carnes y asados",
-  "Comida típica",
-  "Fritanga",
-  "Jugos y bebidas",
-  "Comida callejera",
-  "Mariscos",
-  "Pizzas y pastas",
-  "Hamburguesas",
-  "Pollo y aves",
-  "Vegetariano / Vegano",
-  "Desayunos",
-  "Postres y dulces",
-  "Sushi y japonesa",
-  "Comida rápida",
-  "Otro",
-];
+// Las categorías se importan desde categoriasPorPais.js (TODAS_LAS_CATEGORIAS)
+// para incluir todas las categorías de todos los países disponibles.
+
 
 const DIAS = [
   "lunes",
@@ -1331,9 +1318,9 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                   style={{ cursor: "pointer" }}
                 >
                   <option value="">Selecciona una categoría...</option>
-                  {CATEGORIAS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  {TODAS_LAS_CATEGORIAS.map((c) => (
+                    <option key={c.nombre} value={c.nombre}>
+                      {c.nombre}
                     </option>
                   ))}
                 </select>

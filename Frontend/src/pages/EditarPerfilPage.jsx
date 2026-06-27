@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../api";
 import AppIcon from "../components/AppIcon";
+import { TODAS_LAS_CATEGORIAS } from "../data/categoriasPorPais";
 
 export default function EditarPerfilPage({ onVolver }) {
   const { user, actualizarUsuario, mostrarToast } = useAuth();
@@ -47,10 +48,20 @@ export default function EditarPerfilPage({ onVolver }) {
   useEffect(() => {
     if (esPropietario) {
       setCargandoNegocio(true);
+      // Cargar categorías: usar TODAS_LAS_CATEGORIAS como base,
+      // el backend puede enriquecerla si responde correctamente.
       fetch(`${API_URL}/negocios/categorias`)
         .then((res) => (res.ok ? res.json() : []))
-        .then((data) => setCategoriasPosibles(data))
-        .catch(() => {});
+        .then((data) => {
+          const backendCats = Array.isArray(data) && data.length > 0 ? data : [];
+          const localCats = TODAS_LAS_CATEGORIAS.map((c) => c.nombre);
+          // Unir las del backend con las locales (sin duplicados)
+          const merged = [...new Set([...localCats, ...backendCats])];
+          setCategoriasPosibles(merged);
+        })
+        .catch(() => {
+          setCategoriasPosibles(TODAS_LAS_CATEGORIAS.map((c) => c.nombre));
+        });
 
       fetch(`${API_URL}/negocios/mio/negocio`, { credentials: "include" })
         .then((res) => (res.ok ? res.json() : Promise.reject()))

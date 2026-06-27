@@ -5,6 +5,7 @@ import { NEGOCIOS } from "../data/mockData";
 import API_URL from "../api";
 import AppIcon from "../components/AppIcon";
 import { useUbicacionContext } from "../context/UbicacionContext";
+import { getCategoriasPorPais } from "../data/categoriasPorPais";
 
 export default function HomePage({
   onVerDetalle,
@@ -23,8 +24,11 @@ export default function HomePage({
   const ciudadSeleccionada = ciudad;
   const onCambiarUbicacion = cambiarUbicacion;
   const [negocios, setNegocios] = useState([]);
-  const [categorias, setCategorias] = useState(["Todas"]);
+
+  // Categorías dinámicas según el país seleccionado
+  const catsPais = getCategoriasPorPais(paisSeleccionado);
   const [categoria, setCategoria] = useState("Todas");
+
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -57,13 +61,11 @@ export default function HomePage({
     }
   }, [modoNegocios]);
 
-  // Cargar categorías
+  // Resetear la categoría activa cuando cambia el país
   useEffect(() => {
-    fetch(`${API_URL}/negocios/categorias`)
-      .then((r) => r.json())
-      .then((data) => setCategorias(["Todas", ...data]))
-      .catch(() => {});
-  }, []);
+    setCategoria("Todas");
+  }, [paisSeleccionado]);
+
 
   // Cargar negocios con debounce
   const cargarNegocios = useCallback(() => {
@@ -107,7 +109,7 @@ export default function HomePage({
         setNegocios(mock);
         setUsandoMock(true);
         setCargando(false);
-        setCategorias(["Todas", ...new Set(NEGOCIOS.map((n) => n.categoria))]);
+        // En mock usamos las categorías del país ya calculadas (catsPais)
       });
   }, [
     busqueda,
@@ -277,12 +279,41 @@ export default function HomePage({
               scrollbarWidth: "none",
             }}
           >
-            {categorias.map((cat) => (
+            {/* Botón "Todas" */}
+            <button
+              key="Todas"
+              onClick={() => setCategoria("Todas")}
+              style={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 16px",
+                borderRadius: 50,
+                fontSize: 13,
+                fontWeight: 500,
+                border: "1.5px solid",
+                whiteSpace: "nowrap",
+                borderColor: categoria === "Todas" ? "var(--brand)" : "var(--border)",
+                background: categoria === "Todas" ? "var(--brand)" : "var(--surface)",
+                color: categoria === "Todas" ? "#fff" : "var(--text-2)",
+                cursor: "pointer",
+                transition: "all var(--transition)",
+              }}
+            >
+              <AppIcon name="utensils" size={14} />
+              Todas
+            </button>
+
+            {catsPais.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setCategoria(cat)}
+                key={cat.nombre}
+                onClick={() => setCategoria(cat.nombre)}
                 style={{
                   flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
                   padding: "7px 16px",
                   borderRadius: 50,
                   fontSize: 13,
@@ -290,15 +321,16 @@ export default function HomePage({
                   border: "1.5px solid",
                   whiteSpace: "nowrap",
                   borderColor:
-                    categoria === cat ? "var(--brand)" : "var(--border)",
+                    categoria === cat.nombre ? "var(--brand)" : "var(--border)",
                   background:
-                    categoria === cat ? "var(--brand)" : "var(--surface)",
-                  color: categoria === cat ? "#fff" : "var(--text-2)",
+                    categoria === cat.nombre ? "var(--brand)" : "var(--surface)",
+                  color: categoria === cat.nombre ? "#fff" : "var(--text-2)",
                   cursor: "pointer",
                   transition: "all var(--transition)",
                 }}
               >
-                {cat}
+                <AppIcon name={cat.icon} size={14} />
+                {cat.nombre}
               </button>
             ))}
             <div
