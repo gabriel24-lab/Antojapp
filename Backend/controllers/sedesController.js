@@ -46,12 +46,10 @@ async function crearSede(req, res) {
     res.status(201).json(sede);
   } catch (err) {
     captureError(err, "[crearSede]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
@@ -102,12 +100,10 @@ async function actualizarSede(req, res) {
     res.json(sedeActualizada);
   } catch (err) {
     captureError(err, "[actualizarSede]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
@@ -130,12 +126,10 @@ async function eliminarSede(req, res) {
     res.json({ mensaje: "Sede eliminada" });
   } catch (err) {
     captureError(err, "[eliminarSede]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 

@@ -2,11 +2,9 @@
 function esNegocio(req, res, next) {
   const rolesPermitidos = ["negocio", "propietario"];
   if (!rolesPermitidos.includes(req.usuario?.rol)) {
-    return res
-      .status(403)
-      .json({
-        error: "Solo los propietarios de negocio pueden realizar esta acción",
-      });
+    return res.status(403).json({
+      error: "Solo los propietarios de negocio pueden realizar esta acción",
+    });
   }
   next();
 }

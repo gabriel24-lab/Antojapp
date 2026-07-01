@@ -9,7 +9,9 @@ function initSentry() {
   const dsn = process.env.SENTRY_DSN;
 
   if (!dsn) {
-    console.warn("[Sentry] SENTRY_DSN no definido. El monitoreo de errores está desactivado.");
+    console.warn(
+      "[Sentry] SENTRY_DSN no definido. El monitoreo de errores está desactivado.",
+    );
     return;
   }
 
@@ -20,8 +22,14 @@ function initSentry() {
     beforeSend(event) {
       if (event.request?.data) {
         const sanitized = { ...event.request.data };
-        const camposSensibles = ["password", "passwordActual", "passwordNueva", "credential", "token"];
-        camposSensibles.forEach(campo => {
+        const camposSensibles = [
+          "password",
+          "passwordActual",
+          "passwordNueva",
+          "credential",
+          "token",
+        ];
+        camposSensibles.forEach((campo) => {
           if (sanitized[campo]) sanitized[campo] = "[REDACTED]";
         });
         event.request.data = sanitized;
@@ -30,7 +38,9 @@ function initSentry() {
     },
   });
 
-  console.log(`[Sentry] Monitoreo de errores activo (env: ${process.env.NODE_ENV || "development"})`);
+  console.log(
+    `[Sentry] Monitoreo de errores activo (env: ${process.env.NODE_ENV || "development"})`,
+  );
 }
 
 /**
@@ -46,7 +56,7 @@ function captureError(err, contexto = "", extras = {}) {
   console.error(contexto, err.message);
 
   if (process.env.SENTRY_DSN) {
-    Sentry.withScope(scope => {
+    Sentry.withScope((scope) => {
       scope.setTag("contexto", contexto);
       scope.setExtras(extras);
       Sentry.captureException(err);

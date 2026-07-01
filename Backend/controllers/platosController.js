@@ -31,12 +31,10 @@ async function getPlatos(req, res) {
     res.json(result);
   } catch (err) {
     captureError(err, "[getPlatos]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
@@ -97,12 +95,10 @@ async function crearPlato(req, res) {
     res.status(201).json(plato);
   } catch (err) {
     captureError(err, "[crearPlato]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
@@ -171,12 +167,10 @@ async function actualizarPlato(req, res) {
     if (err.code === "P2025") {
       return res.status(404).json({ error: "Plato no encontrado" });
     }
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
@@ -205,12 +199,10 @@ async function eliminarPlato(req, res) {
     res.json({ mensaje: "Plato eliminado" });
   } catch (err) {
     captureError(err, "[eliminarPlato]");
-    res
-      .status(500)
-      .json({
-        error:
-          "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
-      });
+    res.status(500).json({
+      error:
+        "Ups, algo salió mal. Estamos trabajando en ello, por favor intenta de nuevo más tarde.",
+    });
   }
 }
 
