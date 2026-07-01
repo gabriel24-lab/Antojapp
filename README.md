@@ -49,10 +49,3 @@ Si sabes de programación y quieres entender cómo está construido el proyecto 
 1. **[<img src="https://img.icons8.com/color/48/000000/color-palette.png" alt="Palette" width="20" height="20" style="vertical-align: text-bottom;" /> Frontend (La Interfaz Visual)](./Frontend/README.md):** Creada con React y Vite. Es lo que ves en la pantalla de tu celular o computadora.
 2. **[<img src="https://img.icons8.com/color/48/000000/settings--v1.png" alt="Gear" width="20" height="20" style="vertical-align: text-bottom;" /> Backend (El Motor)](./Backend/README.md):** Construido con Node.js, Express y una base de datos alojada en Supabase (PostgreSQL). Se encarga de la seguridad, guardar los usuarios y las reseñas.
 
-> <img src="https://img.icons8.com/color/48/000000/idea.png" alt="Bulb" width="16" height="16" style="vertical-align: middle;" /> **Nota:** Cada carpeta (`Frontend` y `Backend`) tiene su propia guía (`README.md`) con instrucciones paso a paso de cómo instalarlas y configurarlas. ¡Haz clic en los enlaces de arriba para ir a ellas!
-
----
-
-<div align="center">
-  <p>Hecho con <img src="https://img.icons8.com/color/48/000000/like--v1.png" alt="Heart" width="16" height="16" style="vertical-align: middle;" /> para los amantes de la buena comida.</p>
-</div>
