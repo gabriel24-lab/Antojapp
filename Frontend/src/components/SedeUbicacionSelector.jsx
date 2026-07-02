@@ -109,7 +109,12 @@ export default function SedeUbicacionSelector({
 
   const elegirDepartamento = async (display) => {
     if (!display) {
-      onChange({ pais, pais_nombre: paisNombre, departamento: null, ciudad: null });
+      onChange({
+        pais,
+        pais_nombre: paisNombre,
+        departamento: null,
+        ciudad: null,
+      });
       setDeptOriginal(null);
       setCiudades([]);
       return;

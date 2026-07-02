@@ -8,7 +8,6 @@ import SedeUbicacionSelector from "./SedeUbicacionSelector";
 // Las categorías se importan desde categoriasPorPais.js (TODAS_LAS_CATEGORIAS)
 // para incluir todas las categorías de todos los países disponibles.
 
-
 const DIAS = [
   "lunes",
   "martes",
@@ -416,9 +415,9 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
               placeholder="https://maps.app.goo.gl/..."
             />
             <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>
-              No es obligatorio. Solo complétalo si nuestra búsqueda
-              automática no encontró bien tu dirección, o si prefieres dar tú
-              mismo el link exacto.
+              No es obligatorio. Solo complétalo si nuestra búsqueda automática
+              no encontró bien tu dirección, o si prefieres dar tú mismo el link
+              exacto.
             </div>
           </Field>
           <Divider />
@@ -1403,7 +1402,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 }}
               >
                 <Field>
-                  <Label>WhatsApp</Label>
+                  <Label>WhatsApp (opcional)</Label>
                   <input
                     className="input"
                     value={info.whatsapp}
@@ -1412,7 +1411,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                   />
                 </Field>
                 <Field>
-                  <Label>Instagram</Label>
+                  <Label>Instagram (opcional)</Label>
                   <input
                     className="input"
                     value={info.instagram}
@@ -1422,7 +1421,7 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                 </Field>
               </div>
               <Field>
-                <Label>Link principal de Google Maps</Label>
+                <Label>Link principal de Google Maps (opcional)</Label>
                 <input
                   className="input"
                   value={info.maps_url}
