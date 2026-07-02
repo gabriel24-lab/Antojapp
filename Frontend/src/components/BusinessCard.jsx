@@ -100,18 +100,22 @@ const BusinessCard = React.memo(function BusinessCard({
     >
       {/* Imagen de portada */}
       <div style={{ position: "relative", height: 180, overflow: "hidden" }}>
-        <img
-          src={negocio.portada}
-          alt={negocio.nombre}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            display: "block",
-          }}
-          loading={prioritaria ? "eager" : "lazy"}
-          fetchPriority={prioritaria ? "high" : "auto"}
-        />
+        {negocio.portada ? (
+          <img
+            src={negocio.portada}
+            alt={negocio.nombre}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+            loading={prioritaria ? "eager" : "lazy"}
+            fetchPriority={prioritaria ? "high" : "auto"}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", background: "var(--border)" }} />
+        )}
         {/* Overlay degradado */}
         <div
           style={{

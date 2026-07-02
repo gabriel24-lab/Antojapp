@@ -275,8 +275,8 @@ async function crearNegocio(req, res) {
         maps_url: maps_url || null,
         whatsapp: whatsapp || null,
         instagram: instagram || null,
-        activo: false,
-        estado: "pendiente",
+        activo: true,
+        estado: "aprobado",
         sedes: {
           create: sedesData,
         },

@@ -1119,30 +1119,43 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
         const sedesNuevas = sedes.filter((s) => !s.id);
 
         // Eliminar las que el propietario quitó
-        await Promise.all(
+        const resEliminar = await Promise.all(
           idsEliminadas.map((id) =>
             apiDelete(`/negocios/${negocioId}/sedes/${id}`),
           ),
         );
+        let errElim = resEliminar.find(r => r.error);
+        if (errElim) { setGuardando(false); return setError(errElim.error); }
+
         // Actualizar las existentes
-        await Promise.all(
+        const resActualizar = await Promise.all(
           sedesActuales.map((s) =>
             apiMutate("PUT", `/negocios/${negocioId}/sedes/${s.id}`, s),
           ),
         );
+        let errAct = resActualizar.find(r => r.error);
+        if (errAct) { setGuardando(false); return setError(errAct.error); }
+
         // Crear las nuevas
-        await Promise.all(
+        const resCrear = await Promise.all(
           sedesNuevas.map((s) =>
             apiMutate("POST", `/negocios/${negocioId}/sedes`, s),
           ),
         );
+        let errCrear = resCrear.find(r => r.error);
+        if (errCrear) { setGuardando(false); return setError(errCrear.error); }
       } else {
         // Creación: enviar todas como nuevas
-        await Promise.all(
+        const results = await Promise.all(
           sedes.map((s) =>
             apiMutate("POST", `/negocios/${negocioId}/sedes`, s),
           ),
         );
+        const firstError = results.find(r => r.error);
+        if (firstError) {
+          setGuardando(false);
+          return setError(firstError.error);
+        }
       }
     } catch (e) {
       setGuardando(false);

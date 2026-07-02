@@ -74,8 +74,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
   const [linkCopiado, setLinkCopiado] = useState(false);
 
   const favorito = esFavorito(negocio.id);
-  const sede = negocio.sedes[sedeActiva];
-  const abierto = estaAbierto(sede.horario);
+  const sede = negocio.sedes?.[sedeActiva];
+  const abierto = sede ? estaAbierto(sede.horario) : false;
 
   const handleFavorito = () => {
     if (!user) {
@@ -201,11 +201,26 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           marginBottom: 24,
         }}
       >
-        <img
-          src={negocio.portada}
-          alt={negocio.nombre}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+        {negocio.portada ? (
+          <img
+            src={negocio.portada}
+            alt={negocio.nombre}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ color: "var(--text-3)", fontSize: 14 }}>Sin foto de portada</span>
+          </div>
+        )}
         <div
           style={{
             position: "absolute",
@@ -476,7 +491,8 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
       </div>
 
       {/* Sedes */}
-      <div className="card" style={{ marginBottom: 24, overflow: "hidden" }}>
+      {sede && (
+        <div className="card" style={{ marginBottom: 24, overflow: "hidden" }}>
         <div
           className="p-card-sm"
           style={{ borderBottom: "1px solid var(--border)" }}
@@ -698,6 +714,7 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* Reseñas */}
       <div className="card p-card">
