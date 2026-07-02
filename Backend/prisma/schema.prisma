@@ -38,6 +38,10 @@ model negocios {
   whatsapp       String?
   instagram      String?
   activo         Boolean?    @default(true)
+  // NOTA: estos 3 campos son un CACHÉ de la ubicación de la primera sede
+  // (se sincronizan automáticamente desde sedesController/sedesSync.js).
+  // La fuente de verdad de la ubicación real vive en cada "sede", porque
+  // un negocio puede tener sedes en países/ciudades distintos.
   pais           String?     @db.VarChar(100)
   departamento   String?     @db.VarChar(100)
   ciudad         String?     @db.VarChar(100)
@@ -56,18 +60,24 @@ model negocios {
 }
 
 model sedes {
-  id         Int       @id @default(autoincrement())
-  negocio_id Int
-  nombre     String    @db.VarChar(150)
-  direccion  String?   @db.VarChar(255)
-  telefonos  String[]  @default([])
-  telefono   String?   @db.VarChar(20) // Deprecated based on queries
-  lat        Decimal?  @db.Decimal(9, 6)
-  lng        Decimal?  @db.Decimal(9, 6)
-  horario    Json?
-  maps_url   String?
-  referencia String?
-  negocio    negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
+  id           Int       @id @default(autoincrement())
+  negocio_id   Int
+  nombre       String    @db.VarChar(150)
+  direccion    String?   @db.VarChar(255)
+  // Ubicación específica de ESTA sede (una misma empresa puede tener sedes
+  // en países/ciudades distintos, por eso esto vive aquí y no en "negocios").
+  pais         String?   @db.VarChar(2) // código ISO2, ej: "CO"
+  pais_nombre  String?   @db.VarChar(100) // nombre legible, ej: "Colombia"
+  departamento String?   @db.VarChar(100)
+  ciudad       String?   @db.VarChar(100)
+  telefonos    String[]  @default([])
+  telefono     String?   @db.VarChar(20) // Deprecated based on queries
+  lat          Decimal?  @db.Decimal(9, 6)
+  lng          Decimal?  @db.Decimal(9, 6)
+  horario      Json?
+  maps_url     String?
+  referencia   String?
+  negocio      negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
 }
 
 model platos {
@@ -106,6 +116,11 @@ model resenas {
   creado_en      DateTime? @default(now()) @db.Timestamp(6)
   negocio        negocios  @relation(fields: [negocio_id], references: [id], onDelete: Cascade)
   usuario        usuarios? @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  // Esta restricción ya existe físicamente en la base de datos (evita que
+  // un mismo usuario deje 2 reseñas al mismo negocio). Se declara aquí para
+  // que coincida con el schema y "db push" deje de querer recrearla.
+  @@unique([usuario_id, negocio_id], name: "resenas_usuario_negocio_unique")
 }
 
 model favoritos {

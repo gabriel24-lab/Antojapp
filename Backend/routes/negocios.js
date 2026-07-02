@@ -11,6 +11,7 @@ const { withSafeFilename } = require("../middleware/upload");
 const {
   crearNegocioSchema,
   actualizarNegocioSchema,
+  sedeSchema,
 } = require("../schemas/negocios");
 
 const {
@@ -118,6 +119,7 @@ router.post(
   esNegocio,
   esPropietario,
   escrituraNegocioLimiter,
+  validarBody(sedeSchema),
   crearSede,
 );
 router.put(
@@ -126,6 +128,7 @@ router.put(
   esNegocio,
   esPropietario,
   escrituraNegocioLimiter,
+  validarBody(sedeSchema),
   actualizarSede,
 );
 router.delete(

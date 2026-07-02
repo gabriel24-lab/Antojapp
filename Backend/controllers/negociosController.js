@@ -1,6 +1,8 @@
 const prisma = require("../db/pool");
 const supabase = require("../db/supabase");
 const { captureError } = require("../lib/sentry");
+const { geocodificarDireccion } = require("../lib/geocoding");
+const { sincronizarUbicacionNegocio } = require("../lib/sedesSync");
 
 // Para Tip 8: BullMQ
 const { Queue } = require("bullmq");
@@ -51,17 +53,24 @@ async function getNegocios(req, res) {
       ];
     }
 
+    // La ubicación real vive en cada sede (un negocio puede tener sedes en
+    // ciudades/países distintos), así que filtramos por "al menos una sede
+    // que coincida", en vez de un único pais/ciudad a nivel de negocio.
+    const filtroSede = {};
     if (pais && pais.trim()) {
-      whereClause.pais = pais.trim().toUpperCase();
+      filtroSede.pais = pais.trim().toUpperCase();
     }
     if (departamento && departamento.trim()) {
-      whereClause.departamento = {
+      filtroSede.departamento = {
         equals: departamento.trim(),
         mode: "insensitive",
       };
     }
     if (ciudad && ciudad.trim()) {
-      whereClause.ciudad = { equals: ciudad.trim(), mode: "insensitive" };
+      filtroSede.ciudad = { equals: ciudad.trim(), mode: "insensitive" };
+    }
+    if (Object.keys(filtroSede).length > 0) {
+      whereClause.sedes = { some: filtroSede };
     }
 
     const negocios = await prisma.negocios.findMany({
@@ -212,20 +221,49 @@ async function crearNegocio(req, res) {
         total: totalExistentes,
       });
 
-    const sedesData = sedes.map((s) => ({
-      nombre: s.nombre,
-      direccion: s.direccion,
-      telefonos: Array.isArray(s.telefonos)
-        ? s.telefonos
-        : s.telefonos
-          ? [s.telefonos]
-          : [],
-      lat: s.lat ? parseFloat(s.lat) : null,
-      lng: s.lng ? parseFloat(s.lng) : null,
-      horario: s.horario,
-      maps_url: s.maps_url,
-      referencia: s.referencia,
-    }));
+    const sedesData = await Promise.all(
+      sedes.map(async (s) => {
+        let lat = s.lat ? parseFloat(s.lat) : null;
+        let lng = s.lng ? parseFloat(s.lng) : null;
+        let mapsUrl = s.maps_url?.trim() || null;
+
+        // Igual que en crearSede: si no hay link de Maps pero sí dirección,
+        // intentamos geocodificarla automáticamente (Nominatim/OSM).
+        if (!mapsUrl && s.direccion) {
+          const geo = await geocodificarDireccion({
+            direccion: s.direccion,
+            ciudad: s.ciudad,
+            departamento: s.departamento,
+            paisIso2: s.pais,
+            paisNombre: s.pais_nombre,
+          });
+          if (geo) {
+            lat = geo.lat;
+            lng = geo.lng;
+            mapsUrl = geo.maps_url;
+          }
+        }
+
+        return {
+          nombre: s.nombre,
+          direccion: s.direccion,
+          pais: s.pais || null,
+          pais_nombre: s.pais_nombre || null,
+          departamento: s.departamento || null,
+          ciudad: s.ciudad || null,
+          telefonos: Array.isArray(s.telefonos)
+            ? s.telefonos
+            : s.telefonos
+              ? [s.telefonos]
+              : [],
+          lat,
+          lng,
+          horario: s.horario,
+          maps_url: mapsUrl,
+          referencia: s.referencia,
+        };
+      }),
+    );
 
     const negocio = await prisma.negocios.create({
       data: {
@@ -244,6 +282,10 @@ async function crearNegocio(req, res) {
         },
       },
     });
+
+    if (sedesData.length > 0) {
+      await sincronizarUbicacionNegocio(negocio.id);
+    }
 
     res.status(201).json(negocio);
   } catch (err) {

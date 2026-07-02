@@ -537,6 +537,19 @@ export default function BusinessDetail({ negocio, onVolver, onAbrirAuth }) {
               <div style={{ fontSize: 14, color: "var(--text-1)" }}>
                 {sede.direccion}
               </div>
+              {(sede.ciudad || sede.pais_nombre) && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-3)",
+                    marginTop: 2,
+                  }}
+                >
+                  {[sede.ciudad, sede.departamento, sede.pais_nombre]
+                    .filter(Boolean)
+                    .join(", ")}
+                </div>
+              )}
             </div>
             {/* Teléfonos → WhatsApp */}
             {sede.telefonos?.length > 0 && (

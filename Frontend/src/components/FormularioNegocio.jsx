@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { apiMutate, apiFetch, apiUpload, apiDelete } from "../apiClient";
 import AppIcon from "./AppIcon";
 import { TODAS_LAS_CATEGORIAS } from "../data/categoriasPorPais";
+import SedeUbicacionSelector from "./SedeUbicacionSelector";
 
 // ── Constantes ────────────────────────────────────────────────
 // Las categorías se importan desde categoriasPorPais.js (TODAS_LAS_CATEGORIAS)
@@ -365,6 +366,24 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
               </div>
             </Field>
           </div>
+          <SectionTitle icon="mapPin" iconProps={{ size: 16 }}>
+            Ubicación de esta sede
+          </SectionTitle>
+          <SedeUbicacionSelector
+            pais={sede.pais}
+            paisNombre={sede.pais_nombre}
+            departamento={sede.departamento}
+            ciudad={sede.ciudad}
+            onChange={(u) =>
+              onChange({
+                ...sede,
+                pais: u.pais,
+                pais_nombre: u.pais_nombre,
+                departamento: u.departamento,
+                ciudad: u.ciudad,
+              })
+            }
+          />
           <Field>
             <Label>Dirección</Label>
             <input
@@ -373,6 +392,11 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
               onChange={(e) => set("direccion", e.target.value)}
               placeholder="Calle 15 #8-42, Barrio Centro"
             />
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>
+              Con esto solo, buscamos la ubicación en el mapa automáticamente.
+              Si no la encontramos bien, puedes pegar el link de Google Maps
+              abajo.
+            </div>
           </Field>
           <Field>
             <Label>Referencia / cómo llegar</Label>
@@ -384,13 +408,18 @@ function SedeCard({ sede, index, onChange, onEliminar, esUnica }) {
             />
           </Field>
           <Field>
-            <Label>Link de Google Maps</Label>
+            <Label>Link de Google Maps (opcional)</Label>
             <input
               className="input"
               value={sede.maps_url || ""}
               onChange={(e) => set("maps_url", e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
             />
+            <div style={{ fontSize: 12, color: "var(--text-3)", marginTop: 4 }}>
+              No es obligatorio. Solo complétalo si nuestra búsqueda
+              automática no encontró bien tu dirección, o si prefieres dar tú
+              mismo el link exacto.
+            </div>
           </Field>
           <Divider />
           <SectionTitle icon="clock">Horario de atención</SectionTitle>
@@ -1008,6 +1037,10 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
           {
             nombre: "",
             direccion: "",
+            pais: null,
+            pais_nombre: null,
+            departamento: null,
+            ciudad: null,
             telefonos: [""],
             referencia: "",
             maps_url: "",
@@ -1064,6 +1097,14 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
   const guardarPaso2 = async () => {
     if (sedes.some((s) => !s.nombre?.trim()))
       return setError("Todas las sedes deben tener nombre.");
+    if (sedes.some((s) => !s.pais || !s.ciudad))
+      return setError(
+        "Selecciona país y ciudad en cada sede (recuerda que cada sede puede estar en un lugar distinto).",
+      );
+    if (sedes.some((s) => !s.direccion?.trim() && !s.maps_url?.trim()))
+      return setError(
+        "En cada sede, escribe la dirección o pega un link de Google Maps.",
+      );
     setGuardando(true);
     setError("");
 
@@ -1420,6 +1461,10 @@ export default function FormularioNegocio({ onCerrar, negocioInicial = null }) {
                     {
                       nombre: "",
                       direccion: "",
+                      pais: null,
+                      pais_nombre: null,
+                      departamento: null,
+                      ciudad: null,
                       telefonos: [""],
                       referencia: "",
                       maps_url: "",

@@ -1,5 +1,7 @@
 const prisma = require("../db/pool");
 const { captureError } = require("../lib/sentry");
+const { geocodificarDireccion } = require("../lib/geocoding");
+const { sincronizarUbicacionNegocio } = require("../lib/sedesSync");
 
 // ── Sedes ─────────────────────────────────────────────────────
 
@@ -9,6 +11,10 @@ async function crearSede(req, res) {
   const {
     nombre,
     direccion,
+    pais,
+    pais_nombre,
+    departamento,
+    ciudad,
     telefonos,
     lat,
     lng,
@@ -29,20 +35,50 @@ async function crearSede(req, res) {
       ? [telefonos]
       : [];
 
+  let latFinal = lat ? parseFloat(lat) : null;
+  let lngFinal = lng ? parseFloat(lng) : null;
+  let mapsUrlFinal = maps_url?.trim() || null;
+
+  // Si el propietario no tiene a la mano el link de Google Maps, pero sí
+  // escribió la dirección, intentamos ubicarla solos (Nominatim/OSM).
+  // Si no se encuentra o el servicio falla, seguimos sin bloquear el guardado:
+  // la sede queda sin maps_url y el propietario puede agregarlo después.
+  if (!mapsUrlFinal && direccion) {
+    const geo = await geocodificarDireccion({
+      direccion,
+      ciudad,
+      departamento,
+      paisIso2: pais,
+      paisNombre: pais_nombre,
+    });
+    if (geo) {
+      latFinal = geo.lat;
+      lngFinal = geo.lng;
+      mapsUrlFinal = geo.maps_url;
+    }
+  }
+
   try {
     const sede = await prisma.sedes.create({
       data: {
         negocio_id: parseInt(negocioId),
         nombre,
         direccion,
+        pais: pais || null,
+        pais_nombre: pais_nombre || null,
+        departamento: departamento || null,
+        ciudad: ciudad || null,
         telefonos: telArray,
-        lat: lat ? parseFloat(lat) : null,
-        lng: lng ? parseFloat(lng) : null,
+        lat: latFinal,
+        lng: lngFinal,
         horario,
-        maps_url,
+        maps_url: mapsUrlFinal,
         referencia,
       },
     });
+
+    await sincronizarUbicacionNegocio(parseInt(negocioId));
+
     res.status(201).json(sede);
   } catch (err) {
     captureError(err, "[crearSede]");
@@ -59,6 +95,10 @@ async function actualizarSede(req, res) {
   const {
     nombre,
     direccion,
+    pais,
+    pais_nombre,
+    departamento,
+    ciudad,
     telefonos,
     lat,
     lng,
@@ -74,16 +114,6 @@ async function actualizarSede(req, res) {
         : [telefonos].filter(Boolean)
       : undefined;
 
-  const dataUpdate = {};
-  if (nombre !== undefined) dataUpdate.nombre = nombre;
-  if (direccion !== undefined) dataUpdate.direccion = direccion;
-  if (telArray !== undefined) dataUpdate.telefonos = telArray;
-  if (lat !== undefined) dataUpdate.lat = lat ? parseFloat(lat) : null;
-  if (lng !== undefined) dataUpdate.lng = lng ? parseFloat(lng) : null;
-  if (horario !== undefined) dataUpdate.horario = horario;
-  if (maps_url !== undefined) dataUpdate.maps_url = maps_url;
-  if (referencia !== undefined) dataUpdate.referencia = referencia;
-
   try {
     const sede = await prisma.sedes.findUnique({
       where: { id: parseInt(sedeId) },
@@ -92,10 +122,57 @@ async function actualizarSede(req, res) {
       return res.status(404).json({ error: "Sede no encontrada" });
     }
 
+    const dataUpdate = {};
+    if (nombre !== undefined) dataUpdate.nombre = nombre;
+    if (direccion !== undefined) dataUpdate.direccion = direccion;
+    if (pais !== undefined) dataUpdate.pais = pais || null;
+    if (pais_nombre !== undefined) dataUpdate.pais_nombre = pais_nombre || null;
+    if (departamento !== undefined)
+      dataUpdate.departamento = departamento || null;
+    if (ciudad !== undefined) dataUpdate.ciudad = ciudad || null;
+    if (telArray !== undefined) dataUpdate.telefonos = telArray;
+    if (lat !== undefined) dataUpdate.lat = lat ? parseFloat(lat) : null;
+    if (lng !== undefined) dataUpdate.lng = lng ? parseFloat(lng) : null;
+    if (horario !== undefined) dataUpdate.horario = horario;
+    if (maps_url !== undefined)
+      dataUpdate.maps_url = maps_url?.trim() || null;
+    if (referencia !== undefined) dataUpdate.referencia = referencia;
+
+    // ¿Cambió la dirección (o la ubicación) y no nos dieron un link nuevo?
+    // Intentamos re-geocodificar solos, igual que al crear la sede.
+    const direccionCambio =
+      direccion !== undefined || ciudad !== undefined || pais !== undefined;
+    const sinMapsUrlNuevo = !dataUpdate.maps_url;
+
+    if (direccionCambio && sinMapsUrlNuevo) {
+      const direccionFinal = direccion !== undefined ? direccion : sede.direccion;
+      const ciudadFinal = ciudad !== undefined ? ciudad : sede.ciudad;
+      const departamentoFinal =
+        departamento !== undefined ? departamento : sede.departamento;
+      const paisFinal = pais !== undefined ? pais : sede.pais;
+      const paisNombreFinal =
+        pais_nombre !== undefined ? pais_nombre : sede.pais_nombre;
+
+      const geo = await geocodificarDireccion({
+        direccion: direccionFinal,
+        ciudad: ciudadFinal,
+        departamento: departamentoFinal,
+        paisIso2: paisFinal,
+        paisNombre: paisNombreFinal,
+      });
+      if (geo) {
+        dataUpdate.lat = geo.lat;
+        dataUpdate.lng = geo.lng;
+        dataUpdate.maps_url = geo.maps_url;
+      }
+    }
+
     const sedeActualizada = await prisma.sedes.update({
       where: { id: parseInt(sedeId) },
       data: dataUpdate,
     });
+
+    await sincronizarUbicacionNegocio(parseInt(negocioId));
 
     res.json(sedeActualizada);
   } catch (err) {
@@ -122,6 +199,8 @@ async function eliminarSede(req, res) {
     await prisma.sedes.delete({
       where: { id: parseInt(sedeId) },
     });
+
+    await sincronizarUbicacionNegocio(parseInt(negocioId));
 
     res.json({ mensaje: "Sede eliminada" });
   } catch (err) {

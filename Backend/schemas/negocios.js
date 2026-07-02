@@ -1,17 +1,40 @@
 const { z } = require("zod");
 
-const sedeSchema = z.object({
-  nombre: z.string().min(1).max(150).trim(),
-  direccion: z.string().max(255).optional(),
-  telefonos: z
-    .union([z.array(z.string().max(20)), z.string().max(20)])
-    .optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
-  horario: z.record(z.string()).optional(),
-  maps_url: z.string().url().max(500).optional().nullable(),
-  referencia: z.string().max(255).optional(),
-});
+// maps_url: opcional. Si viene, debe ser una URL válida; pero también
+// aceptamos "" (string vacío) para que el frontend no tenga que mandar
+// null y podamos distinguir "no lo llenó" de "lo borró a propósito".
+const mapsUrlField = z
+  .union([z.string().url().max(500), z.literal("")])
+  .optional()
+  .nullable();
+
+const sedeSchema = z
+  .object({
+    nombre: z.string().min(1).max(150).trim(),
+    direccion: z.string().max(255).optional().nullable(),
+    // Ubicación de la sede (mundial y obligatoria: cada sede puede estar
+    // en un país/ciudad distinto, no se puede asumir la de otra sede).
+    // país = código ISO2 (ej: "CO").
+    pais: z.string().length(2, "Selecciona un país"),
+    pais_nombre: z.string().max(100).optional().nullable(),
+    departamento: z.string().max(100).optional().nullable(),
+    ciudad: z.string().min(1, "Selecciona una ciudad").max(100),
+    telefonos: z
+      .union([z.array(z.string().max(20)), z.string().max(20)])
+      .optional(),
+    lat: z.number().optional().nullable(),
+    lng: z.number().optional().nullable(),
+    horario: z.record(z.string()).optional(),
+    maps_url: mapsUrlField,
+    referencia: z.string().max(255).optional().nullable(),
+  })
+  // El propietario debe dar AL MENOS una forma de ubicar la sede en el mapa:
+  // la dirección en texto (que luego intentamos geocodificar solos) o,
+  // si no la tiene automatizable, el link de Google Maps directamente.
+  .refine((s) => !!s.direccion?.trim() || !!s.maps_url?.trim(), {
+    message: "Indica la dirección de la sede o un link de Google Maps",
+    path: ["direccion"],
+  });
 
 const crearNegocioSchema = z.object({
   nombre: z.string().min(1).max(150).trim(),
@@ -32,4 +55,11 @@ const crearNegocioSchema = z.object({
 // independiente protegido por esAdmin, nunca aquí.
 const actualizarNegocioSchema = crearNegocioSchema.partial();
 
-module.exports = { crearNegocioSchema, actualizarNegocioSchema };
+// Las rutas POST/PUT /negocios/:id/sedes usan este mismo schema completo:
+// el frontend siempre envía el objeto de sede entero (no parches parciales),
+// así que no hace falta una versión ".partial()" para actualizar.
+module.exports = {
+  crearNegocioSchema,
+  actualizarNegocioSchema,
+  sedeSchema,
+};
